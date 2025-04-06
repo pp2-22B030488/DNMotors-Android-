@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <!-- AppBar с Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        android:background="@android:color/white"
+        app:elevation="4dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/white"
+            app:title="Автокредит"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:contentInsetStart="16dp"
+            app:contentInsetEnd="16dp"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Подать заявку в кредит"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:textColor="@color/black"
+                android:layout_marginBottom="12dp"/>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ежемесячный платеж"
+                android:textSize="14sp"
+                android:layout_marginTop="16dp"/>
+
+            <TextView
+                android:id="@+id/monthlyPayment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="215 489 ₸"
+                android:textSize="24sp"
+                android:textColor="@color/primary_red"
+                android:textStyle="bold"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/edittext_bg_carcredit"
+                android:layout_marginTop="24dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Стоимость автомобиля, ₸"
+                    android:textSize="14sp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginStart="12dp"/>
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/carCost"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="3 000 000"
+                        android:inputType="number"
+                        android:paddingStart="12dp"
+                        android:paddingBottom="12dp" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/edittext_bg_carcredit"
+                android:layout_marginTop="12dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Первоначальный взнос, ₸"
+                    android:textSize="14sp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginStart="12dp"/>
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/initialPayment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="600 000"
+                    android:inputType="number"
+                    android:paddingStart="12dp"
+                    android:paddingBottom="12dp" />
+            </LinearLayout>
+
+            <!-- Сумма кредита -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Сумма кредита"
+                android:textSize="14sp"
+                android:layout_marginTop="24dp"/>
+
+            <TextView
+                android:id="@+id/creditSum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2 400 000 ₸"
+                android:textSize="24sp"
+                android:textColor="@color/primary_red"
+                android:textStyle="bold"/>
+
+            <!-- Выбор срока кредита -->
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="4"
+                android:layout_marginTop="12dp">
+
+                <Button
+                    android:id="@+id/month12"
+                    style="@style/CreditTermButton.Selected"
+                    android:layout_marginEnd="8dp"
+                    android:text="12 мес"/>
+                <Button
+                    android:id="@+id/month24"
+                    style="@style/CreditTermButton"
+                    android:layout_marginEnd="8dp"
+                    android:text="24 мес"/>
+                <Button
+                    android:id="@+id/month36"
+                    style="@style/CreditTermButton"
+                    android:layout_marginEnd="8dp"
+                    android:text="36 мес"/>
+                <Button
+                    android:id="@+id/month48"
+                    style="@style/CreditTermButton"
+                    android:text="48 мес"/>
+                <Button
+                    android:id="@+id/month60"
+                    style="@style/CreditTermButton"
+                    android:text="60 мес"/>
+                <Button
+                    android:id="@+id/month72"
+                    style="@style/CreditTermButton"
+                    android:text="72 мес"/>
+                <Button
+                    android:id="@+id/month84"
+                    style="@style/CreditTermButton"
+                    android:text="84 мес"/>
+            </GridLayout>
+
+            <Button
+                android:id="@+id/requestCredit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Узнать решение"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/primary_red"
+                android:padding="16dp"
+                android:layout_marginTop="24dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp">
+
+                <Button
+                    android:id="@+id/aboutCredit"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="О кредитовании"
+                    android:padding="16dp"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/primary_red"/>
+
+                <View android:layout_width="8dp" android:layout_height="wrap_content"/>
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Объявлений"
+                    android:padding="16dp"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/primary_red"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/carFragment"
+        android:icon="@drawable/ic_bottom_car"
+        android:title="Intents"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/favouritesFragment"
+        android:icon="@drawable/ic_bottom_favourites"
+        android:title="Service"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/searchFragment"
+        android:icon="@drawable/ic_bottom_search"
+        android:title="Receiver"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/chatFragment"
+        android:icon="@drawable/ic_bottom_message"
+        android:title="Provider"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/ic_bottom_profile"
+        android:title="Provider"
+        app:showAsAction="ifRoom" />
+
+</menu>

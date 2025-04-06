@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <!-- AppBar с Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        android:background="@android:color/white"
+        app:elevation="4dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/white"
+            app:title="Подать заявку"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:contentInsetStart="16dp"
+            app:contentInsetEnd="16dp"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+    <!-- Основное содержимое -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@color/credit_term_button">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingBottom="16dp"
+                android:text="Заполните онлайн заявку для получения автокредита"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
+
+            <!-- Поле Имя -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Имя*"
+                android:layout_marginTop="20dp"
+                app:boxBackgroundMode="outline"
+                app:boxStrokeColor="@color/primary_back"
+                app:boxBackgroundColor="@android:color/white"
+                >
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/edittext_bg_carcredit"
+                    android:padding="20dp"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Поле Город (Spinner) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Город*"
+                app:boxBackgroundMode="outline"
+                app:boxStrokeColor="@color/primary_back"
+                app:boxBackgroundColor="@android:color/white">
+
+                <TextView
+                    android:id="@+id/tv_selected_city"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:padding="16dp"
+                    android:gravity="center_vertical"
+                    android:text="Выберите город"
+                    android:textColor="@android:color/black"
+                    android:background="@drawable/edittext_bg_carcredit"
+                    android:drawableEnd="@drawable/ic_arrow_down"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+            <!-- Поле Телефон -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Телефон*"
+                app:boxBackgroundMode="outline"
+                app:boxStrokeColor="@color/primary_back"
+                app:boxBackgroundColor="@android:color/white">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_phone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="phone"
+                    android:background="@drawable/edittext_bg_carcredit"
+                    android:padding="20dp"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Кнопка Отправить -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_submit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:padding="16dp"
+                android:backgroundTint="@color/primary_red"
+                android:text="Отправить"
+                android:textColor="@android:color/white" />
+
+        </LinearLayout>
+
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

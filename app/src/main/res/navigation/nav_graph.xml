@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/carFragment">
+
+    <fragment
+        android:id="@+id/carFragment"
+        android:name="com.example.dnmotors.carFragment.CarFragment"
+        android:label="Car"
+        tools:layout="@layout/fragment_car" >
+        <action
+            android:id="@+id/action_carFragment_to_carCreditFragment"
+            app:destination="@id/carCreditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/favouritesFragment"
+        android:name="com.example.dnmotors.favouritesFragment.FavouritesFragment"
+        android:label="Favourites"
+        tools:layout="@layout/fragment_favourites" />
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.dnmotors.searchFragment.SearchFragment"
+        android:label="Search"
+        tools:layout="@layout/fragment_search" />
+
+    <fragment
+        android:id="@+id/messagesFragment"
+        android:name="com.example.dnmotors.messagesFragment.MessagesFragment"
+        android:label="Chat"
+        tools:layout="@layout/fragment_messages" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.dnmotors.profileFragment.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" >
+        <action
+            android:id="@+id/action_profileFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.dnmotors.settingsFragment.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+    <fragment
+        android:id="@+id/carCreditFragment"
+        android:name="com.example.dnmotors.carFragment.сredit.CarCreditFragment"
+        android:label="Credit"
+        tools:layout="@layout/fragment_car_credit" >
+        <action
+            android:id="@+id/action_carCreditFragment_to_aboutCreditFragment"
+            app:destination="@id/aboutCreditFragment" />
+        <action
+            android:id="@+id/action_carCreditFragment_to_requestCreditFragment"
+            app:destination="@id/requestCreditFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/aboutCreditFragment"
+        android:name="com.example.dnmotors.carFragment.сredit.AboutCreditFragment"
+        android:label="AboutCredit"
+        tools:layout="@layout/fragment_about_credit" />
+    <fragment
+        android:id="@+id/requestCreditFragment"
+        android:name="com.example.dnmotors.carFragment.сredit.RequestCreditFragment"
+        android:label="RequestCredit"
+        tools:layout="@layout/fragment_request_credit" />
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.example.dnmotors.messagesFragment.ChatFragment"
+        android:label="ChatFragment"
+        tools:layout="@layout/fragment_chat" >
+        <action
+            android:id="@+id/action_chatFragment_to_messagesFragment"
+            app:destination="@id/messagesFragment" />
+    </fragment>
+
+
+</navigation>
