@@ -1,4 +1,4 @@
-package com.example.dnmotors.profileFragment
+package com.example.dnmotors.view.fragments.profileFragment
 
 import android.app.Activity
 import android.content.Intent

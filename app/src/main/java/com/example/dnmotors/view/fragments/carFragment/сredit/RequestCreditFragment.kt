@@ -1,4 +1,4 @@
-package com.example.dnmotors.carFragment.сredit
+package com.example.dnmotors.view.fragments.carFragment.сredit
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment

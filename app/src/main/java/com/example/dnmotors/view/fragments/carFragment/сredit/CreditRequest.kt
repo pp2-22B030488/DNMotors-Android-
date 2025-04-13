@@ -1,4 +1,4 @@
-package com.example.dnmotors.carFragment.сredit
+package com.example.dnmotors.view.fragments.carFragment.сredit
 
 data class CreditRequest(
     val name: String = "",

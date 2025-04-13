@@ -22,6 +22,7 @@ playServicesAuth = "21.3.0"
 navigationUiKtx = "2.8.7"
 firebaseFirestoreKtx = "25.1.2"
 firebaseStorageKtx = "21.0.1"
+jetbrainsKotlinJvm = "2.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -53,5 +54,6 @@ firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 gms = { id = "com.google.gms.google-services", version.ref = "gmsVersion" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 
 

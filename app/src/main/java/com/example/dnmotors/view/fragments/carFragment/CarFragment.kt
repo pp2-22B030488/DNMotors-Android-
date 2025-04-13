@@ -1,25 +1,28 @@
-package com.example.dnmotors.searchFragment
+package com.example.dnmotors.view.fragments.carFragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.dnmotors.R
-import com.example.dnmotors.databinding.FragmentSearchBinding
+import com.example.dnmotors.databinding.FragmentCarBinding
 
-class SearchFragment : Fragment() {
+class CarFragment : Fragment() {
 
-    private var _binding: FragmentSearchBinding? = null
+    private var _binding: FragmentCarBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSearchBinding.inflate(inflater, container, false)
+        _binding = FragmentCarBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -27,18 +30,16 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
-        toolbar.inflateMenu(R.menu.search_filter_menu)
+        val logo = view.findViewById<ImageView>(R.id.logo)
+        val btnCredit = view.findViewById<ImageView>(R.id.btnCredit)
 
-        toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.btnFilter -> {
-//                    findNavController().navigate(R.id.action_profileFragment_to_settingsFragment)
-                    true
-                }
-                else -> false
-            }
+        btnCredit.setOnClickListener {
+            // Переход на другой фрагмент
+            findNavController().navigate(R.id.action_carFragment_to_carCreditFragment)
         }
     }
+
+
 
 
     override fun onDestroyView() {

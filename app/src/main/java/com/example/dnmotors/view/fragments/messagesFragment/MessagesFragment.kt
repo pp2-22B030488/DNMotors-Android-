@@ -1,4 +1,4 @@
-package com.example.dnmotors.messagesFragment
+package com.example.dnmotors.view.fragments.messagesFragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.dnmotors.messagesFragment.MessagesAdapter
+import com.example.dnmotors.view.fragments.messagesFragment.MessagesAdapter
 import com.example.dnmotors.databinding.FragmentMessagesBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot

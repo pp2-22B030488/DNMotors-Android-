@@ -1,4 +1,4 @@
-package com.example.dnmotors.favouritesFragment
+package com.example.dnmotors.view.fragments.favouritesFragment
 
 import android.os.Bundle
 import android.view.LayoutInflater

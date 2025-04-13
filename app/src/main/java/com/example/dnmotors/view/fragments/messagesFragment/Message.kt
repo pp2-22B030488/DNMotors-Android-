@@ -1,4 +1,4 @@
-package com.example.dnmotors.messagesFragment
+package com.example.dnmotors.view.fragments.messagesFragment
 
 data class Message(
     val id: String? = null,

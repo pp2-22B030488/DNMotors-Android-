@@ -1,4 +1,4 @@
-package com.example.dnmotors.messagesFragment
+package com.example.dnmotors.view.fragments.messagesFragment
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

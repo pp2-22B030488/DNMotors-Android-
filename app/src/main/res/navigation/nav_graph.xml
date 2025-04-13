@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/carFragment"
-        android:name="com.example.dnmotors.carFragment.CarFragment"
+        android:name="com.example.dnmotors.view.fragments.carFragment.CarFragment"
         android:label="Car"
         tools:layout="@layout/fragment_car" >
         <action
@@ -17,25 +17,25 @@
 
     <fragment
         android:id="@+id/favouritesFragment"
-        android:name="com.example.dnmotors.favouritesFragment.FavouritesFragment"
+        android:name="com.example.dnmotors.view.fragments.favouritesFragment.FavouritesFragment"
         android:label="Favourites"
         tools:layout="@layout/fragment_favourites" />
 
     <fragment
         android:id="@+id/searchFragment"
-        android:name="com.example.dnmotors.searchFragment.SearchFragment"
+        android:name="com.example.dnmotors.view.fragments.searchFragment.SearchFragment"
         android:label="Search"
         tools:layout="@layout/fragment_search" />
 
     <fragment
         android:id="@+id/messagesFragment"
-        android:name="com.example.dnmotors.messagesFragment.MessagesFragment"
+        android:name="com.example.dnmotors.view.fragments.messagesFragment.MessagesFragment"
         android:label="Chat"
         tools:layout="@layout/fragment_messages" />
 
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.example.dnmotors.profileFragment.ProfileFragment"
+        android:name="com.example.dnmotors.view.fragments.profileFragment.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile" >
         <action
@@ -49,7 +49,7 @@
         tools:layout="@layout/fragment_settings" />
     <fragment
         android:id="@+id/carCreditFragment"
-        android:name="com.example.dnmotors.carFragment.сredit.CarCreditFragment"
+        android:name="com.example.dnmotors.view.fragments.carFragment.сredit.CarCreditFragment"
         android:label="Credit"
         tools:layout="@layout/fragment_car_credit" >
         <action
@@ -61,17 +61,17 @@
     </fragment>
     <fragment
         android:id="@+id/aboutCreditFragment"
-        android:name="com.example.dnmotors.carFragment.сredit.AboutCreditFragment"
+        android:name="com.example.dnmotors.view.fragments.carFragment.сredit.AboutCreditFragment"
         android:label="AboutCredit"
         tools:layout="@layout/fragment_about_credit" />
     <fragment
         android:id="@+id/requestCreditFragment"
-        android:name="com.example.dnmotors.carFragment.сredit.RequestCreditFragment"
+        android:name="com.example.dnmotors.view.fragments.carFragment.сredit.RequestCreditFragment"
         android:label="RequestCredit"
         tools:layout="@layout/fragment_request_credit" />
     <fragment
         android:id="@+id/chatFragment"
-        android:name="com.example.dnmotors.messagesFragment.ChatFragment"
+        android:name="com.example.dnmotors.view.fragments.messagesFragment.ChatFragment"
         android:label="ChatFragment"
         tools:layout="@layout/fragment_chat" >
         <action
