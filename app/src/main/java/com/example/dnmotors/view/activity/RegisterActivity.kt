@@ -3,95 +3,80 @@ package com.example.dnmotors.view.activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.dnmotors.R
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.ktx.Firebase
+import com.example.dnmotors.databinding.ActivityRegisterBinding
+import com.example.domain.repository.AuthRepository
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 class RegisterActivity : AppCompatActivity() {
-    private lateinit var auth: FirebaseAuth
+    private lateinit var googleLauncher: ActivityResultLauncher<Intent>
+
+    private val authRepository: AuthRepository by inject()
+    private lateinit var binding: ActivityRegisterBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_register)
+        binding = ActivityRegisterBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-//        auth = FirebaseAuth.getInstance()
-        auth = Firebase.auth
+        binding.bRegister.setOnClickListener {
+            val email = binding.etEmail.text.toString().trim()
+            val password = binding.etPassword.text.toString().trim()
+            val name = binding.etName.text.toString().trim()
 
-        findViewById<Button>(R.id.bRegister).setOnClickListener {
-            val email = findViewById<EditText>(R.id.etEmail).text.toString().trim()
-            val password = findViewById<EditText>(R.id.etPassword).text.toString().trim()
-            val name = findViewById<EditText>(R.id.etName).text.toString().trim()
+            if (email.isBlank() || password.isBlank() || name.isBlank()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-            if (email.isNotEmpty() && password.isNotEmpty() && name.isNotEmpty()) {
-                auth.fetchSignInMethodsForEmail(email).addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val signInMethods = task.result?.signInMethods ?: emptyList()
-                        if (signInMethods.isEmpty()) {
-                            registerUser(email, password, name)
-                        } else {
-                            Toast.makeText(this, "Email is already registered", Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        Log.d("MyLog", "Error checking email: ${task.exception?.message}")
-                        Toast.makeText(this, "Error checking email!", Toast.LENGTH_SHORT).show()
-                    }
-                }
+            registerUser(email, password, name)
+        }
 
-            } else {
-                Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show()
+        binding.tvSignIn.setOnClickListener {
+            startActivity(Intent(this, SignInActivity::class.java))
+            finish()
+        }
+
+        // Google Sign-In button
+        binding.btnGoogle.setOnClickListener {
+            try {
+                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+                val client = GoogleSignIn.getClient(this, gso)
+                googleLauncher.launch(client.signInIntent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error launching Google Sign-In", Toast.LENGTH_SHORT).show()
+                Log.e("SignInActivity", "Error launching Google Sign-In intent", e)
             }
         }
     }
 
     private fun registerUser(email: String, password: String, name: String) {
-        auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val user = hashMapOf(
-                    "name" to name,
-                    "email" to email,
-                )
-                checkAuthState()
-                FirebaseFirestore.getInstance().collection("users").document(auth.currentUser!!.uid)
-                    .set(user)
-                    .addOnSuccessListener {
-//                        Log.d("MyLog", "User registered successfully: ${auth.currentUser?.uid}")
-//                        Toast.makeText(this, "User registered successfully", Toast.LENGTH_SHORT).show()
-
-
-//                        checkAuthState()
-//                        finish() // Закрываем активность после успешной регистрации
-
-                    }
-                    .addOnFailureListener {
-                        Log.d("MyLog", "Firestore write failed: ${it.message}")
-                    }
-            } else {
-                if (task.exception is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
-                    Toast.makeText(this, "Email is already registered", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Registration failed!", Toast.LENGTH_SHORT).show()
-                }
-                Log.d("MyLog", "Registration failed: ${task.exception?.message}")
+        lifecycleScope.launch {
+            val result = authRepository.registerWithEmail(email, password, name)
+            result.onSuccess {
+                Toast.makeText(this@RegisterActivity, "Registration successful!", Toast.LENGTH_SHORT).show()
+                navigateToMain()
+            }.onFailure {
+                Log.e("RegisterActivity", "Registration failed", it)
+                Toast.makeText(this@RegisterActivity, "Registration failed: ${it.message}", Toast.LENGTH_SHORT).show()
             }
         }
-
     }
 
-    private fun checkAuthState() {
-        if (auth.currentUser != null) {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.putExtra("OPEN_FRAGMENT", "CarFragment") // Передаём ключ
-            startActivity(intent)
-            finish()
-        } else {
-            Log.d("MyLog", "Auth state check failed: user is null")
-        }
+    private fun navigateToMain() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.putExtra("OPEN_FRAGMENT", "CarFragment")
+        startActivity(intent)
+        finish()
     }
-
 }

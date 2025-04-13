@@ -4,144 +4,104 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivitySignInBinding
+import com.example.dnmotors.viewmodel.AuthViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.firestore.FirebaseFirestore
-
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SignInActivity : AppCompatActivity() {
-    lateinit var launcher: ActivityResultLauncher<Intent>
-    lateinit var auth: FirebaseAuth
-    lateinit var binding: ActivitySignInBinding
+    private lateinit var googleLauncher: ActivityResultLauncher<Intent>
+    private lateinit var binding: ActivitySignInBinding
+    private val viewModel: AuthViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         binding = ActivitySignInBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        auth = FirebaseAuth.getInstance()
-        launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                if (account != null) {
-                    firebaseAuthWithGoogle(account.idToken!!)
-                }
-            }catch (e: ApiException){
-                Log.d("MyLog", "Api exception")
-            }
+
+        if (viewModel.isUserSignedIn()) {
+            Log.d("SignInActivity", "Already logged in. Navigating to MainActivity.")
+            navigateToMain()
+            return
         }
 
-        // Авторизация через Email/Password
+        // Email Sign-In
         binding.btnSignIn.setOnClickListener {
-            val email = binding.etEmail.text.toString().trim()
-            val password = binding.etPassword.text.toString().trim()
+            val email = binding.etEmail.text.toString()
+            val password = binding.etPassword.text.toString()
 
-            if (email.isNotEmpty() && password.isNotEmpty()) {
-                auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            checkAuthState()
-                        } else {
-                            Toast.makeText(this, "Authentication failed!", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+            if (email.isBlank() || password.isBlank()) {
+                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
+                Log.w("SignInActivity", "Empty email or password")
+                return@setOnClickListener
+            }
+
+            viewModel.signIn(email, password)
+        }
+
+        viewModel.authState.observe(this) { isSuccess ->
+            if (isSuccess) {
+                Log.d("SignInActivity", "Sign-in successful")
+                navigateToMain()
             } else {
-                Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT).show()
+                Log.e("SignInActivity", "Email/Password authentication failed")
             }
         }
 
+        // Google Sign-In setup
+        googleLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            try {
+                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                val account = task.getResult(ApiException::class.java)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.signIn)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        binding.btnGoogle.setOnClickListener {
-            signInWithGoogle()
-        }
-        // Переход на страницу регистрации
-        binding.tvSignUp.setOnClickListener {
-            startActivity(Intent(this, RegisterActivity::class.java))
-        }
-    }
-
-
-
-    private fun getClient(): GoogleSignInClient {
-        val gso = GoogleSignInOptions
-            .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-
-        return GoogleSignIn.getClient(this, gso)
-    }
-
-    private fun signInWithGoogle(){
-        val signInClient = getClient()
-        launcher.launch(signInClient.signInIntent)
-
-    }
-
-    private fun firebaseAuthWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Log.d("MyLog", "Google sign in done")
-
-                val user = auth.currentUser
-                if (user != null) {
-                    val name = user.displayName ?: "No Name"
-                    val email = user.email ?: "No Email"
-
-                    Log.d("MyLog", "User Name: $name, Email: $email")
-
-                    val userRef = FirebaseFirestore.getInstance().collection("users").document(user.uid)
-
-                    userRef.get().addOnSuccessListener { document ->
-                        if (!document.exists()) {
-                            val newUser = hashMapOf(
-                                "name" to name,
-                                "email" to email
-                            )
-                            userRef.set(newUser).addOnSuccessListener {
-                                Log.d("MyLog", "User data saved in Firestore")
-                            }.addOnFailureListener { e ->
-                                Log.d("MyLog", "Firestore write error: ${e.message}")
-                            }
-                        }
-                    }
-
+                if (account != null && account.idToken != null) {
+                    viewModel.signInWithGoogle(account.idToken!!)
+                } else {
+                    Toast.makeText(this, "Google Sign-In failed: Account or token null", Toast.LENGTH_SHORT).show()
+                    Log.e("SignInActivity", "Google Sign-In failed: Account or token was null")
                 }
 
-                checkAuthState()
-            } else {
-                Log.d("MyLog", "Google sign in error")
+            } catch (e: ApiException) {
+                Toast.makeText(this, "Google Sign-In error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                Log.e("SignInActivity", "Google Sign-In exception: ${e.message}", e)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Unexpected error during Google Sign-In", Toast.LENGTH_SHORT).show()
+                Log.e("SignInActivity", "Unexpected exception during Google Sign-In", e)
             }
         }
-    }
 
+        // Google Sign-In button
+        binding.btnGoogle.setOnClickListener {
+            try {
+                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+                val client = GoogleSignIn.getClient(this, gso)
+                googleLauncher.launch(client.signInIntent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error launching Google Sign-In", Toast.LENGTH_SHORT).show()
+                Log.e("SignInActivity", "Error launching Google Sign-In intent", e)
+            }
+        }
 
-    private fun checkAuthState(){
-        if(auth.currentUser != null){
-            val intent = Intent(this, MainActivity::class.java)
-            intent.putExtra("OPEN_FRAGMENT", "CarFragment")
+        binding.tvSignUp.setOnClickListener {
+            val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
             finish()
         }
+
+    }
+
+    private fun navigateToMain() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 }

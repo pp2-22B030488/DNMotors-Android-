@@ -1,3 +1,4 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -53,12 +54,18 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
+    implementation(project(":domain"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation(platform(libs.firebase.boom))
     implementation(libs.play.services.auth)
+
+
+//  google
+    implementation(libs.play.services.location)
+
 
     implementation(libs.picasso)
 
@@ -67,5 +74,10 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
 
     implementation(libs.material.v1110)
+
+    // koin
+    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
 
 }

@@ -21,6 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "DNMotors"
 include(":app")
-
 include(":data")
 include(":domain")
