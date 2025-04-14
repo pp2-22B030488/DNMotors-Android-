@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Car Photo -->
+        <ImageView
+            android:id="@+id/imageViewCar"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/tayota_camry_xv80"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Brand and Model -->
+        <TextView
+            android:id="@+id/textViewBrandModel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Toyota Camry XV70 (2022)"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#222222" />
+
+        <!-- Price -->
+        <TextView
+            android:id="@+id/textViewPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15 800 000 ₸"
+            android:textSize="22sp"
+            android:textColor="#FF5722"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+
+        <!-- Mileage and Owners -->
+        <TextView
+            android:id="@+id/textViewMileage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mileage: 2,500 km"
+            android:textSize="16sp"
+            android:textColor="#444444"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/textViewOwnersCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Owners count: 1"
+            android:textSize="16sp"
+            android:textColor="#444444" />
+
+        <!-- Location -->
+        <TextView
+            android:id="@+id/textViewLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location: Almaty, Kazakhstan"
+            android:textSize="16sp"
+            android:textColor="#444444" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Car Specs -->
+        <TextView
+            android:layout_height="12sp"
+            android:layout_width="12sp"
+            android:text="Specifications"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginBottom="8dp" />
+
+
+        <TextView android:id="@+id/textViewYear" style="@style/DetailItemStyle" android:text="Year: 2022" />
+        <TextView android:id="@+id/textViewCondition" style="@style/DetailItemStyle" android:text="Condition: used" />
+        <TextView android:id="@+id/textViewBodyType" style="@style/DetailItemStyle" android:text="Body Type: Sedan" />
+        <TextView android:id="@+id/textViewDriveType" style="@style/DetailItemStyle" android:text="Drive Type: Front-Wheel Drive" />
+        <TextView android:id="@+id/textViewEngineVolume" style="@style/DetailItemStyle" android:text="Engine Volume: 2.5 L / Petrol" />
+        <TextView android:id="@+id/textViewHorsepower" style="@style/DetailItemStyle" android:text="Horsepower: 181 hp" />
+        <TextView android:id="@+id/textViewTransmission" style="@style/DetailItemStyle" android:text="Transmission: Automatic" />
+        <TextView android:id="@+id/textViewSteeringWheel" style="@style/DetailItemStyle" android:text="Steering Wheel: left" />
+        <TextView android:id="@+id/textViewVIN" style="@style/DetailItemStyle" android:text="VIN: JTNB11HK7K3000001" />
+
+        <!-- Exterior -->
+        <TextView
+            android:id="@+id/textViewExteriorFeatures"
+            android:layout_height="12sp"
+            android:layout_width="12sp"
+            android:text="Exterior"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+        <TextView style="@style/DetailItemStyle" android:text="• LED headlights" />
+        <TextView style="@style/DetailItemStyle" android:text="• Alloy wheels" />
+        <TextView style="@style/DetailItemStyle" android:text="• Sunroof" />
+        <TextView style="@style/DetailItemStyle" android:text="• Chrome accents" />
+        <TextView style="@style/DetailItemStyle" android:text="• Rear spoiler" />
+
+        <!-- Interior -->
+        <TextView
+            android:id="@+id/textViewInteriorFeatures"
+            android:layout_height="12sp"
+            android:layout_width="12sp"
+            android:text="Interior"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+        <TextView style="@style/DetailItemStyle" android:text="• Leather seats" />
+        <TextView style="@style/DetailItemStyle" android:text="• Touchscreen" />
+        <TextView style="@style/DetailItemStyle" android:text="• Ambient lighting" />
+        <TextView style="@style/DetailItemStyle" android:text="• Multifunction wheel" />
+
+        <!-- Description -->
+        <TextView
+            android:id="@+id/textViewDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toyota Camry XV70 — a stylish and reliable business-class sedan with minimal mileage."
+            android:textSize="16sp"
+            android:textColor="#444444"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+    </LinearLayout>
+</ScrollView>
