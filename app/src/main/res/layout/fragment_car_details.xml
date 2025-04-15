@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fillViewport="true"
     android:background="#FFFFFF">
 
@@ -20,26 +25,75 @@
             android:src="@drawable/tayota_camry_xv80"
             android:layout_marginBottom="16dp" />
 
-        <!-- Brand and Model -->
-        <TextView
-            android:id="@+id/textViewBrandModel"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Toyota Camry XV70 (2022)"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#222222" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
 
-        <!-- Price -->
-        <TextView
-            android:id="@+id/textViewPrice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="15 800 000 ₸"
-            android:textSize="22sp"
-            android:textColor="#FF5722"
-            android:textStyle="bold"
-            android:layout_marginTop="8dp" />
+            <!-- Левая часть: Название и Цена -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Brand and Model -->
+                <TextView
+                    android:id="@+id/textViewBrandModel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Toyota Camry XV70 (2022)"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#222222" />
+
+                <!-- Price -->
+                <TextView
+                    android:id="@+id/textViewPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="15 800 000 ₸"
+                    android:textSize="18sp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <!-- Правая часть: Иконки Share и Like -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal">
+
+                <!-- Share Icon -->
+                <ImageView
+                    android:id="@+id/imageViewShare"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_share"
+                    app:tint="#666666"/>
+
+                <!-- Like Icon -->
+                <ImageView
+                    android:id="@+id/imageViewLike"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_like"
+                    android:layout_marginStart="16dp"
+                    app:tint="#666666"/>
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
 
         <!-- Mileage and Owners -->
         <TextView
@@ -75,17 +129,6 @@
             android:background="#DDDDDD"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp" />
-
-        <!-- Car Specs -->
-        <TextView
-            android:layout_height="12sp"
-            android:layout_width="12sp"
-            android:text="Specifications"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginBottom="8dp" />
-
 
         <TextView android:id="@+id/textViewYear" style="@style/DetailItemStyle" android:text="Year: 2022" />
         <TextView android:id="@+id/textViewCondition" style="@style/DetailItemStyle" android:text="Condition: used" />
@@ -142,4 +185,49 @@
             android:layout_marginBottom="16dp" />
 
     </LinearLayout>
+
 </ScrollView>
+    <!-- Fixed bottom buttons -->
+    <LinearLayout
+        android:id="@+id/fixedButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:padding="12dp"
+        android:orientation="horizontal"
+        >
+
+        <Button
+            android:id="@+id/buttonWrite"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Write"
+            android:textSize="12sp"
+            android:drawableTop="@drawable/ic_message_write"
+            android:gravity="center"
+            android:backgroundTint="@color/primary_red"
+            android:textColor="@android:color/white"
+            android:drawableTint="@color/white"
+            />
+
+        <View
+            android:layout_width="8dp"
+            android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/buttonCall"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Call"
+            android:textSize="12sp"
+            android:drawableTop="@drawable/ic_phone_call"
+            android:gravity="center"
+            android:backgroundTint="@color/primary_red"
+            android:textColor="@android:color/white"
+            android:drawableTint="@color/white"
+            />
+
+    </LinearLayout>
+</FrameLayout>
