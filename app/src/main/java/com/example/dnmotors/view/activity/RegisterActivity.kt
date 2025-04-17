@@ -15,7 +15,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import org.koin.androidx.viewmodel.ext.android.viewModel
-
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
@@ -56,8 +55,9 @@ class RegisterActivity : AppCompatActivity() {
                 }
             } else {
                 Log.w(TAG, "Google Sign-In (for registration) flow cancelled or failed. Result code: ${result.resultCode}")
-                // Optional: Show a message if the user cancelled
-                // if (result.resultCode == RESULT_CANCELED) { showError("Google Registration cancelled.") }
+                if (result.resultCode == RESULT_CANCELED) {
+                    showError("Google Registration cancelled.")
+                }
             }
         }
     }
@@ -81,15 +81,16 @@ class RegisterActivity : AppCompatActivity() {
             Log.d(TAG, "Attempting registration for: $email, Name: $name")
             authViewModel.register(email, password, name)
         }
+
         binding.btnGoogle.setOnClickListener {
             Log.d(TAG, "Google Register button clicked.")
             launchGoogleSignInForRegister()
         }
+
         binding.tvSignIn.setOnClickListener {
             Log.d(TAG, "Navigating back to SignInActivity.")
             finish()
         }
-
     }
 
     private fun launchGoogleSignInForRegister() {
@@ -98,17 +99,23 @@ class RegisterActivity : AppCompatActivity() {
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
-//                .requestProfile() // DEFAULT_SIGN_IN includes profile
                 .build()
             val googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+            // Sign out first before launching
             googleSignInClient.signOut().addOnCompleteListener {
+                Log.d(TAG, "Successfully signed out previous session.")
                 googleRegisterLauncher.launch(googleSignInClient.signInIntent)
+            }.addOnFailureListener { e ->
+                Log.e(TAG, "Sign out failed.", e)
+                showError("Google Sign-Out failed, please try again.")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error setting up or launching Google Sign-In intent for registration.", e)
             showError("Could not start Google Registration. Please try again.")
         }
     }
+
     private fun observeViewModel() {
         authViewModel.authState.observe(this) { result ->
             setLoading(result is AuthResult.Loading)
@@ -135,7 +142,7 @@ class RegisterActivity : AppCompatActivity() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             fragmentToOpen?.let {
                 putExtra("OPEN_FRAGMENT", it)
-                Log.d(TAG,"Adding OPEN_FRAGMENT extra: $it")
+                Log.d(TAG, "Adding OPEN_FRAGMENT extra: $it")
             }
         }
         startActivity(intent)
@@ -144,15 +151,9 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun showError(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        // binding.tvErrorRegister.text = message // Example if you add a TextView
-        // binding.tvErrorRegister.visibility = View.VISIBLE
     }
 
     private fun setLoading(isLoading: Boolean) {
-//        binding.progressBarRegister.visibility = if (isLoading) View.VISIBLE else View.GONE // Ensure you have a ProgressBar with this ID
         binding.bRegister.isEnabled = !isLoading
-        // binding.etEmail.isEnabled = !isLoading // Optional: disable fields
-        // binding.etPassword.isEnabled = !isLoading
-        // binding.etName.isEnabled = !isLoading
     }
 }
