@@ -1,4 +1,3 @@
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -54,7 +53,6 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
-    implementation(project(":domain"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -74,6 +72,12 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
 
     implementation(libs.material.v1110)
+
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+//    ksp ("com.github.bumptech.glide:ksp:4.15.1")
+
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
 
     // koin
     implementation(project.dependencies.platform(libs.koin.bom))
