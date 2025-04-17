@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.gms) //Firebase
+    alias(libs.plugins.parcelize)
 }
 
 android {
@@ -83,5 +84,7 @@ dependencies {
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.android)
+    implementation(project(":domain"))
+    implementation(project(":data"))
 
 }
