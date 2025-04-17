@@ -24,7 +24,7 @@ class ChatFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
-        val generalChat = view.findViewById<CardView>(R.id.generalChat)
+        val generalChat = view.findViewById<CardView>(R.id.chatFragment)
 
         generalChat.setOnClickListener {
             // Переход на другой фрагмент

@@ -65,7 +65,12 @@ dependencies {
 //  google
     implementation(libs.play.services.location)
 
+//    couroutines
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
+    
     implementation(libs.picasso)
 
     //Navigation Component

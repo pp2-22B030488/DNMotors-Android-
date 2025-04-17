@@ -4,8 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.bundle.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentCarDetailsBinding
 import com.example.dnmotors.view.fragments.carFragment.Car
 
@@ -53,7 +56,12 @@ class CarDetailsFragment : Fragment() {
 //        binding.textViewVIN.text = "VIN: ${car.vin}"
 //        binding.textViewExteriorFeatures.text = "Exterior Features: ${car.exteriorFeatures.joinToString()}"
 //        binding.textViewInteriorFeatures.text = "Interior Features: ${car.interiorFeatures.joinToString()}"
-
+// Add this in onViewCreated
+        binding.buttonWrite.setOnClickListener {
+            findNavController().navigate(
+                R.id.messagesFragment,
+            )
+        }
     }
 
     override fun onDestroyView() {

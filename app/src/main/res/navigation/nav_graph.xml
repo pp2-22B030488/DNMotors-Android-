@@ -32,9 +32,13 @@
 
     <fragment
         android:id="@+id/messagesFragment"
-        android:name="com.example.dnmotors.view.fragments.messagesFragment.MessagesFragment"
+        android:name="com.example.dnmotors.view.fragments.messagesFragment.ChatFragment"
         android:label="Chat"
-        tools:layout="@layout/fragment_messages" />
+        tools:layout="@layout/fragment_messages">
+        <argument
+            android:name="dealerId"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/profileFragment"

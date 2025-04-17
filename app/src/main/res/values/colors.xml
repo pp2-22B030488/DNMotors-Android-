@@ -5,4 +5,8 @@
     <color name="primary_red">#8B0000</color>
     <color name="primary_back">#E8F5F3</color>
     <color name="credit_term_button">#E0EDFD</color>
+    <color name="user_message">#2196F3</color>
+    <color name="dealer_message">#FFFFFF</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
 </resources>
