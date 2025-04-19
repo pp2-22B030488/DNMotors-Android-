@@ -21,22 +21,29 @@ class MessagesFragment : Fragment() {
     private lateinit var database: DatabaseReference
     private lateinit var auth: FirebaseAuth
 
+    private lateinit var carId: String
+    private lateinit var carTitle: String
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentMessagesBinding.inflate(inflater, container, false)
 
-        auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance().getReference("messages")
-        adapter = MessagesAdapter()
+        // Get nav args
+        val args = MessagesFragmentArgs.fromBundle(requireArguments())
+        carId = args.carId
 
+        auth = FirebaseAuth.getInstance()
+        val userId = auth.currentUser?.uid ?: ""
+        database = FirebaseDatabase.getInstance().getReference("messages")
+            .child(userId).child(carId)
+
+        adapter = MessagesAdapter()
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter
 
-        binding.sendButton.setOnClickListener {
-            sendMessage()
-        }
+        binding.sendButton.setOnClickListener { sendMessage() }
 
         listenForMessages()
         return binding.root
@@ -64,8 +71,8 @@ class MessagesFragment : Fragment() {
                     val message = s.getValue(Message::class.java)
                     if (message != null) messages.add(message)
                 }
-                adapter.submitList(messages.toList())
-                adapter.notifyDataSetChanged()
+                adapter.submitList(messages)
+                binding.recyclerView.scrollToPosition(messages.size - 1)
             }
 
             override fun onCancelled(error: DatabaseError) {}

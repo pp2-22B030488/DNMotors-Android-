@@ -30,11 +30,6 @@
         android:label="Search"
         tools:layout="@layout/fragment_search" />
 
-    <fragment
-        android:id="@+id/messagesFragment"
-        android:name="com.example.dnmotors.view.fragments.messagesFragment.MessagesFragment"
-        android:label="Chat"
-        tools:layout="@layout/fragment_messages" />
 
     <fragment
         android:id="@+id/profileFragment"
@@ -72,21 +67,34 @@
         android:name="com.example.dnmotors.view.fragments.carFragment.сredit.RequestCreditFragment"
         android:label="RequestCredit"
         tools:layout="@layout/fragment_request_credit" />
-    <fragment
-        android:id="@+id/chatFragment"
-        android:name="com.example.dnmotors.view.fragments.messagesFragment.ChatFragment"
-        android:label="ChatFragment"
-        tools:layout="@layout/fragment_chat" >
-        <action
-            android:id="@+id/action_chatFragment_to_messagesFragment"
-            app:destination="@id/messagesFragment" />
-    </fragment>
+
     <fragment
         android:id="@+id/carDetailsFragment"
         android:name="com.example.dnmotors.view.fragments.carFragment.CarDetailsFragment"
         android:label="CarDetailsFragment"
         tools:layout="@layout/fragment_car_details" >
 
+        <action
+            android:id="@+id/action_carDetailsFragment_to_messagesFragment"
+            app:destination="@id/messagesFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/messagesFragment"
+        android:name="com.example.dnmotors.view.fragments.messagesFragment.MessagesFragment"
+        tools:layout="@layout/fragment_messages">
+        <argument
+            android:name="carId"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.example.dnmotors.view.fragments.messagesFragment.ChatsFragment"
+        android:label="Chats"
+        tools:layout="@layout/fragment_chats">
+
+        <action
+            android:id="@+id/action_chatsFragment_to_messagesFragment"
+            app:destination="@id/messagesFragment" />
     </fragment>
 
 </navigation>

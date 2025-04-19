@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.gms) //Firebase
     alias(libs.plugins.parcelize)
+    id("androidx.navigation.safeargs.kotlin")
+
 }
 
 android {
