@@ -6,8 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.dnmotors.view.fragments.messagesFragment.MessagesAdapter
 import com.example.dnmotors.databinding.FragmentMessagesBinding
+import com.example.dnmotors.view.adapter.MessagesAdapter
+import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
