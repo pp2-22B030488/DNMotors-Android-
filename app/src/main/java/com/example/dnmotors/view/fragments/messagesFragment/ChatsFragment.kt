@@ -36,8 +36,6 @@ class ChatsFragment : Fragment() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val carIds = snapshot.children.map { it.key ?: "" }
 
-                // Optional: fetch titles from Firestore for nicer UI
-                // Or just show carId directly
                 val chatItems = carIds.map { carId -> ChatItem(carId = carId) }
                 setupRecyclerView(chatItems)
             }

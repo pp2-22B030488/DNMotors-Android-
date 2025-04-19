@@ -1,9 +1,11 @@
 package com.example.dnmotors.view.fragments.messagesFragment
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentMessagesBinding
@@ -15,15 +17,19 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 
 class MessagesFragment : Fragment() {
     private lateinit var binding: FragmentMessagesBinding
     private lateinit var adapter: MessagesAdapter
     private lateinit var database: DatabaseReference
     private lateinit var auth: FirebaseAuth
+    private val mediaPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { uploadMedia(it) }
+        }
 
     private lateinit var carId: String
-    private lateinit var carTitle: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,6 +51,9 @@ class MessagesFragment : Fragment() {
         binding.recyclerView.adapter = adapter
 
         binding.sendButton.setOnClickListener { sendMessage() }
+        binding.mediaButton.setOnClickListener {
+            mediaPickerLauncher.launch("*/*") // or use "image/*" if limiting to images
+        }
 
         listenForMessages()
         return binding.root
@@ -79,4 +88,25 @@ class MessagesFragment : Fragment() {
             override fun onCancelled(error: DatabaseError) {}
         })
     }
+
+    private fun uploadMedia(uri: Uri) {
+        val mediaType = requireContext().contentResolver.getType(uri)?.split("/")?.get(0) ?: "unknown"
+        val storageRef = FirebaseStorage.getInstance().reference
+            .child("media/${auth.currentUser?.uid}/${System.currentTimeMillis()}")
+
+        storageRef.putFile(uri)
+            .addOnSuccessListener {
+                storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                    val message = Message(
+                        id = auth.currentUser?.uid,
+                        name = auth.currentUser?.displayName ?: "Unknown",
+                        mediaUrl = downloadUri.toString(),
+                        mediaType = mediaType,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    database.push().setValue(message)
+                }
+            }
+    }
+
 }
