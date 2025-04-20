@@ -1,5 +1,7 @@
 package com.example.dnmotors.view.fragments.carFragment
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -62,6 +64,13 @@ class CarDetailsFragment : Fragment() {
                     )
                 findNavController().navigate(action)
             }
+        }
+        binding.buttonCall.setOnClickListener {
+            val phoneNumber = car.phoneNumber
+            val intent = Intent(Intent.ACTION_DIAL).apply {
+                data = Uri.parse("tel:$phoneNumber")
+            }
+            startActivity(intent)
         }
     }
 

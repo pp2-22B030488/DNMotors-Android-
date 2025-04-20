@@ -26,6 +26,7 @@ data class Car(
 //    val exteriorFeatures: List<String> = emptyList(),
 //    val interiorFeatures: List<String> = emptyList(),
 //    val additionalFeatures: List<String> = emptyList()
+    val phoneNumber: Long = 0L,
     var isLiked: Boolean = false
 
 ) : Parcelable
