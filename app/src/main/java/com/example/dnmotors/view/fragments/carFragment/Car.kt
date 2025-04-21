@@ -17,15 +17,6 @@ data class Car(
     val description: String = "",
     val imageUrl: List<String> = emptyList(),
     val condition: String = "",
-//    val bodyType: String = "",
-//    val engineVolume: String = "",
-//    val horsepower: String = "",
-//    val steeringWheel: String = "",
-//    val color: String = "",
-//    val ownersCount: Int = 0,
-//    val exteriorFeatures: List<String> = emptyList(),
-//    val interiorFeatures: List<String> = emptyList(),
-//    val additionalFeatures: List<String> = emptyList()
     val phoneNumber: Long = 0L,
     var isLiked: Boolean = false
 

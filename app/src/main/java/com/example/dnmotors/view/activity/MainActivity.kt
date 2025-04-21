@@ -3,11 +3,14 @@ package com.example.dnmotors.view.activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
@@ -28,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -47,8 +51,27 @@ class MainActivity : AppCompatActivity() {
         setupFirestorePersistence()
         setupNavigation()
         setupActionBar()
+        handleDeepLink(intent?.data)
     }
+    private fun handleDeepLink(uri: Uri?) {
+        uri?.let {
+            if (it.pathSegments.firstOrNull() == "car") {
+                val vin = it.lastPathSegment
+                vin?.let {
+                    val bundle = Bundle().apply {
+                        putString("vin", vin)
+                    }
 
+                    // ✅ Correct way to get NavController from NavHostFragment
+                    val navHostFragment = supportFragmentManager
+                        .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                    val navController = navHostFragment.navController
+
+                    navController.navigate(R.id.carDetailsFragment, bundle)
+                }
+            }
+        }
+    }
     private fun setupFirestorePersistence() {
         try {
             val firestore = FirebaseFirestore.getInstance()
@@ -62,7 +85,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
-        val navController = findNavController(R.id.nav_host_fragment)
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
         binding.bottomNavigationView.setupWithNavController(navController)
 
         intent.getStringExtra("OPEN_FRAGMENT")?.let { fragmentName ->

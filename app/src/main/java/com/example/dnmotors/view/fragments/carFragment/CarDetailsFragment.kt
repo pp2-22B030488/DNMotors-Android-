@@ -9,8 +9,10 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentCarDetailsBinding
 import com.example.dnmotors.view.fragments.carFragment.Car
+import com.google.firebase.firestore.FirebaseFirestore
 
 class CarDetailsFragment : Fragment() {
 
@@ -30,32 +32,14 @@ class CarDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        car = arguments?.getParcelable("car")!!
 
-        // Загрузка изображения
-        Glide.with(requireContext())
-            .load(car.imageUrl)
-            .placeholder(com.example.dnmotors.R.drawable.tayota_camry_xv80)
-            .into(binding.imageViewCar)
-
-        binding.textViewBrandModel.text = "${car.brand}" + " " + "${car.model}" + " " + "${car.year}"
-//        binding.textViewModel.text = car.model
-        binding.textViewPrice.text = "${car.price} ₸"
-//        binding.textViewYear.text = "Year: ${car.year}"
-//        binding.textViewMileage.text = "Mileage: ${car.mileageKm} km"
-//        binding.textViewTransmission.text = "Transmission: ${car.transmission}"
-//        binding.textViewDriveType.text = "Drive Type: ${car.driveType}"
-//        binding.textViewLocation.text = "Location: ${car.location}"
-        binding.textViewDescription.text = car.description
-//        binding.textViewCondition.text = "Condition: ${car.condition}"
-//        binding.textViewBodyType.text = "Body Type: ${car.bodyType}"
-//        binding.textViewEngineVolume.text = "Engine Volume: ${car.engineVolume}"
-//        binding.textViewHorsepower.text = "Horsepower: ${car.horsepower}"
-//        binding.textViewSteeringWheel.text = "Steering Wheel: ${car.steeringWheel}"
-//        binding.textViewOwnersCount.text = "Owners count: ${car.ownersCount}"
-//        binding.textViewVIN.text = "VIN: ${car.vin}"
-//        binding.textViewExteriorFeatures.text = "Exterior Features: ${car.exteriorFeatures.joinToString()}"
-//        binding.textViewInteriorFeatures.text = "Interior Features: ${car.interiorFeatures.joinToString()}"
+        val vinFromArgs = arguments?.getString("vin")
+        if (vinFromArgs != null) {
+            loadCarByVin(vinFromArgs)
+        } else {
+            car = arguments?.getParcelable("car")!!
+            displayCarInfo(car)
+        }
         binding.buttonWrite.setOnClickListener {
             car?.let {
                 val action = CarDetailsFragmentDirections
@@ -65,6 +49,18 @@ class CarDetailsFragment : Fragment() {
                 findNavController().navigate(action)
             }
         }
+        binding.imageViewShare.setOnClickListener {
+            val deepLinkUrl = "https://dnmotors.com/car/${car.vin}"
+            val shareIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, "Check out this car: $deepLinkUrl")
+                type = "text/plain"
+            }
+            startActivity(Intent.createChooser(shareIntent, "Share via"))
+        }
+
+
+
         binding.buttonCall.setOnClickListener {
             val phoneNumber = car.phoneNumber
             val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -72,6 +68,35 @@ class CarDetailsFragment : Fragment() {
             }
             startActivity(intent)
         }
+    }
+
+    private fun loadCarByVin(vin: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("cars")
+            .whereEqualTo("vin", vin)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val doc = documents.first()
+                    car = doc.toObject(Car::class.java)
+                    displayCarInfo(car)
+                } else {
+                    // Handle car not found
+                }
+            }
+            .addOnFailureListener {
+                // Handle error
+            }
+    }
+    private fun displayCarInfo(car: Car) {
+        Glide.with(requireContext())
+            .load(car.imageUrl.firstOrNull())
+            .placeholder(R.drawable.tayota_camry_xv80)
+            .into(binding.imageViewCar)
+
+        binding.textViewBrandModel.text = "${car.brand} ${car.model} ${car.year}"
+        binding.textViewPrice.text = "${car.price} ₸"
+        binding.textViewDescription.text = car.description
     }
 
     override fun onDestroyView() {
