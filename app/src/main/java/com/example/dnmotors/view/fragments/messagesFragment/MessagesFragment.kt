@@ -62,8 +62,6 @@ class MessagesFragment : Fragment() {
         }
     }
 
-
-
     private val videoCaptureLauncher =
         registerForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
             if (success && ::videoUri.isInitialized) {
@@ -461,7 +459,7 @@ class MessagesFragment : Fragment() {
         })
     }
 
-    fun fileToBase64(path: String?): String {
+    private fun fileToBase64(path: String?): String {
         if (path == null) {
             Log.e("MessagesFragment", "fileToBase64: Input path is null")
             return ""
@@ -472,7 +470,7 @@ class MessagesFragment : Fragment() {
             return ""
         }
         val fileSizeInMB = file.length() / (1024.0 * 1024.0)
-        val maxSizeMB = 100
+        val maxSizeMB = 1000
         if (fileSizeInMB > maxSizeMB) {
             Log.e("MessagesFragment", "File size (${fileSizeInMB}MB) exceeds limit (${maxSizeMB}MB) for Base64 encoding.")
             Toast.makeText(context, "Selected file is too large (Max ${maxSizeMB}MB)", Toast.LENGTH_SHORT).show()

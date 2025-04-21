@@ -18,12 +18,12 @@ import com.example.dnmotors.databinding.UserListBinding
 import com.example.dnmotors.utils.MediaUtils
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemComparator()) {
-
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
     companion object {
@@ -105,14 +105,14 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                         return@with
                     }
 
-                    val lifecycleOwner = itemView.findViewTreeLifecycleOwner()
-                    if (lifecycleOwner == null) {
-                        Log.e("MessagesAdapter", "Cannot find LifecycleOwner for image loading. ID: ${message.id}")
-                        ivMediaPreview.setImageResource(R.drawable.ic_settings)
-                        return@with
-                    }
+//                    val lifecycleOwner = itemView.findViewTreeLifecycleOwner()
+//                    if (lifecycleOwner == null) {
+//                        Log.e("MessagesAdapter", "Cannot find LifecycleOwner for image loading. ID: ${message.id}")
+//                        ivMediaPreview.setImageResource(R.drawable.ic_settings)
+//                        return@with
+//                    }
 
-                    imageLoadingJob = lifecycleOwner.lifecycleScope.launch {
+                    imageLoadingJob = CoroutineScope(Dispatchers.Main).launch {
                         Log.d("MessagesAdapter", "Starting background decode for image ID: ${message.id}")
                         val bitmap = decodeBase64ToBitmapAsync(currentBase64)
 
@@ -124,6 +124,7 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                             ivMediaPreview.setImageResource(R.drawable.ic_settings)
                         }
                     }
+
                 }
                 else -> {
                     tvMessage.visibility = View.VISIBLE
@@ -137,7 +138,7 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
         private suspend fun decodeBase64ToBitmapAsync(base64String: String): Bitmap? {
             return withContext(Dispatchers.IO) {
                 try {
-                    val imageBytes = Base64.decode(base64String, Base64.NO_WRAP)
+                    val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
                     BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 } catch (e: IllegalArgumentException) {
                     Log.e("MessagesAdapter", "Invalid Base64 string for image decoding", e)
