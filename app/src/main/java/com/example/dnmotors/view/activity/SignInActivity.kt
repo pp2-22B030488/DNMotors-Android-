@@ -12,6 +12,7 @@ import com.example.dnmotors.R
 import com.example.dnmotors.viewmodel.AuthResult
 import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.databinding.ActivitySignInBinding
+import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -138,11 +139,22 @@ class SignInActivity : AppCompatActivity() {
     }
 
     private fun navigateToMain() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
+        authViewModel.fetchUserRole { role ->
+            val cleanRole = role.trim().lowercase()
+            Log.d(TAG, "Fetched user role: '$cleanRole'")
+
+            if (cleanRole == "dealer") {
+                startActivity(Intent(this, DealerActivity::class.java))
+            } else {
+                startActivity(Intent(this, MainActivity::class.java))
+                Log.d("SignInActivity", "Fetched user role:xxxxxxxxxxxxxxx '$role'")
+            }
+            finish()
+        }
+
     }
+
+
 
     private fun showError(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()

@@ -40,6 +40,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".view.activity.MainActivity" />
+        <activity android:name=".viewdealer.activity.DealerActivity" />
+
         <activity android:name=".view.activity.MainActivity"
             android:exported="true">
             <intent-filter android:label="Deep Link">
