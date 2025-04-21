@@ -1,9 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.gms) //Firebase
+    alias(libs.plugins.gms)
     alias(libs.plugins.parcelize)
     id("androidx.navigation.safeargs.kotlin")
+    alias(libs.plugins.compose.compiler)
 
 }
 
@@ -39,6 +40,11 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        compose = true      // <-- ВАЖНО для Compose
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.10" // для Kotlin 2.1.0 бери 1.5.10
+
     }
 }
 
@@ -47,7 +53,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
@@ -56,6 +61,8 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
+    implementation(libs.androidx.material3.android)
+    implementation(libs.generativeai)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -68,8 +75,8 @@ dependencies {
     implementation(libs.play.services.location)
 
 //    couroutines
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
     
@@ -79,11 +86,8 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
-    implementation(libs.material.v1110)
 
-    implementation("com.github.bumptech.glide:glide:4.15.1")
-//    ksp ("com.github.bumptech.glide:ksp:4.15.1")
-
+    implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.google.firebase:firebase-analytics-ktx")
 
 
@@ -93,5 +97,15 @@ dependencies {
     implementation(libs.koin.android)
     implementation(project(":domain"))
     implementation(project(":data"))
+
+    // compose
+    implementation(platform("androidx.compose:compose-bom:2025.04.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation(libs.androidx.activity.compose)
+    implementation("androidx.navigation:navigation-compose:2.8.9")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+
 
 }

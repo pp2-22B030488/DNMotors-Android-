@@ -4,7 +4,9 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Car(
+    val id: String = "",
     val vin: String = "",
+    val dealerId: String? = null,
     val brand: String = "",
     val model: String = "",
     val year: Int = 0,

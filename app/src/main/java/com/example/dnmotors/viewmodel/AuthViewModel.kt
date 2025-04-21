@@ -10,7 +10,10 @@ import com.example.domain.usecase.RegisterWithEmailUseCase
 import com.example.domain.usecase.RegisterWithGoogleUseCase
 import com.example.domain.usecase.SignInWithEmailUseCase
 import com.example.domain.usecase.SignInWithGoogleUseCase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class AuthViewModel(
     private val signInWithEmailUseCase: SignInWithEmailUseCase,
@@ -20,6 +23,7 @@ class AuthViewModel(
     private val checkUserSignedInUseCase: CheckUserSignedInUseCase
 ) : ViewModel() {
 
+    private val firestore = FirebaseFirestore.getInstance()
     private val _authState = MutableLiveData<AuthResult>()
     val authState: LiveData<AuthResult> = _authState
 
@@ -88,6 +92,23 @@ class AuthViewModel(
         Log.d(TAG, "Checked if user signed in via UseCase: $signedIn")
         return signedIn
     }
+    fun fetchUserRole(callback: (String) -> Unit) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            firestore.collection("users")
+                .document(uid) // <- Вот тут вместо email
+                .get()
+                .addOnSuccessListener { document ->
+                    val role = document.getString("role")
+                    callback(role ?: "user")
+                }
+                .addOnFailureListener {
+                    callback("user")
+                }
+        }
+
+    }
+
 }
 
 sealed class AuthResult {

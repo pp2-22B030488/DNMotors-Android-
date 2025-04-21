@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.data"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -39,9 +39,10 @@ dependencies {
     implementation(libs.material)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.auth)
-    implementation(libs.google.firebase.firestore.ktx)
     implementation(project(":domain"))
     implementation(libs.firebase.database.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
