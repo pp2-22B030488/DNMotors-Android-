@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,6 +11,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
         android:text="Car Comparison"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -20,6 +22,7 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardCar1"
         android:layout_width="0dp"
+        android:background="@color/white"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
@@ -29,6 +32,7 @@
         app:cardCornerRadius="8dp">
 
         <LinearLayout
+            android:background="@color/white"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -45,6 +49,7 @@
                 android:id="@+id/tvCar1Name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="@color/black"
                 android:layout_marginTop="8dp"
                 android:text="Select Car 1"
                 android:textSize="18sp"
@@ -52,8 +57,10 @@
 
             <Button
                 android:id="@+id/btnSelectCar1"
+                android:backgroundTint="@color/primary_red"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="@color/white"
                 android:layout_marginTop="8dp"
                 android:text="Select Car" />
 
@@ -72,6 +79,7 @@
         android:id="@+id/cardCar2"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toEndOf="@id/guideline"
@@ -80,6 +88,7 @@
         app:cardCornerRadius="8dp">
 
         <LinearLayout
+            android:background="@color/white"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -94,6 +103,7 @@
 
             <TextView
                 android:id="@+id/tvCar2Name"
+                android:textColor="@color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -103,8 +113,10 @@
 
             <Button
                 android:id="@+id/btnSelectCar2"
+                android:backgroundTint="@color/primary_red"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="@color/white"
                 android:layout_marginTop="8dp"
                 android:text="Select Car" />
 

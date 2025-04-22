@@ -123,12 +123,14 @@
 
                     <ImageButton
                         android:id="@+id/analysisButton"
+                        android:backgroundTint="@color/primary_back"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_analysis"/>
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/black"
                         android:text="Analysis"/>
                 </LinearLayout>
 
@@ -141,12 +143,14 @@
 
                     <ImageButton
                         android:id="@+id/btnCredit"
+                        android:backgroundTint="@color/primary_back"
                         android:layout_width="44dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_credit"/>
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/black"
                         android:text="Credit"/>
                 </LinearLayout>
 
@@ -161,10 +165,12 @@
                     <ImageButton
                         android:layout_width="40dp"
                         android:layout_height="40dp"
+                        android:backgroundTint="@color/primary_back"
                         android:src="@drawable/ic_guide"/>
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/black"
                         android:text="Guide"/>
                 </LinearLayout>
 

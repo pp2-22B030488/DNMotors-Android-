@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     app:cardElevation="2dp"
+    android:backgroundTint="@color/white"
     app:cardCornerRadius="8dp">
 
     <LinearLayout
@@ -15,6 +16,7 @@
 
         <TextView
             android:id="@+id/tvParameterName"
+            android:textColor="@color/black"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAlignment="center"
@@ -32,6 +34,8 @@
                 android:id="@+id/tvCar1Value"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:textColor="@color/primary_red"
+                android:textStyle="bold"
                 android:layout_weight="1"
                 android:text="Car 1 Value"
                 android:textSize="14sp" />
@@ -41,6 +45,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textStyle="bold"
+                android:textColor="@color/primary_red"
                 android:gravity="end"
                 android:text="Car 2 Value"
                 android:textSize="14sp" />

@@ -18,6 +18,7 @@ data class Car(
     val fuelType: String = "",
     val location: String = "",
     val description: String = "",
+    val previewUrl: String = "",
     val imageUrl: List<String> = emptyList(),
     val condition: String = "",
     val phoneNumber: Long = 0L,

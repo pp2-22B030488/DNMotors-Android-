@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.example.dnmotors.databinding.FragmentCarComparisonBinding
 import com.example.dnmotors.view.fragments.carFragment.Car
 import com.google.firebase.firestore.FirebaseFirestore
@@ -47,6 +48,9 @@ class CarComparisonFragment : Fragment() {
             CarSelectionBottomSheet { selectedCar ->
                 car1 = selectedCar
                 binding.tvCar1Name.text = selectedCar.model
+                Glide.with(binding.ivCar1.context)
+                    .load(selectedCar.previewUrl)
+                    .into(binding.ivCar1)
                 updateComparison()
             }.show(childFragmentManager, "Car1Selector")
         }
@@ -55,6 +59,9 @@ class CarComparisonFragment : Fragment() {
             CarSelectionBottomSheet { selectedCar ->
                 car2 = selectedCar
                 binding.tvCar2Name.text = selectedCar.model
+                Glide.with(binding.ivCar2.context)
+                    .load(selectedCar.previewUrl)
+                    .into(binding.ivCar2)
                 updateComparison()
             }.show(childFragmentManager, "Car2Selector")
         }
