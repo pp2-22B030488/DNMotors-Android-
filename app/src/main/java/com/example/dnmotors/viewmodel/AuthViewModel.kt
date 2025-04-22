@@ -108,6 +108,22 @@ class AuthViewModel(
         }
 
     }
+    fun fetchDealerCompany(callback: (String) -> Unit) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            firestore.collection("users")
+                .document(uid) // <- Вот тут вместо email
+                .get()
+                .addOnSuccessListener { document ->
+                    val company = document.getString("company")
+                    callback(company ?: "null")
+                }
+                .addOnFailureListener {
+                    callback("null")
+                }
+        }
+
+    }
 
 }
 

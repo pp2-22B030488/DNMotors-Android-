@@ -10,6 +10,7 @@ data class Car(
     val brand: String = "",
     val model: String = "",
     val year: Int = 0,
+    val generation: String = "",
     val price: Int = 0,
     val mileageKm: Int = 0,
     val transmission: String = "",

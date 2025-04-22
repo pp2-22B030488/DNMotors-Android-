@@ -10,18 +10,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.dnmotors.viewdealer.compose.DealerApp
 import com.example.dnmotors.viewdealer.compose.screen.DealerCarsScreen
+import com.example.dnmotors.viewmodel.AuthViewModel
 
 class DealerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val navController = rememberNavController()
-            DealerCarsScreen(navController)
+            DealerApp() // важно!
+
         }
     }
 }
+
 
 @Composable
 fun DealerScreen() {

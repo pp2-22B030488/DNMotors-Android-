@@ -6,11 +6,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.dnmotors.viewdealer.compose.screen.*
+import com.example.dnmotors.viewmodel.AuthViewModel
 
 @Composable
 fun DealerNavGraph(navController: NavHostController, padding: PaddingValues) {
     NavHost(navController, startDestination = DealerNavItem.Cars.route) {
-        composable(DealerNavItem.Cars.route) { DealerCarsScreen(navController) }
+        composable(DealerNavItem.Cars.route) { DealerCarsScreen(navController, padding) }
         composable("dealer_car_details/{carId}") { backStackEntry ->
             val carId = backStackEntry.arguments?.getString("carId")
             carId?.let {
