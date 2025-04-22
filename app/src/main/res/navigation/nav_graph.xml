@@ -16,6 +16,9 @@
         <action
             android:id="@+id/action_carFragment_to_carDetailsFragment"
             app:destination="@id/carDetailsFragment" />
+        <action
+            android:id="@+id/action_carFragment_to_carComparisionFragment"
+            app:destination="@+id/carComparisonFragment"/>
     </fragment>
 
     <fragment
@@ -96,5 +99,11 @@
             android:id="@+id/action_chatsFragment_to_messagesFragment"
             app:destination="@id/messagesFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/carComparisonFragment"
+        android:name="com.example.dnmotors.view.fragments.comparisionFragment.CarComparisonFragment"
+        android:label="Car Comparison"
+        tools:layout="@layout/fragment_car_comparison" />
 
 </navigation>

@@ -49,6 +49,9 @@ class CarFragment : Fragment() {
         btnCredit.setOnClickListener {
             findNavController().navigate(R.id.action_carFragment_to_carCreditFragment)
         }
+        binding.analysisButton.setOnClickListener {
+            findNavController().navigate(R.id.action_carFragment_to_carComparisionFragment)
+        }
     }
 
     private fun fetchCarsFromFirestore() {
