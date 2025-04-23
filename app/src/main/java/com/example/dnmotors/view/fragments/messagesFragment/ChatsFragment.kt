@@ -30,17 +30,25 @@ class ChatsFragment : Fragment() {
         auth = FirebaseAuth.getInstance()
 
         val userId = auth.currentUser?.uid ?: return binding.root
-        database = FirebaseDatabase.getInstance().getReference("messages").child(userId)
+        database = FirebaseDatabase.getInstance().getReference("messages")
 
         database.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val carIds = snapshot.children.map { it.key ?: "" }
+                val chatItems = mutableListOf<ChatItem>()
 
-                val chatItems = carIds.map { carId -> ChatItem(carId = carId) }
+                for (vinSnapshot in snapshot.children) {
+                    val vin = vinSnapshot.key ?: continue
+                    if (vinSnapshot.hasChild(userId)) {
+                        chatItems.add(ChatItem(vin = vin, userId = userId))
+                    }
+                }
+
                 setupRecyclerView(chatItems)
             }
 
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                println("Error loading chats: ${error.message}")
+            }
         })
 
         return binding.root
@@ -56,7 +64,11 @@ class ChatsFragment : Fragment() {
         binding.chatsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
     }
 
-    data class ChatItem(val carId: String)
+    data class ChatItem(
+        val vin: String,
+        val userId: String
+
+    )
 
     class ChatListAdapter(
         private val items: List<ChatItem>,
@@ -64,8 +76,8 @@ class ChatsFragment : Fragment() {
     ) : RecyclerView.Adapter<ChatListAdapter.ViewHolder>() {
         inner class ViewHolder(val binding: ChatItemBinding) : RecyclerView.ViewHolder(binding.root) {
             fun bind(item: ChatItem) {
-                binding.chatTitle.text = "Chat for ${item.carId}"
-                binding.root.setOnClickListener { onClick(item.carId) }
+                binding.chatTitle.text = "Chat for ${item.vin}"
+                binding.root.setOnClickListener { onClick(item.vin) }
             }
         }
 
@@ -80,4 +92,6 @@ class ChatsFragment : Fragment() {
 
         override fun getItemCount() = items.size
     }
+
+
 }

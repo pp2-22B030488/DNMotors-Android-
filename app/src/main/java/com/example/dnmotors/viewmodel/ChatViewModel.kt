@@ -1,154 +1,145 @@
-//import android.util.Log
-//import androidx.lifecycle.*
-//import com.example.domain.model.Chat
-//import com.example.domain.model.Message
-//import com.example.domain.usecase.ChatUseCase
-//import com.google.firebase.auth.FirebaseAuth
-//import kotlinx.coroutines.launch
-//import javax.inject.Inject // Assuming Hilt or Dagger for injection
-//
-//// import your Chat, Message, ChatUseCase models/interfaces
-//
-//// Annotate with @HiltViewModel if using Hilt
-//class ChatViewModel @Inject constructor( // Use @Inject if using Hilt/Dagger
-//    private val chatUseCase: ChatUseCase // Inject the UseCase (backed by ChatRepositoryImpl)
-//) : ViewModel() {
-//
-//    // Make currentUserId observable or easily accessible if needed elsewhere
-//    val currentUserId: String = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-//
-//    private val _chatList = MutableLiveData<List<Chat>>()
-//    val chatList: LiveData<List<Chat>> = _chatList
-//
-//    private val _messageList = MutableLiveData<List<Message>>()
-//    val messageList: LiveData<List<Message>> = _messageList
-//
-//    // Consider adding state for loading/errors
-//    private val _isLoadingChats = MutableLiveData<Boolean>()
-//    val isLoadingChats: LiveData<Boolean> = _isLoadingChats
-//
-//    private val _isLoadingMessages = MutableLiveData<Boolean>()
-//    val isLoadingMessages: LiveData<Boolean> = _isLoadingMessages
-//
-//    private val _error = MutableLiveData<String?>()
-//    val error: LiveData<String?> = _error
-//
-//
-//    // Listener registration for messages, needs to be cleared
-//    private var messageListenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
-//
-//
-//    fun listenToMessages(chatId: String) {
-//        if (chatId.isEmpty()) {
-//            _error.postValue("Cannot load messages: Chat ID is missing.")
-//            return
-//        }
-//        if (currentUserId.isEmpty()){
-//            _error.postValue("Cannot load messages: User not logged in.")
-//            return
-//        }
-//        // Remove previous listener if any
-//        messageListenerRegistration?.remove()
-//        _isLoadingMessages.postValue(true)
-//
-//        // Call the use case method which now internally uses addSnapshotListener
-//        // The use case itself doesn't return the registration, so we rely on the callback.
-//        // For more robust lifecycle mgmt, the use case could return ListenerRegistration
-//        chatUseCase.listenToMessages(chatId) { messages ->
-//            _messageList.postValue(messages)
-//            _isLoadingMessages.postValue(false)
-//        }
-//        // How to clean up? The repository listener lives on.
-//        // A better pattern: have the use case/repo return a Flow<List<Message>>
-//        // which can be collected in viewModelScope and automatically cancelled.
-//        // Or, modify listenToMessages to return the ListenerRegistration.
-//    }
-//
-//    // Example modification to return ListenerRegistration (requires changing UseCase/Repo)
-//    /*
-//    fun listenToMessagesWithCleanup(chatId: String) {
-//        messageListenerRegistration?.remove() // Clean up old one
-//        _isLoadingMessages.postValue(true)
-//        // Assume chatUseCase.listenToMessages now returns ListenerRegistration
-//        messageListenerRegistration = chatUseCase.listenToMessages(chatId) { messages ->
-//            _messageList.postValue(messages)
-//            _isLoadingMessages.postValue(false)
-//        }
-//    }
-//
-//    override fun onCleared() {
-//        super.onCleared()
-//        messageListenerRegistration?.remove() // Clean up listener when ViewModel is destroyed
-//    }
-//    */
-//
-//
-//    fun sendMessage(chatId: String, text: String) {
-//        if (currentUserId.isEmpty()){
-//            _error.postValue("Cannot send message: User not logged in.")
-//            return
-//        }
-//        if (chatId.isEmpty()){
-//            _error.postValue("Cannot send message: Chat ID is missing.")
-//            return
-//        }
-//        val trimmedText = text.trim()
-//        if (trimmedText.isEmpty()) {
-//            return // Don't send empty messages
-//        }
-//
-//        val message = Message(
-//            senderId = currentUserId, // Use the actual logged-in user's ID
-//            text = trimmedText,
-//            timestamp = System.currentTimeMillis()
-//        )
-//
-//        viewModelScope.launch {
-//            try {
-//                chatUseCase.sendMessage(chatId, message)
-//                // Optionally clear error state on success
-//                _error.postValue(null)
-//            } catch (e: Exception) {
-//                Log.e("ChatViewModel", "Error sending message for chatId $chatId", e)
-//                _error.postValue("Failed to send message. Please try again.")
-//            }
-//        }
-//    }
-//
-//    fun loadChats() {
-//        if (currentUserId.isEmpty()){
-//            _error.postValue("Cannot load chats: User not logged in.")
-//            _chatList.postValue(emptyList()) // Clear list if user logs out
-//            return
-//        }
-//        _isLoadingChats.postValue(true)
-//        _error.postValue(null) // Clear previous errors
-//        viewModelScope.launch {
-//            try {
-//                val chats = chatUseCase.getUserChats(currentUserId)
-//                _chatList.postValue(chats)
-//            } catch (e: Exception) {
-//                Log.e("ChatViewModel", "Error loading chats for user $currentUserId", e)
-//                _error.postValue("Failed to load chats.")
-//                _chatList.postValue(emptyList()) // Set empty list on error
-//            } finally {
-//                _isLoadingChats.postValue(false)
-//            }
-//        }
-//    }
-//
-//    // Call this when the user logs out to clear data
-//    fun clearChatData() {
-//        _chatList.postValue(emptyList())
-//        _messageList.postValue(emptyList())
-//        messageListenerRegistration?.remove()
-//        messageListenerRegistration = null
-//    }
-//
-//    // Call this in Fragment's onDestroyView or ViewModel's onCleared if needed
-//    fun stopListeningToMessages() {
-//        messageListenerRegistration?.remove()
-//        messageListenerRegistration = null
-//        _messageList.postValue(emptyList()) // Clear messages when not listening
-//    }
-//}
+package com.example.dnmotors.viewmodel
+
+import android.util.Base64
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.dnmotors.view.fragments.messagesFragment.ChatsFragment
+import com.example.dnmotors.viewdealer.repository.CarRepository
+import com.example.domain.model.Message
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.launch
+
+class ChatViewModel : ViewModel() {
+    private val _chatItems = MutableLiveData<List<ChatsFragment.ChatItem>>()
+    val chatItems: LiveData<List<ChatsFragment.ChatItem>> = _chatItems
+
+    private val _messages = MutableLiveData<List<Message>>()
+    val messages: LiveData<List<Message>> = _messages
+
+    private val baseRef: DatabaseReference = FirebaseDatabase.getInstance().getReference("messages")
+
+    private var messagesListener: ValueEventListener? = null
+    private var messagesListenerRef: DatabaseReference? = null
+
+
+    fun loadChatListForDealer() {
+        val dealerId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        viewModelScope.launch {
+            val cars = CarRepository().getCarsForDealer(dealerId)
+            val vins = cars.mapNotNull { it.vin }
+
+            val chatItems = mutableListOf<ChatsFragment.ChatItem>()
+            val messagesRef = FirebaseDatabase.getInstance().getReference("messages")
+            val remaining = vins.toMutableSet()
+
+            vins.forEach { vin ->
+                messagesRef.child(vin).addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        snapshot.children.forEach { userSnapshot ->
+                            val userId = userSnapshot.key ?: return@forEach
+                            chatItems.add(ChatsFragment.ChatItem(vin = vin, userId = userId))
+                        }
+
+                        remaining.remove(vin)
+                        if (remaining.isEmpty()) {
+                            _chatItems.value = chatItems
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        println("Error reading messages for VIN $vin: ${error.message}")
+                        remaining.remove(vin)
+                        if (remaining.isEmpty()) {
+                            _chatItems.value = chatItems
+                        }
+                    }
+                })
+            }
+
+            if (vins.isEmpty()) {
+                _chatItems.value = emptyList()
+            }
+        }
+    }
+
+    fun loadMessages(carId: String, userId: String) {
+        removeMessagesListener()
+
+        val messagesRef = baseRef.child(carId).child(userId)
+        messagesListenerRef = messagesRef
+
+        messagesListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val messageList = snapshot.children.mapNotNull { data ->
+                    val msg = data.getValue(Message::class.java)
+                    msg?.copy(
+                        message = try {
+                            val decodedBytes = Base64.decode(msg.message, Base64.DEFAULT)
+                            String(decodedBytes, Charsets.UTF_8)
+                        } catch (e: Exception) {
+                            "[Error decoding]"
+                        }
+                    )
+                }.sortedBy { it.timestamp }
+
+                _messages.value = messageList
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                println("Error loading messages: ${error.message}")
+                _messages.value = emptyList()
+            }
+        }
+
+        messagesRef.addValueEventListener(messagesListener!!)
+    }
+
+    fun sendMessage(
+        carId: String,
+        userId: String,
+        messageText: String,
+        dealerId: String,
+        dealerName: String
+    ) {
+        if (messageText.isBlank()) return
+
+        val messagesRef = baseRef.child(carId).child(userId)
+        val messageId = messagesRef.push().key ?: System.currentTimeMillis().toString()
+
+        // ✅ Encode message to Base64
+        val encodedMessage = Base64.encodeToString(messageText.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
+
+        val message = Message(
+            id = messageId,
+            senderId = dealerId,
+            name = dealerName,
+            message = encodedMessage,
+            messageType = "text",
+            timestamp = System.currentTimeMillis()
+        )
+
+        messagesRef.child(messageId).setValue(message)
+    }
+
+
+    private fun removeMessagesListener() {
+        messagesListener?.let { listener ->
+            messagesListenerRef?.removeEventListener(listener)
+        }
+        messagesListener = null
+        messagesListenerRef = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        removeMessagesListener()
+    }
+}

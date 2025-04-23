@@ -123,7 +123,7 @@ class MessagesFragment : Fragment() {
             return binding.root
         }
         database = FirebaseDatabase.getInstance().getReference("messages")
-            .child(userId).child(carId)
+            .child(carId).child(userId)
 
         adapter = MessagesAdapter()
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext()).apply {
