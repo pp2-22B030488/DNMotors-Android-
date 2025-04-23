@@ -35,9 +35,21 @@ class CarRepository {
     suspend fun deleteCar(carId: String): Boolean {
         return try {
             FirebaseFirestore.getInstance()
-                .collection("cars")
+                .collection("Cars")
                 .document(carId)
                 .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    suspend fun addCar(car: com.example.dnmotors.view.fragments.carFragment.Car
+    ): Boolean {
+        return try {
+            db.collection("Cars")
+                .document(car.id)
+                .set(car)
                 .await()
             true
         } catch (e: Exception) {

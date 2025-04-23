@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.material3.android)
     implementation(libs.generativeai)
+    implementation(libs.androidx.ui.tooling.preview.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

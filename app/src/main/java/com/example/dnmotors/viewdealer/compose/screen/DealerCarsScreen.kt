@@ -25,6 +25,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.dnmotors.view.fragments.carFragment.Car
 import com.example.dnmotors.view.fragments.profileFragment.User
 import com.example.dnmotors.viewdealer.repository.CarRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,14 +39,17 @@ fun DealerCarsScreen(navController: NavHostController, paddingValues: PaddingVal
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        val repo = CarRepository()
-        val dealerCars = repo.getCarsForDealer("dealer001")
-        cars.clear()
-        cars.addAll(dealerCars)
+        val dealerId = FirebaseAuth.getInstance().currentUser?.uid
+        if (dealerId != null) {
+            val repo = CarRepository()
+            val dealerCars = repo.getCarsForDealer(dealerId)
+            cars.clear()
+            cars.addAll(dealerCars)
 
-        val dealerInfo = repo.getDealerInfo("dealer001")
-        dealerInfo?.let {
-            user.value = it
+            val dealerInfo = repo.getDealerInfo(dealerId)
+            dealerInfo?.let {
+                user.value = it
+            }
         }
     }
 
