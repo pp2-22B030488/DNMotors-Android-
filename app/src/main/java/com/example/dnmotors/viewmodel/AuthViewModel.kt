@@ -5,131 +5,137 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.domain.usecase.CheckUserSignedInUseCase
-import com.example.domain.usecase.RegisterWithEmailUseCase
-import com.example.domain.usecase.RegisterWithGoogleUseCase
-import com.example.domain.usecase.SignInWithEmailUseCase
-import com.example.domain.usecase.SignInWithGoogleUseCase
+import com.example.dnmotors.R
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class AuthViewModel(
-    private val signInWithEmailUseCase: SignInWithEmailUseCase,
-    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
-    private val registerWithEmailUseCase: RegisterWithEmailUseCase,
-    private val registerWithGoogleUseCase: RegisterWithGoogleUseCase,
-    private val checkUserSignedInUseCase: CheckUserSignedInUseCase
-) : ViewModel() {
+class AuthViewModel : ViewModel() {
+    private val auth: FirebaseAuth = Firebase.auth
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val TAG = "AuthViewModel"
 
-    private val firestore = FirebaseFirestore.getInstance()
     private val _authState = MutableLiveData<AuthResult>()
     val authState: LiveData<AuthResult> = _authState
 
-    private val TAG = "AuthViewModel"
+    fun isUserSignedIn(): Boolean {
+        return auth.currentUser != null
+    }
 
     fun signIn(email: String, password: String) {
-        _authState.value = AuthResult.Loading
         viewModelScope.launch {
-            Log.d(TAG, "Executing SignInWithEmailUseCase for $email")
-            val result = signInWithEmailUseCase(email, password)
-            result.onSuccess {
-                Log.i(TAG, "Sign in success for $email")
+            try {
+                _authState.value = AuthResult.Loading
+                val result = auth.signInWithEmailAndPassword(email, password).await()
                 _authState.value = AuthResult.Success
-            }.onFailure { error ->
-                Log.e(TAG, "Sign in failure for $email: ${error.message}", error)
-                _authState.value = AuthResult.Error(error.message ?: "Sign-in failed")
+                Log.d(TAG, "Sign in successful for user: ${result.user?.uid}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Sign in failed", e)
+                _authState.value = AuthResult.Error(e.message ?: "Sign in failed")
             }
         }
     }
 
     fun signInWithGoogle(idToken: String) {
-        _authState.value = AuthResult.Loading
         viewModelScope.launch {
-            Log.d(TAG, "Executing SignInWithGoogleUseCase")
-            val result = signInWithGoogleUseCase(idToken)
-            result.onSuccess {
-                Log.i(TAG, "Google Sign in success")
+            try {
+                _authState.value = AuthResult.Loading
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val result = auth.signInWithCredential(credential).await()
                 _authState.value = AuthResult.Success
-            }.onFailure { error ->
-                Log.e(TAG, "Google Sign in failure: ${error.message}", error)
-                _authState.value = AuthResult.Error(error.message ?: "Google Sign-in failed")
+                Log.d(TAG, "Google sign in successful for user: ${result.user?.uid}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Google sign in failed", e)
+                _authState.value = AuthResult.Error(e.message ?: "Google sign in failed")
             }
         }
     }
 
     fun register(email: String, password: String, name: String) {
-        _authState.value = AuthResult.Loading
         viewModelScope.launch {
-            Log.d(TAG, "Executing RegisterWithEmailUseCase for $email, Name: $name")
-            val result = registerWithEmailUseCase(email, password, name)
-            result.onSuccess {
-                Log.i(TAG, "Registration success for $email")
+            try {
+                _authState.value = AuthResult.Loading
+                val result = auth.createUserWithEmailAndPassword(email, password).await()
+                
+                // Update user profile
+                result.user?.updateProfile(
+                    com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .build()
+                )?.await()
+
+                // Create user document in Firestore
+                result.user?.let { user ->
+                    val userData = hashMapOf(
+                        "name" to name,
+                        "email" to email,
+                        "role" to "user"
+                    )
+                    firestore.collection("users").document(user.uid).set(userData).await()
+                }
+
                 _authState.value = AuthResult.Success
-            }.onFailure { error ->
-                Log.e(TAG, "Registration failure for $email: ${error.message}", error)
-                _authState.value = AuthResult.Error(error.message ?: "Registration failed")
+                Log.d(TAG, "Registration successful for user: ${result.user?.uid}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Registration failed", e)
+                _authState.value = AuthResult.Error(e.message ?: "Registration failed")
             }
         }
     }
+
     fun registerWithGoogle(idToken: String) {
-        _authState.value = AuthResult.Loading
         viewModelScope.launch {
-            Log.d(TAG, "Executing RegisterWithGoogleUseCase")
-            val result = registerWithGoogleUseCase(idToken)
-            result.onSuccess {
-                Log.i(TAG, "Google Registration/Sign-in success")
+            try {
+                _authState.value = AuthResult.Loading
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val result = auth.signInWithCredential(credential).await()
+                
+                // Create user document in Firestore if it doesn't exist
+                result.user?.let { user ->
+                    val userDoc = firestore.collection("users").document(user.uid).get().await()
+                    if (!userDoc.exists()) {
+                        val userData = hashMapOf(
+                            "name" to user.displayName,
+                            "email" to user.email,
+                            "role" to "user"
+                        )
+                        firestore.collection("users").document(user.uid).set(userData).await()
+                    }
+                }
+
                 _authState.value = AuthResult.Success
-            }.onFailure { error ->
-                Log.e(TAG, "Google Registration/Sign-in failure: ${error.message}", error)
-                _authState.value = AuthResult.Error(error.message ?: "Google Registration/Sign-in failed")
+                Log.d(TAG, "Google registration successful for user: ${result.user?.uid}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Google registration failed", e)
+                _authState.value = AuthResult.Error(e.message ?: "Google registration failed")
             }
         }
     }
-    fun isUserSignedIn(): Boolean {
-        val signedIn = checkUserSignedInUseCase()
-        Log.d(TAG, "Checked if user signed in via UseCase: $signedIn")
-        return signedIn
-    }
+
     fun fetchUserRole(callback: (String) -> Unit) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid != null) {
-            firestore.collection("users")
-                .document(uid) // <- Вот тут вместо email
+        auth.currentUser?.let { user ->
+            firestore.collection("users").document(user.uid)
                 .get()
                 .addOnSuccessListener { document ->
-                    val role = document.getString("role")
-                    callback(role ?: "user")
+                    val role = document.getString("role") ?: "user"
+                    callback(role)
                 }
-                .addOnFailureListener {
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error fetching user role", e)
                     callback("user")
                 }
+        } ?: run {
+            callback("user")
         }
-
     }
-    fun fetchDealerCompany(callback: (String) -> Unit) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid != null) {
-            firestore.collection("users")
-                .document(uid) // <- Вот тут вместо email
-                .get()
-                .addOnSuccessListener { document ->
-                    val company = document.getString("company")
-                    callback(company ?: "null")
-                }
-                .addOnFailureListener {
-                    callback("null")
-                }
-        }
-
-    }
-
 }
 
 sealed class AuthResult {
     object Success : AuthResult()
     data class Error(val message: String) : AuthResult()
     object Loading : AuthResult()
-    // object Idle : AuthResult() // Optional: Initial state before any action
 }

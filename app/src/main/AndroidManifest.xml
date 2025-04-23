@@ -28,30 +28,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DNMotors"
         tools:targetApi="31">
-        <activity
-            android:name=".view.activity.RegisterActivity"
-            android:exported="true" />
-        <activity
-            android:name=".view.activity.SignInActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <activity android:name=".viewdealer.activity.DealerActivity" />
 
         <activity android:name=".view.activity.MainActivity"
             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
             <intent-filter android:label="Deep Link">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="dnmotors.com"
-                    android:path="/car" />
+                <data android:scheme="dnmotors" />
             </intent-filter>
         </activity>
 

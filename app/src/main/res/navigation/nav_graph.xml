@@ -3,7 +3,39 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/carFragment">
+    app:startDestination="@id/signInFragment">
+
+    <fragment
+        android:id="@+id/signInFragment"
+        android:name="com.example.dnmotors.view.fragments.authFragment.SignInFragment"
+        android:label="Sign In"
+        tools:layout="@layout/activity_sign_in">
+        <action
+            android:id="@+id/action_signInFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_signInFragment_to_mainFragment"
+            app:destination="@id/carFragment"
+            app:popUpTo="@id/signInFragment"
+            app:popUpToInclusive="true" />
+<!--        <action-->
+<!--            android:id="@+id/action_signInFragment_to_dealerFragment"-->
+<!--            app:destination="@id/dealerFragment"-->
+<!--            app:popUpTo="@id/signInFragment"-->
+<!--            app:popUpToInclusive="true" />-->
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.dnmotors.view.fragments.authFragment.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/activity_register">
+        <action
+            android:id="@+id/action_registerFragment_to_mainFragment"
+            app:destination="@id/carFragment"
+            app:popUpTo="@id/signInFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/carFragment"

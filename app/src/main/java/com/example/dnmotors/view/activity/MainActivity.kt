@@ -6,14 +6,14 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
+import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,7 +22,7 @@ import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
 
@@ -37,22 +37,28 @@ class MainActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        if (auth.currentUser == null) {
-            Log.w(TAG, "No authenticated user found, redirecting to SignInActivity.")
-            startActivity(Intent(this, SignInActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            })
-            finish()
-            return
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            setupFirestorePersistence()
+            setupNavigation()
+            setupActionBar()
+            handleDeepLink(intent?.data)
+        } else {
+            navigateToLoginScreen()
         }
-
-        Log.d(TAG, "User authenticated: ${auth.currentUser?.uid}. Setting up UI.")
 
         setupFirestorePersistence()
         setupNavigation()
         setupActionBar()
         handleDeepLink(intent?.data)
     }
+
+    private fun navigateToLoginScreen() {
+        val intent = Intent(this, SignInFragment::class.java)
+        startActivity(intent)
+        finish() // Завершаем текущую активность, чтобы предотвратить возврат на неё
+    }
+
     private fun handleDeepLink(uri: Uri?) {
         uri?.let {
             if (it.pathSegments.firstOrNull() == "car") {
@@ -62,7 +68,6 @@ class MainActivity : AppCompatActivity() {
                         putString("vin", vin)
                     }
 
-                    // ✅ Correct way to get NavController from NavHostFragment
                     val navHostFragment = supportFragmentManager
                         .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
                     val navController = navHostFragment.navController
@@ -72,6 +77,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun setupFirestorePersistence() {
         try {
             val firestore = FirebaseFirestore.getInstance()
@@ -113,7 +119,6 @@ class MainActivity : AppCompatActivity() {
             ab.title = displayName
             Log.d(TAG, "Setting ActionBar title: $displayName")
 
-
             if (photoUrl != null) {
                 Log.d(TAG, "Loading profile picture from URL: $photoUrl")
                 val placeholder = R.drawable.ic_launcher_background
@@ -140,28 +145,28 @@ class MainActivity : AppCompatActivity() {
 
                         override fun onBitmapFailed(e: Exception?, errorDrawableDrawable: android.graphics.drawable.Drawable?) {
                             Log.e(TAG, "Failed to load profile picture.", e)
-                            runOnUiThread {
-                                setDefaultActionBarIcon(ab)
-                            }
+                            setDefaultActionBarIcon(ab)
                         }
 
                         override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {
-                            Log.d(TAG,"Preparing to load profile picture...")
+                            // Optional: Show placeholder while loading
                         }
                     })
             } else {
-                Log.w(TAG, "User photo URL is null. Setting default icon.")
                 setDefaultActionBarIcon(ab)
             }
-        } ?: Log.w(TAG, "SupportActionBar is null, cannot configure.")
+        }
     }
 
     private fun setDefaultActionBarIcon(ab: androidx.appcompat.app.ActionBar) {
-        // Set a default placeholder icon (e.g., a user silhouette)
-        // Make sure you have a drawable resource for this
-        // ab.setDisplayHomeAsUpEnabled(true)
-        // ab.setHomeAsUpIndicator(R.drawable.ic_default_profile) // Replace with your default icon
-        // Or just hide the indicator if no icon is desired
-        ab.setDisplayHomeAsUpEnabled(false)
+        ab.setDisplayHomeAsUpEnabled(true)
+        ab.setHomeAsUpIndicator(R.drawable.ic_launcher_foreground)
+    }
+
+    override fun onLoginSuccess() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+        navController.navigate(R.id.action_signInFragment_to_mainFragment)
+        binding.bottomNavigationView.visibility = View.VISIBLE
     }
 }

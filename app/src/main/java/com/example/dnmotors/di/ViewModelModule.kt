@@ -5,13 +5,5 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule = module {
-    viewModel {
-        AuthViewModel(
-            signInWithEmailUseCase = get(),
-            signInWithGoogleUseCase = get(),
-            registerWithEmailUseCase = get(),
-            registerWithGoogleUseCase = get(),
-            checkUserSignedInUseCase = get()
-        )
-    }
+    viewModel { AuthViewModel() }
 }

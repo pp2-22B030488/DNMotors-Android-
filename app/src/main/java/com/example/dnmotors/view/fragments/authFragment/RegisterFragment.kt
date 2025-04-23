@@ -1,32 +1,43 @@
-package com.example.dnmotors.view.activity
+package com.example.dnmotors.view.fragments.authFragment
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.dnmotors.R
+import com.example.dnmotors.databinding.ActivityRegisterBinding
 import com.example.dnmotors.viewmodel.AuthResult
 import com.example.dnmotors.viewmodel.AuthViewModel
-import com.example.dnmotors.databinding.ActivityRegisterBinding
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import org.koin.androidx.viewmodel.ext.android.viewModel
-class RegisterActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityRegisterBinding
+class RegisterFragment : Fragment() {
+    private var _binding: ActivityRegisterBinding? = null
+    private val binding get() = _binding!!
     private val authViewModel: AuthViewModel by viewModel()
     private lateinit var googleRegisterLauncher: ActivityResultLauncher<Intent>
-    private val TAG = "RegisterActivity"
+    private val TAG = "RegisterFragment"
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityRegisterBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = ActivityRegisterBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         setupGoogleRegisterLauncher()
         setupClickListeners()
         observeViewModel()
@@ -34,7 +45,7 @@ class RegisterActivity : AppCompatActivity() {
 
     private fun setupGoogleRegisterLauncher() {
         googleRegisterLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
                 try {
                     val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                     val account = task.getResult(ApiException::class.java)
@@ -55,7 +66,7 @@ class RegisterActivity : AppCompatActivity() {
                 }
             } else {
                 Log.w(TAG, "Google Sign-In (for registration) flow cancelled or failed. Result code: ${result.resultCode}")
-                if (result.resultCode == RESULT_CANCELED) {
+                if (result.resultCode == android.app.Activity.RESULT_CANCELED) {
                     showError("Google Registration cancelled.")
                 }
             }
@@ -68,7 +79,6 @@ class RegisterActivity : AppCompatActivity() {
             val password = binding.etPassword.text.toString().trim()
             val name = binding.etName.text.toString().trim()
 
-            // Basic validation
             if (email.isBlank() || password.isBlank() || name.isBlank()) {
                 showError("Please fill in all fields.")
                 return@setOnClickListener
@@ -88,8 +98,8 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         binding.tvSignIn.setOnClickListener {
-            Log.d(TAG, "Navigating back to SignInActivity.")
-            finish()
+            Log.d(TAG, "Navigating back to SignInFragment.")
+            findNavController().navigateUp()
         }
     }
 
@@ -100,9 +110,8 @@ class RegisterActivity : AppCompatActivity() {
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build()
-            val googleSignInClient = GoogleSignIn.getClient(this, gso)
+            val googleSignInClient = GoogleSignIn.getClient(requireContext(), gso)
 
-            // Sign out first before launching
             googleSignInClient.signOut().addOnCompleteListener {
                 Log.d(TAG, "Successfully signed out previous session.")
                 googleRegisterLauncher.launch(googleSignInClient.signInIntent)
@@ -117,14 +126,14 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        authViewModel.authState.observe(this) { result ->
+        authViewModel.authState.observe(viewLifecycleOwner) { result ->
             setLoading(result is AuthResult.Loading)
 
             when (result) {
                 is AuthResult.Success -> {
                     Log.i(TAG, "Registration successful, navigating to Main.")
-                    Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
-                    navigateToMain("CarFragment")
+                    Toast.makeText(requireContext(), "Registration successful!", Toast.LENGTH_SHORT).show()
+                    navigateToMain()
                 }
                 is AuthResult.Error -> {
                     Log.e(TAG, "Registration failed: ${result.message}")
@@ -137,23 +146,20 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
-    private fun navigateToMain(fragmentToOpen: String? = null) {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            fragmentToOpen?.let {
-                putExtra("OPEN_FRAGMENT", it)
-                Log.d(TAG, "Adding OPEN_FRAGMENT extra: $it")
-            }
-        }
-        startActivity(intent)
-        finish()
+    private fun navigateToMain() {
+        findNavController().navigate(R.id.action_registerFragment_to_mainFragment)
     }
 
     private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     private fun setLoading(isLoading: Boolean) {
         binding.bRegister.isEnabled = !isLoading
     }
-}
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+} 

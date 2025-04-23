@@ -2,6 +2,7 @@ package com.example.dnmotors
 
 import android.app.Application
 import com.example.dnmotors.di.appModules
+import com.example.dnmotors.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -14,6 +15,7 @@ class App : Application() {
             androidLogger(Level.DEBUG)
             androidContext(this@App)
             modules(appModules)
+            modules(listOf(viewModelModule))
         }
     }
 }

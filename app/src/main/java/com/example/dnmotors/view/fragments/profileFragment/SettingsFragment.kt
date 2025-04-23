@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentSettingsBinding
 import com.google.firebase.auth.FirebaseAuth
-import com.example.dnmotors.view.activity.SignInActivity
+import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
@@ -42,7 +42,7 @@ class SettingsFragment : Fragment() {
             when (item.itemId) {
                 R.id.btnSignOut -> {
                     auth.signOut()
-                    val intent = Intent(requireActivity(), SignInActivity::class.java)
+                    val intent = Intent(requireActivity(), SignInFragment::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                     true
