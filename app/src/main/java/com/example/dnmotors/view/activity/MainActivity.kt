@@ -47,17 +47,16 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             navigateToLoginScreen()
         }
 
-        setupFirestorePersistence()
-        setupNavigation()
-        setupActionBar()
-        handleDeepLink(intent?.data)
     }
 
     private fun navigateToLoginScreen() {
-        val intent = Intent(this, SignInFragment::class.java)
-        startActivity(intent)
-        finish() // Завершаем текущую активность, чтобы предотвратить возврат на неё
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+        navController.navigate(R.id.signInFragment)
+        binding.bottomNavigationView.visibility = View.GONE
     }
+
 
     private fun handleDeepLink(uri: Uri?) {
         uri?.let {

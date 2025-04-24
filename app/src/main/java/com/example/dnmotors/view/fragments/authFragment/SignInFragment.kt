@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivitySignInBinding
+import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.dnmotors.viewmodel.AuthResult
 import com.example.dnmotors.viewmodel.AuthViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -157,7 +158,10 @@ class SignInFragment : Fragment() {
             Log.d(TAG, "Fetched user role: '$cleanRole'")
 
             if (cleanRole == "dealer") {
-//                findNavController().navigate(R.id.action_signInFragment_to_dealerFragment)
+                Log.i(TAG, "Navigating to DealerActivity for dealer user.")
+                val intent = Intent(requireContext(), DealerActivity::class.java)
+                startActivity(intent)
+                requireActivity().finish() // Optional: Prevent returning to logi
             } else {
                 findNavController().navigate(R.id.action_signInFragment_to_mainFragment)
             }
