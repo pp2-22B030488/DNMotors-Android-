@@ -31,7 +31,7 @@ fun DealerNavGraph(
 
         composable(DealerNavItem.Chat.route) {
             ChatScreen { chatItem ->
-                navController.navigate("messages/${chatItem.userId}/${chatItem.vin}")
+                navController.navigate("messages/${chatItem.userId}/${chatItem.carId}")
             }
         }
 
@@ -43,7 +43,8 @@ fun DealerNavGraph(
 
             if (dealerId != null) {
                 MessagesScreen(
-                    vin = carId,
+                    chatId = "${dealerId}_${userId}",
+                    carId = carId,
                     userId = userId,
                     dealerId = dealerId,
                     dealerName = dealerName,

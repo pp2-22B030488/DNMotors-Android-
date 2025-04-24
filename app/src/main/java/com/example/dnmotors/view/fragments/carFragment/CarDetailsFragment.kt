@@ -42,13 +42,19 @@ class CarDetailsFragment : Fragment() {
         }
         binding.buttonWrite.setOnClickListener {
             car?.let {
-                val action = CarDetailsFragmentDirections
-                    .actionCarDetailsFragmentToMessagesFragment(
-                        carId = it.vin,
-                    )
-                findNavController().navigate(action)
+                val action = it.dealerId?.let { it1 ->
+                    CarDetailsFragmentDirections
+                        .actionCarDetailsFragmentToMessagesFragment(
+                            carId = it.vin,
+                            dealerId = it1
+                        )
+                }
+                if (action != null) {
+                    findNavController().navigate(action)
+                }
             }
         }
+
         binding.imageViewShare.setOnClickListener {
             val deepLinkUrl = "https://dnmotors.com/car/${car.vin}"
             val shareIntent = Intent().apply {

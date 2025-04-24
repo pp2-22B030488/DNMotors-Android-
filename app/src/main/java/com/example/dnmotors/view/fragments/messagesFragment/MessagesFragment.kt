@@ -23,15 +23,15 @@ import com.example.dnmotors.utils.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import java.io.File
 import java.io.IOException
 import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -40,10 +40,12 @@ import java.util.Locale
 class MessagesFragment : Fragment() {
     private lateinit var binding: FragmentMessagesBinding
     private lateinit var adapter: MessagesAdapter
-    private lateinit var database: DatabaseReference
     private lateinit var auth: FirebaseAuth
-    private lateinit var carId: String
+    private lateinit var firestore: FirebaseFirestore
+    private lateinit var messagesRef: CollectionReference
 
+    private lateinit var carId: String
+    private lateinit var dealerId: String
     private val mediaPickerLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let { handleSelectedMedia(it) }
@@ -98,14 +100,12 @@ class MessagesFragment : Fragment() {
                 Toast.makeText(context, "Camera permission denied", Toast.LENGTH_SHORT).show()
             }
         }
-
     @Volatile
     private var mediaRecorder: MediaRecorder? = null
     private var audioFilePath: String? = null
     @Volatile
     private var isRecording = false
     private lateinit var videoUri: Uri
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -114,16 +114,20 @@ class MessagesFragment : Fragment() {
 
         val args = MessagesFragmentArgs.fromBundle(requireArguments())
         carId = args.carId
+        dealerId = args.dealerId // Make sure you pass this from navigation args
 
         auth = FirebaseAuth.getInstance()
         val userId = auth.currentUser?.uid
         if (userId == null) {
             Toast.makeText(context, "User not logged in", Toast.LENGTH_LONG).show()
-
             return binding.root
         }
-        database = FirebaseDatabase.getInstance().getReference("messages")
-            .child(carId).child(userId)
+
+        firestore = FirebaseFirestore.getInstance()
+        val chatId = "${dealerId}_$userId"
+        messagesRef = firestore.collection("chats")
+            .document(chatId)
+            .collection("messages")
 
         adapter = MessagesAdapter()
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext()).apply {
@@ -140,40 +144,57 @@ class MessagesFragment : Fragment() {
         return binding.root
     }
 
-    override fun onStop() {
-        super.onStop()
-        if (isRecording) {
-            Log.w("MessagesFragment", "Fragment stopped during recording. Cleaning up recorder.")
-            cleanupRecorder()
-        }
-    }
-
     private fun sendMessage() {
         val messageText = binding.messageInput.text.toString().trim()
         if (messageText.isNotEmpty()) {
             val encodedMessage = encodeToBase64(messageText)
+            val senderId = auth.currentUser?.uid ?: return
+            val senderName = auth.currentUser?.displayName ?: "Unknown User"
+            val timestamp = System.currentTimeMillis()
+            val chatId = "${dealerId}_$senderId"
+            val isNotificationSent = false
+
             val message = Message(
-                id = System.currentTimeMillis().toString(),
-                senderId = auth.currentUser?.uid,
-                name = auth.currentUser?.displayName ?: "Unknown User",
+                id = timestamp.toString(),
+                senderId = senderId,
+                name = senderName,
                 message = encodedMessage,
                 messageType = "text",
-                timestamp = System.currentTimeMillis()
+                timestamp = timestamp,
+                carId = carId,
+                isNotificationSent = false // Add this line
+
             )
-            database.push().setValue(message)
+
+            // Save the message
+            messagesRef.add(message)
                 .addOnSuccessListener {
                     binding.messageInput.text.clear()
+
+                    // Update chat metadata
+                    val chatMetadata = mapOf(
+                        "userId" to senderId,
+                        "dealerId" to dealerId,
+                        "carId" to carId,
+                        "lastMessage" to messageText,
+                        "lastMessageTimestamp" to FieldValue.serverTimestamp(),
+                        "isNotificationSent" to isNotificationSent
+                    )
+
+                    FirebaseFirestore.getInstance()
+                        .collection("chats")
+                        .document(chatId)
+                        .set(chatMetadata, SetOptions.merge())
                 }
                 .addOnFailureListener {
                     Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT).show()
-                    Log.e("MessagesFragment", "Failed to send message", it)
                 }
         }
     }
 
+
     private fun sendBase64Media(base64: String, mediaType: String) {
         if (base64.isEmpty()) {
-            Log.e("MessagesFragment", "Attempted to send empty Base64 string for type: $mediaType")
             Toast.makeText(context, "Failed to process media", Toast.LENGTH_SHORT).show()
             return
         }
@@ -184,12 +205,13 @@ class MessagesFragment : Fragment() {
             name = auth.currentUser?.displayName ?: "Unknown User",
             base64 = base64,
             messageType = mediaType,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            carId = carId
         )
-        database.push().setValue(message)
+
+        messagesRef.add(message)
             .addOnFailureListener {
-                Toast.makeText(context, "Failed to send media message", Toast.LENGTH_SHORT).show()
-                Log.e("MessagesFragment", "Failed to send media message", it)
+                Toast.makeText(context, "Failed to send media", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -435,30 +457,26 @@ class MessagesFragment : Fragment() {
     }
 
     private fun listenForMessages() {
-        database.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val messages = mutableListOf<Message>()
-                for (s in snapshot.children) {
-                    val message = s.getValue(Message::class.java)
-                    if (message != null) {
-                        messages.add(message)
-                    }
+        messagesRef
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("MessagesFragment", "Firestore listen failed", error)
+                    Toast.makeText(context, "Failed to load messages", Toast.LENGTH_LONG).show()
+                    return@addSnapshotListener
                 }
-                messages.sortBy { it.timestamp }
+
+                val messages = snapshot?.documents?.mapNotNull {
+                    it.toObject(Message::class.java)
+                }.orEmpty()
+
                 adapter.submitList(messages) {
                     if (messages.isNotEmpty()) {
                         binding.recyclerView.scrollToPosition(messages.size - 1)
                     }
                 }
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("MessagesFragment", "Firebase listener cancelled", error.toException())
-                Toast.makeText(context, "Failed to load messages: ${error.message}", Toast.LENGTH_LONG).show()
-            }
-        })
     }
-
     private fun fileToBase64(path: String?): String {
         if (path == null) {
             Log.e("MessagesFragment", "fileToBase64: Input path is null")

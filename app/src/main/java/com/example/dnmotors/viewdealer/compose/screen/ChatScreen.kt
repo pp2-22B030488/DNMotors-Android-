@@ -19,12 +19,13 @@ import androidx.compose.ui.Modifier
 import com.example.dnmotors.view.fragments.messagesFragment.ChatsFragment
 import com.example.dnmotors.viewmodel.ChatViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.domain.model.ChatItem
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = viewModel(),
-    onChatClick: (ChatsFragment.ChatItem) -> Unit
+    onChatClick: (ChatItem) -> Unit
 ) {
     val chatItems by viewModel.chatItems.observeAsState(emptyList())
     val dealerId = FirebaseAuth.getInstance().currentUser?.uid
@@ -44,7 +45,7 @@ fun ChatScreen(
             items(chatItems) { item ->
                 ListItem(
                     headlineContent = { Text("User ID: ${item.userId}") },
-                    supportingContent = { Text("Car VIN: ${item.vin}") },
+                    supportingContent = { Text("Car VIN: ${item.carId}") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onChatClick(item) }

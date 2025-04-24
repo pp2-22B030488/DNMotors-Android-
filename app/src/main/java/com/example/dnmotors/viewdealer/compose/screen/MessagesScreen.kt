@@ -33,21 +33,21 @@ import com.example.dnmotors.viewmodel.MainViewModel
 
 @Composable
 fun MessagesScreen(
-    vin: String,
+    chatId: String,
+    carId: String,
     userId: String,
     dealerId: String,
     dealerName: String,
     viewModel: ChatViewModel = viewModel(),
     onToggleBottomBar: (Boolean) -> Unit
-
 ) {
     val messages by viewModel.messages.observeAsState(emptyList())
     var input by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    LaunchedEffect(vin, userId) {
-        viewModel.loadMessages(vin, userId)
-        viewModel.observeMessages(vin, userId, context)
+    LaunchedEffect(chatId) {
+        viewModel.loadMessages(chatId)
+        viewModel.observeMessages(chatId, context)
     }
 
     DisposableEffect(Unit) {
@@ -57,16 +57,14 @@ fun MessagesScreen(
         }
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp) // Padding the whole screen
+            .padding(8.dp)
     ) {
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .height(300.dp) // debug only
                 .fillMaxWidth()
         ) {
             items(messages) { msg ->
@@ -97,7 +95,15 @@ fun MessagesScreen(
             Button(
                 onClick = {
                     if (input.isNotBlank()) {
-                        viewModel.sendMessage(vin, userId, input.trim(), dealerId, dealerName)
+                        viewModel.sendMessage(
+                            chatId = chatId,
+                            messageText = input.trim(),
+                            senderId = dealerId,
+                            senderName = dealerName,
+                            userId = userId,
+                            carId = carId,
+                            isNotificationSent = false
+                        )
                         input = ""
                     }
                 }

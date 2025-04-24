@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Base64
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -15,22 +16,22 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dnmotors.R
-import com.example.dnmotors.utils.MessageNotificationUtil.observeNewMessages
-import com.example.dnmotors.view.activity.MainActivity
-import com.example.dnmotors.view.fragments.messagesFragment.ChatsFragment
-import com.example.dnmotors.viewdealer.repository.CarRepository
+import com.example.dnmotors.utils.MessageNotificationUtil
+import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import kotlinx.coroutines.launch
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
+import java.util.UUID
 
 class ChatViewModel : ViewModel() {
-    private val _chatItems = MutableLiveData<List<ChatsFragment.ChatItem>>()
-    val chatItems: LiveData<List<ChatsFragment.ChatItem>> = _chatItems
+    private val _chatItems = MutableLiveData<List<ChatItem>>()
+    val chatItems: LiveData<List<ChatItem>> = _chatItems
 
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> = _messages
@@ -44,103 +45,122 @@ class ChatViewModel : ViewModel() {
     fun loadChatListForDealer() {
         val dealerId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        viewModelScope.launch {
-            val cars = CarRepository().getCarsForDealer(dealerId)
-            val vins = cars.mapNotNull { it.vin }
+        FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("dealerId", dealerId)
+            .get()
+            .addOnSuccessListener { result ->
+                val chatItems = result.documents.mapNotNull { doc ->
+                    val carId = doc.getString("carId")
+                    val userId = doc.getString("userId")
+                    if (carId != null && userId != null) {
+                        ChatItem(
+                            carId = carId,
+                            userId = userId,
+                            dealerId = dealerId
+                        )
+                    } else null
+                }
+                _chatItems.postValue(chatItems)
+            }
+            .addOnFailureListener { error ->
+                println("Error loading dealer chat list: ${error.message}")
+                _chatItems.postValue(emptyList())
+            }
+    }
 
-            val chatItems = mutableListOf<ChatsFragment.ChatItem>()
-            val messagesRef = FirebaseDatabase.getInstance().getReference("messages")
-            val remaining = vins.toMutableSet()
 
-            vins.forEach { vin ->
-                messagesRef.child(vin).addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        snapshot.children.forEach { userSnapshot ->
-                            val userId = userSnapshot.key ?: return@forEach
-                            chatItems.add(ChatsFragment.ChatItem(vin = vin, userId = userId))
-                        }
+    fun loadMessages(chatId: String) {
+        val messagesRef = FirebaseFirestore.getInstance()
+            .collection("chats")
+            .document(chatId)
+            .collection("messages")
 
-                        remaining.remove(vin)
-                        if (remaining.isEmpty()) {
-                            _chatItems.value = chatItems
+        messagesRef
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ChatViewModel", "Error loading messages", error)
+                    _messages.postValue(emptyList())
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && !snapshot.isEmpty) {
+                    val messages = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(Message::class.java)?.let { message ->
+                            val decodedMessage = try {
+                                val bytes = Base64.decode(message.message, Base64.DEFAULT)
+                                String(bytes, Charsets.UTF_8)
+                            } catch (e: Exception) {
+                                "[Error decoding message]"
+                            }
+
+                            message.copy(message = decodedMessage)
                         }
                     }
 
-                    override fun onCancelled(error: DatabaseError) {
-                        println("Error reading messages for VIN $vin: ${error.message}")
-                        remaining.remove(vin)
-                        if (remaining.isEmpty()) {
-                            _chatItems.value = chatItems
-                        }
-                    }
-                })
+                    _messages.postValue(messages)
+                } else {
+                    _messages.postValue(emptyList())
+                }
             }
-
-            if (vins.isEmpty()) {
-                _chatItems.value = emptyList()
-            }
-        }
     }
 
-    fun loadMessages(carId: String, userId: String) {
-        removeMessagesListener()
-
-        val messagesRef = baseRef.child(carId).child(userId)
-        messagesListenerRef = messagesRef
-
-        messagesListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val messageList = snapshot.children.mapNotNull { data ->
-                    val msg = data.getValue(Message::class.java)
-                    msg?.copy(
-                        message = try {
-                            val decodedBytes = Base64.decode(msg.message, Base64.DEFAULT)
-                            String(decodedBytes, Charsets.UTF_8)
-                        } catch (e: Exception) {
-                            "[Error decoding]"
-                        }
-                    )
-                }.sortedBy { it.timestamp }
-
-                _messages.value = messageList
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                println("Error loading messages: ${error.message}")
-                _messages.value = emptyList()
-            }
-        }
-
-        messagesRef.addValueEventListener(messagesListener!!)
-    }
 
     fun sendMessage(
-        carId: String,
-        userId: String,
+        chatId: String,
         messageText: String,
-        dealerId: String,
-        dealerName: String
+        senderId: String,
+        senderName: String,
+        userId: String,
+        carId: String,
+        isNotificationSent: Boolean
     ) {
         if (messageText.isBlank()) return
 
-        val messagesRef = baseRef.child(carId).child(userId)
-        val messageId = messagesRef.push().key ?: System.currentTimeMillis().toString()
-
-        // ✅ Encode message to Base64
         val encodedMessage = Base64.encodeToString(messageText.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
+
+        val messageId = UUID.randomUUID().toString()
+        val timestamp = System.currentTimeMillis()
 
         val message = Message(
             id = messageId,
-            senderId = dealerId,
-            name = dealerName,
+            senderId = senderId,
+            name = senderName,
             message = encodedMessage,
             messageType = "text",
-            timestamp = System.currentTimeMillis()
+            timestamp = timestamp,
+            carId = carId,
+            isNotificationSent = false
         )
 
-        messagesRef.child(messageId).setValue(message)
-    }
+        val firestore = FirebaseFirestore.getInstance()
 
+        // 1. Send the actual message
+        firestore.collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .document(messageId)
+            .set(message)
+            .addOnSuccessListener {
+                // 2. Update the metadata of the chat document
+                val chatMetadata = mapOf(
+                    "userId" to userId,
+                    "dealerId" to senderId,
+                    "carId" to carId,
+                    "lastMessage" to messageText,
+                    "lastMessageTimestamp" to FieldValue.serverTimestamp(),
+                    "isNotificationSent" to isNotificationSent
+                )
+
+                firestore.collection("chats")
+                    .document(chatId)
+                    .set(chatMetadata, SetOptions.merge())
+            }
+            .addOnFailureListener {
+                Log.e("ChatViewModel", "Failed to send message", it)
+            }
+    }
 
     private fun removeMessagesListener() {
         messagesListener?.let { listener ->
@@ -149,48 +169,12 @@ class ChatViewModel : ViewModel() {
         messagesListener = null
         messagesListenerRef = null
     }
-    fun observeMessages(
-        vin: String,
-        userId: String,
-        context: Context
-    ) {
-        observeNewMessages(vin, userId, context) { newMessage ->
-            // Update LiveData
+
+    fun observeMessages(chatId: String, context: Context) {
+        MessageNotificationUtil.observeNewMessages(chatId, context) { newMessage ->
             val currentMessages = _messages.value?.toMutableList() ?: mutableListOf()
             currentMessages.add(newMessage)
             _messages.postValue(currentMessages)
-
-            // Show notification when a new message is received
-            showNotification(context, newMessage)
-        }
-    }
-
-    private fun showNotification(context: Context, message: Message) {
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val notificationBuilder = NotificationCompat.Builder(context, "messages_channel")
-            .setSmallIcon(R.drawable.ic_settings)
-            .setContentTitle("New message from ${message.name}")
-            .setContentText(message.message)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-        val notificationManager = NotificationManagerCompat.from(context)
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
         }
     }
 

@@ -1,6 +1,9 @@
 package com.example.domain.model
 
 data class ChatItem(
+    val carId: String,
+    val dealerId: String,
     val userId: String,
-    val carId: String
+    val lastMessage: String = "",
+    val timestamp: Long = 0L
 )

@@ -186,13 +186,15 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     Log.i(TAG, "Navigating to DealerActivity for dealer user.")
                     val intent = Intent(this, DealerActivity::class.java)
                     startActivity(intent)
-                    finish() // Ensure we finish the current activity
+                    finish()
                 }
                 else -> {
                     Log.i(TAG, "Navigating to main fragment for non-dealer user.")
                     val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
                     val navController = navHostFragment.navController
                     navController.navigate(R.id.carFragment)
+                    binding.bottomNavigationView.visibility = View.VISIBLE
+
                 }
             }
         }

@@ -5,23 +5,28 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dnmotors.databinding.ChatItemBinding
 import com.example.dnmotors.databinding.FragmentChatsBinding
 import com.example.dnmotors.utils.MessageNotificationUtil
+import com.example.dnmotors.view.adapter.ChatListAdapter
+import com.example.domain.model.ChatItem
+import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 class ChatsFragment : Fragment() {
     private lateinit var binding: FragmentChatsBinding
-    private lateinit var database: DatabaseReference
     private lateinit var auth: FirebaseAuth
+    private lateinit var firestore: FirebaseFirestore
+    private val _chatItems = MutableLiveData<List<ChatItem>>()
+    private val chatItems: LiveData<List<ChatItem>> get() = _chatItems
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,93 +34,61 @@ class ChatsFragment : Fragment() {
     ): View {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         auth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
         val userId = auth.currentUser?.uid ?: return binding.root
-        database = FirebaseDatabase.getInstance().getReference("messages")
 
-        database.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val chatItems = mutableListOf<ChatItem>()
-
-                for (vinSnapshot in snapshot.children) {
-                    val vin = vinSnapshot.key ?: continue
-                    if (vinSnapshot.hasChild(userId)) {
-                        chatItems.add(ChatItem(vin = vin, userId = userId))
-                    }
-                }
-
-                setupRecyclerView(chatItems)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                println("Error loading chats: ${error.message}")
-            }
+        loadChatListForUser()
+        // Observe the chat items to update the RecyclerView
+        chatItems.observe(viewLifecycleOwner, Observer { items ->
+            setupRecyclerView(items)
         })
-
         return binding.root
     }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    private fun loadChatListForUser() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val messagesRef = FirebaseDatabase.getInstance().getReference("messages")
 
-        messagesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val chatItems = mutableListOf<ChatItem>()
-                for (vinSnapshot in snapshot.children) {
-                    val vin = vinSnapshot.key ?: continue
-                    if (vinSnapshot.hasChild(userId)) {
-                        chatItems.add(ChatItem(vin, userId))
-                        MessageNotificationUtil.observeNewMessages(vin, userId, requireContext())
-                    }
+        FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnSuccessListener { result ->
+                val chatItems = result.documents.mapNotNull { doc ->
+                    val carId = doc.getString("carId")
+                    val dealerId = doc.getString("dealerId")
+                    val lastMessage = doc.getString("lastMessage") ?: ""
+                    val timestamp = doc.getTimestamp("lastMessageTimestamp")?.toDate()?.time ?: 0L
+
+                    if (carId != null && dealerId != null) {
+                        ChatItem(
+                            carId = carId,
+                            userId = userId,
+                            dealerId = dealerId,
+                            lastMessage = lastMessage,
+                            timestamp = timestamp,
+                        )
+                    } else null
                 }
-                setupRecyclerView(chatItems)
+
+                _chatItems.postValue(chatItems)
             }
-
-            override fun onCancelled(error: DatabaseError) {}
-        })
-
+            .addOnFailureListener { error ->
+                println("Error loading user chat list: ${error.message}")
+                _chatItems.postValue(emptyList())
+            }
     }
 
     private fun setupRecyclerView(items: List<ChatItem>) {
-        val adapter = ChatListAdapter(items) { clickedCarId ->
+        val adapter = ChatListAdapter(items) { clickedItem ->
             val action = ChatsFragmentDirections
-                .actionChatsFragmentToMessagesFragment(carId = clickedCarId)
+                .actionChatsFragmentToMessagesFragment(
+                    carId = clickedItem.carId,
+                    dealerId = clickedItem.dealerId
+                )
             findNavController().navigate(action)
         }
         binding.chatsRecyclerView.adapter = adapter
         binding.chatsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
     }
-
-    data class ChatItem(
-        val vin: String,
-        val userId: String
-
-    )
-
-    class ChatListAdapter(
-        private val items: List<ChatItem>,
-        private val onClick: (String) -> Unit
-    ) : RecyclerView.Adapter<ChatListAdapter.ViewHolder>() {
-        inner class ViewHolder(val binding: ChatItemBinding) : RecyclerView.ViewHolder(binding.root) {
-            fun bind(item: ChatItem) {
-                binding.chatTitle.text = "Chat for ${item.vin}"
-                binding.root.setOnClickListener { onClick(item.vin) }
-            }
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val binding = ChatItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return ViewHolder(binding)
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.bind(items[position])
-        }
-
-        override fun getItemCount() = items.size
-    }
-
 
 }
