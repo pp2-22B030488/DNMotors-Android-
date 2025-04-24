@@ -161,7 +161,7 @@ class SignInFragment : Fragment() {
                 Log.i(TAG, "Navigating to DealerActivity for dealer user.")
                 val intent = Intent(requireContext(), DealerActivity::class.java)
                 startActivity(intent)
-                requireActivity().finish() // Optional: Prevent returning to logi
+                requireActivity().finish()
             } else {
                 findNavController().navigate(R.id.action_signInFragment_to_mainFragment)
             }

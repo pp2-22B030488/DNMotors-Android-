@@ -9,11 +9,15 @@ import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
+import com.example.dnmotors.viewdealer.activity.DealerActivity
+import com.example.dnmotors.viewmodel.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -25,6 +29,7 @@ import com.squareup.picasso.Target
 class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
+    private lateinit var authViewModel: AuthViewModel
 
     private val TAG = "MainActivity"
 
@@ -32,19 +37,26 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
         auth = Firebase.auth
+        authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
 
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            setupFirestorePersistence()
-            setupNavigation()
-            setupActionBar()
-            handleDeepLink(intent?.data)
+            authViewModel.fetchUserRole { role ->
+                val cleanRole = role.trim().lowercase()
+                Log.d(TAG, "Fetched user role: '$cleanRole'")
+
+                if (cleanRole == "dealer") {
+                    Log.i(TAG, "Navigating directly to DealerActivity.")
+                    val intent = Intent(this, DealerActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    setupMainUI()
+                }
+            }
         } else {
-            navigateToLoginScreen()
+            setupMainUI()
         }
 
     }
@@ -86,6 +98,21 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             Log.i(TAG, "Firestore persistence enabled.")
         } catch (e: Exception) {
             Log.e(TAG, "Error enabling Firestore persistence.", e)
+        }
+    }
+    private fun setupMainUI() {
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setupFirestorePersistence()
+        setupNavigation()
+        setupActionBar()
+
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            handleDeepLink(intent?.data)
+        } else {
+            navigateToLoginScreen()
         }
     }
 
@@ -168,4 +195,5 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         navController.navigate(R.id.action_signInFragment_to_mainFragment)
         binding.bottomNavigationView.visibility = View.VISIBLE
     }
+
 }
