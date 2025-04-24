@@ -11,7 +11,11 @@ import com.example.dnmotors.viewmodel.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun DealerNavGraph(navController: NavHostController, padding: PaddingValues) {
+fun DealerNavGraph(
+    navController: NavHostController,
+    padding: PaddingValues,
+    onToggleBottomBar: (Boolean) -> Unit
+) {
 
     NavHost(navController, startDestination = DealerNavItem.Cars.route) {
         composable(DealerNavItem.Cars.route) {
@@ -34,7 +38,6 @@ fun DealerNavGraph(navController: NavHostController, padding: PaddingValues) {
         composable("messages/{userId}/{vin}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
             val carId = backStackEntry.arguments?.getString("vin") ?: return@composable
-
             val dealerId = FirebaseAuth.getInstance().currentUser?.uid
             val dealerName = FirebaseAuth.getInstance().currentUser?.displayName ?: "Dealer"
 
@@ -43,7 +46,8 @@ fun DealerNavGraph(navController: NavHostController, padding: PaddingValues) {
                     vin = carId,
                     userId = userId,
                     dealerId = dealerId,
-                    dealerName = dealerName
+                    dealerName = dealerName,
+                    onToggleBottomBar = onToggleBottomBar
                 )
             } else {
                 Text("Error: Dealer not logged in.")

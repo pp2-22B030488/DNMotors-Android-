@@ -38,7 +38,7 @@ fun MessagesScreen(
     dealerId: String,
     dealerName: String,
     viewModel: ChatViewModel = viewModel(),
-    mainViewModel: MainViewModel = viewModel(LocalContext.current as ViewModelStoreOwner) // access shared VM
+    onToggleBottomBar: (Boolean) -> Unit
 
 ) {
     val messages by viewModel.messages.observeAsState(emptyList())
@@ -49,9 +49,9 @@ fun MessagesScreen(
     }
 
     DisposableEffect(Unit) {
-        mainViewModel.setBottomBarVisible(false)
+        onToggleBottomBar(false)
         onDispose {
-            mainViewModel.setBottomBarVisible(true)
+            onToggleBottomBar(true)
         }
     }
 
