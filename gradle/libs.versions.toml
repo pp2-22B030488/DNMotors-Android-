@@ -32,6 +32,7 @@ kotlinCompilerExtension = "1.5.10"
 generativeai = "0.9.0"
 uiToolingPreviewAndroid = "1.7.8"
 runtimeLivedata = "1.7.8"
+firebaseMessagingKtx = "24.1.1"
 
 
 [libraries]
@@ -67,6 +68,7 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
 androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "uiToolingPreviewAndroid" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebaseMessagingKtx" }
 
 
 [plugins]

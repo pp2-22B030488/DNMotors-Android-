@@ -37,26 +37,21 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         auth = Firebase.auth
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
 
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            authViewModel.fetchUserRole { role ->
-                val cleanRole = role.trim().lowercase()
-                Log.d(TAG, "Fetched user role: '$cleanRole'")
-
-                if (cleanRole == "dealer") {
-                    Log.i(TAG, "Navigating directly to DealerActivity.")
-                    val intent = Intent(this, DealerActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                } else {
-                    setupMainUI()
-                }
-            }
+            setupFirestorePersistence()
+            setupNavigation()
+            setupActionBar()
+            fetchAndNavigateUserRole()
+            handleDeepLink(intent?.data)
         } else {
-            setupMainUI()
+            navigateToLoginScreen()
         }
 
     }
@@ -98,21 +93,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             Log.i(TAG, "Firestore persistence enabled.")
         } catch (e: Exception) {
             Log.e(TAG, "Error enabling Firestore persistence.", e)
-        }
-    }
-    private fun setupMainUI() {
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        setupFirestorePersistence()
-        setupNavigation()
-        setupActionBar()
-
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            handleDeepLink(intent?.data)
-        } else {
-            navigateToLoginScreen()
         }
     }
 
@@ -196,4 +176,25 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         binding.bottomNavigationView.visibility = View.VISIBLE
     }
 
+    private fun fetchAndNavigateUserRole() {
+        authViewModel.fetchUserRole { role ->
+            val cleanRole = role.trim().lowercase()
+            Log.d(TAG, "Fetched user role: '$cleanRole'")
+
+            when (cleanRole) {
+                "dealer" -> {
+                    Log.i(TAG, "Navigating to DealerActivity for dealer user.")
+                    val intent = Intent(this, DealerActivity::class.java)
+                    startActivity(intent)
+                    finish() // Ensure we finish the current activity
+                }
+                else -> {
+                    Log.i(TAG, "Navigating to main fragment for non-dealer user.")
+                    val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                    val navController = navHostFragment.navController
+                    navController.navigate(R.id.carFragment)
+                }
+            }
+        }
+    }
 }
