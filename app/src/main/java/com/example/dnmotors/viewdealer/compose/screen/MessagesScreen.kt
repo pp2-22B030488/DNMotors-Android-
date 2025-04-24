@@ -43,9 +43,11 @@ fun MessagesScreen(
 ) {
     val messages by viewModel.messages.observeAsState(emptyList())
     var input by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     LaunchedEffect(vin, userId) {
         viewModel.loadMessages(vin, userId)
+        viewModel.observeMessages(vin, userId, context)
     }
 
     DisposableEffect(Unit) {

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dnmotors.databinding.ChatItemBinding
 import com.example.dnmotors.databinding.FragmentChatsBinding
+import com.example.dnmotors.utils.MessageNotificationUtil
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -52,6 +53,29 @@ class ChatsFragment : Fragment() {
         })
 
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val messagesRef = FirebaseDatabase.getInstance().getReference("messages")
+
+        messagesRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val chatItems = mutableListOf<ChatItem>()
+                for (vinSnapshot in snapshot.children) {
+                    val vin = vinSnapshot.key ?: continue
+                    if (vinSnapshot.hasChild(userId)) {
+                        chatItems.add(ChatItem(vin, userId))
+                        MessageNotificationUtil.observeNewMessages(vin, userId, requireContext())
+                    }
+                }
+                setupRecyclerView(chatItems)
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
+
     }
 
     private fun setupRecyclerView(items: List<ChatItem>) {
