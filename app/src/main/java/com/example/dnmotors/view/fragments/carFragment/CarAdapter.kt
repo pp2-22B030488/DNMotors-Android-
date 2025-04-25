@@ -77,7 +77,7 @@ class CarAdapter(
         holder.bind(car)
 
         Glide.with(holder.itemView.context)
-            .load(car.imageUrl.firstOrNull() ?: "")
+            .load(car.imageUrl.getOrNull(1) ?: car.imageUrl.firstOrNull() ?: "")
             .placeholder(R.drawable.tayota_camry_xv80)
             .into(holder.imageCar)
 
@@ -87,4 +87,10 @@ class CarAdapter(
     }
 
     override fun getItemCount(): Int = cars.size
+
+    fun updateList(newCars: List<Car>) {
+        cars.clear()
+        cars.addAll(newCars)
+        notifyDataSetChanged()
+    }
 }
