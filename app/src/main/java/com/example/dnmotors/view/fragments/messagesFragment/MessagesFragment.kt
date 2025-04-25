@@ -27,6 +27,8 @@ import java.io.File
 import java.io.IOException
 import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.lifecycle.lifecycleScope
+import com.example.dnmotors.utils.MultimediaUtils.encodeToBase64
+import com.example.dnmotors.utils.MultimediaUtils.fileToBase64
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -46,6 +48,7 @@ class MessagesFragment : Fragment() {
 
     private lateinit var carId: String
     private lateinit var dealerId: String
+
     private val mediaPickerLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let { handleSelectedMedia(it) }
@@ -54,34 +57,11 @@ class MessagesFragment : Fragment() {
     private var latestTmpUri: Uri? = null
     private val takePictureLauncher = registerForActivityResult(TakePicture()) { isSuccess ->
         if (isSuccess) {
-            latestTmpUri?.let { uri ->
-                 Log.d("MessagesFragment", "Picture taken successfully: $uri")
-                 handleCapturedImage(uri)
-            }
+            latestTmpUri?.let { handleCapturedImage(it) }
         } else {
-             Log.e("MessagesFragment", "Picture capture failed or was cancelled.")
-             Toast.makeText(context, "Failed to capture image", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Failed to capture image", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private val videoCaptureLauncher =
-        registerForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
-            if (success && ::videoUri.isInitialized) {
-                val path = FileUtils.getPath(requireContext(), videoUri)
-                if (path != null) {
-                    val base64 = fileToBase64(path)
-                    if (base64.isNotEmpty()) {
-                        sendBase64Media(base64, "video")
-                    } else {
-                        Toast.makeText(context, "Failed to encode video", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(context, "Failed to get video path", Toast.LENGTH_SHORT).show()
-                }
-            } else if (!success) {
-                Toast.makeText(context, "Video capture failed or cancelled", Toast.LENGTH_SHORT).show()
-            }
-        }
 
     private val requestAudioPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -92,20 +72,12 @@ class MessagesFragment : Fragment() {
             }
         }
 
-    private val requestVideoPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                startVideoRecordingInternal()
-            } else {
-                Toast.makeText(context, "Camera permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
     @Volatile
     private var mediaRecorder: MediaRecorder? = null
     private var audioFilePath: String? = null
     @Volatile
     private var isRecording = false
-    private lateinit var videoUri: Uri
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -114,7 +86,7 @@ class MessagesFragment : Fragment() {
 
         val args = MessagesFragmentArgs.fromBundle(requireArguments())
         carId = args.carId
-        dealerId = args.dealerId // Make sure you pass this from navigation args
+        dealerId = args.dealerId
 
         auth = FirebaseAuth.getInstance()
         val userId = auth.currentUser?.uid
@@ -137,12 +109,18 @@ class MessagesFragment : Fragment() {
 
         binding.sendButton.setOnClickListener { sendMessage() }
         binding.mediaButton.setOnClickListener { selectMedia() }
+        binding.videoRecordButton.setOnClickListener { takePicture() } // <-- Hooked up to UI button
         setupAudioRecordButton()
-        binding.videoRecordButton.setOnClickListener { startVideoRecording() }
 
         listenForMessages()
         return binding.root
     }
+
+
+    private fun selectMedia() {
+        mediaPickerLauncher.launch("*/*")
+    }
+
 
     private fun sendMessage() {
         val messageText = binding.messageInput.text.toString().trim()
@@ -162,23 +140,17 @@ class MessagesFragment : Fragment() {
                 messageType = "text",
                 timestamp = timestamp,
                 carId = carId,
-                isNotificationSent = false // Add this line
-
+                notificationSent = isNotificationSent
             )
 
-            // Save the message
             messagesRef.add(message)
                 .addOnSuccessListener {
                     binding.messageInput.text.clear()
-
-                    // Update chat metadata
                     val chatMetadata = mapOf(
                         "userId" to senderId,
                         "dealerId" to dealerId,
                         "carId" to carId,
-                        "lastMessage" to messageText,
-                        "lastMessageTimestamp" to FieldValue.serverTimestamp(),
-                        "isNotificationSent" to isNotificationSent
+                        "timestamp" to FieldValue.serverTimestamp()
                     )
 
                     FirebaseFirestore.getInstance()
@@ -191,7 +163,6 @@ class MessagesFragment : Fragment() {
                 }
         }
     }
-
 
     private fun sendBase64Media(base64: String, mediaType: String) {
         if (base64.isEmpty()) {
@@ -215,15 +186,10 @@ class MessagesFragment : Fragment() {
             }
     }
 
-    private fun selectMedia() {
-        mediaPickerLauncher.launch("*/*")
-    }
-
     private fun takePicture() {
         lifecycleScope.launch {
             getTmpFileUri().let { uri ->
                 latestTmpUri = uri
-                Log.d("MessagesFragment", "Launching camera with temp URI: $uri")
                 takePictureLauncher.launch(uri)
             }
         }
@@ -236,54 +202,38 @@ class MessagesFragment : Fragment() {
         }
 
         return FileProvider.getUriForFile(
-             requireContext(),
-             "${requireContext().packageName}.provider",
-             tmpFile
+            requireContext(),
+            "${requireContext().packageName}.provider",
+            tmpFile
         )
     }
 
     private fun handleCapturedImage(uri: Uri) {
-         val path = FileUtils.getPath(requireContext(), uri)
-         if (path != null) {
-             val base64 = fileToBase64(path)
-             if (base64.isNotEmpty()) {
-                 sendBase64Media(base64, "image")
-             } else {
-                 Toast.makeText(context, "Failed to encode captured image", Toast.LENGTH_SHORT).show()
-             }
-         } else {
-             Toast.makeText(context, "Failed to access captured image file", Toast.LENGTH_SHORT).show()
-         }
+        val path = FileUtils.getPath(requireContext(), uri)
+        if (path != null) {
+            val base64 = fileToBase64(path)
+            if (base64.isNotEmpty()) {
+                sendBase64Media(base64, "image")
+            } else {
+                Toast.makeText(context, "Failed to encode captured image", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "Failed to access captured image file", Toast.LENGTH_SHORT).show()
+        }
     }
-
-
 
     private fun handleSelectedMedia(uri: Uri) {
         val mediaType = requireContext().contentResolver.getType(uri)?.split("/")?.getOrNull(0)
-        Log.d("MessagesFragment", "Selected media type: $mediaType, URI: $uri")
-
-        if (mediaType == null || !listOf("audio", "video", "image").contains(mediaType)) {
+        if (mediaType == null || mediaType != "image" && mediaType != "audio") {
             Toast.makeText(context, "Unsupported file type: $mediaType", Toast.LENGTH_SHORT).show()
-            Log.w("MessagesFragment", "Unsupported file type selected: $mediaType")
             return
         }
 
         val path = FileUtils.getPath(requireContext(), uri)
         if (path != null) {
-
             val base64 = fileToBase64(path)
             if (base64.isNotEmpty()) {
-                val finalMediaType = when(mediaType) {
-                    "audio" -> "audio"
-                    "video" -> "video"
-                    "image" -> "image"
-                    else -> "unknown"
-                }
-                if (finalMediaType != "unknown") {
-                    sendBase64Media(base64, finalMediaType)
-                } else {
-                    Toast.makeText(context, "Cannot determine media type", Toast.LENGTH_SHORT).show()
-                }
+                sendBase64Media(base64, mediaType)
             } else {
                 Toast.makeText(context, "Failed to encode selected media", Toast.LENGTH_SHORT).show()
             }
@@ -292,11 +242,11 @@ class MessagesFragment : Fragment() {
         }
     }
 
-
     private fun setupAudioRecordButton() {
-        binding.audioRecordButton.setOnTouchListener { view, motionEvent ->
+        binding.audioRecordButton.setOnTouchListener { _, motionEvent ->
             when (motionEvent.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    if (isRecording) return@setOnTouchListener true
                     if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                         startRecordingInternal()
                     } else {
@@ -305,11 +255,7 @@ class MessagesFragment : Fragment() {
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (isRecording) {
-                        stopRecordingAndSend()
-                    } else {
-                        cleanupRecorder()
-                    }
+                    if (isRecording) stopRecordingAndSend() else cleanupRecorder()
                     true
                 }
                 else -> false
@@ -318,10 +264,7 @@ class MessagesFragment : Fragment() {
     }
 
     private fun startRecordingInternal() {
-        if (isRecording) {
-            Log.w("MessagesFragment", "startRecordingInternal called while already recording.")
-            return
-        }
+        if (isRecording) return
 
         val fileName = "recorded_audio_${System.currentTimeMillis()}.3gp"
         val file = File(requireContext().cacheDir, fileName)
@@ -329,12 +272,7 @@ class MessagesFragment : Fragment() {
         var recorder: MediaRecorder? = null
 
         try {
-            recorder = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                MediaRecorder(requireContext())
-            } else {
-                @Suppress("DEPRECATION")
-                MediaRecorder()
-            }).apply {
+            recorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
                 setOutputFile(audioFilePath)
@@ -342,132 +280,55 @@ class MessagesFragment : Fragment() {
                 prepare()
                 start()
             }
-            this.mediaRecorder = recorder
+            mediaRecorder = recorder
             isRecording = true
-            Log.d("MessagesFragment", "Audio recording started: $audioFilePath")
-
         } catch (e: Exception) {
-            Log.e("MessagesFragment", "MediaRecorder setup or start failed", e)
-            Toast.makeText(context, "Failed to start recording: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
             recorder?.release()
             cleanupRecorder()
         }
     }
 
     private fun stopRecordingAndSend() {
-        if (!isRecording || mediaRecorder == null) {
-            Log.w("MessagesFragment", "stopRecordingAndSend called but not in a valid recording state.")
-            cleanupRecorder()
-            return
-        }
+        val recorder = mediaRecorder ?: return
+        val path = audioFilePath ?: return
 
-        val recorderToStop = mediaRecorder
-        val currentFilePath = audioFilePath
-
-        isRecording = false
-        mediaRecorder = null
-
-        var stopSucceeded = false
         try {
-            Log.d("MessagesFragment", "Attempting to stop audio recording...")
-            recorderToStop?.stop()
-            stopSucceeded = true
-            Log.d("MessagesFragment", "Audio recording stopped successfully.")
-
-        } catch (e: RuntimeException) {
-            Log.e("MessagesFragment", "Error stopping MediaRecorder", e)
-            Toast.makeText(context, "Error stopping recording", Toast.LENGTH_SHORT).show()
-            currentFilePath?.let { path ->
-                try {
-                    File(path).delete()
-                    Log.d("MessagesFragment", "Deleted potentially corrupted audio file: $path")
-                } catch (ioe: IOException) {
-                    Log.e("MessagesFragment", "Error deleting corrupted audio file", ioe)
-                }
-            }
-        } finally {
-            cleanupRecorder(recorderToStop)
-        }
-
-        if (stopSucceeded && currentFilePath != null) {
-            val base64 = fileToBase64(currentFilePath)
+            recorder.stop()
+            val base64 = fileToBase64(path)
             if (base64.isNotEmpty()) {
                 sendBase64Media(base64, "audio")
-            } else {
-                Toast.makeText(context, "Failed to encode audio", Toast.LENGTH_SHORT).show()
-                try { File(currentFilePath).delete() } catch (e: Exception) {}
             }
-        } else if (stopSucceeded && currentFilePath == null) {
-            Log.e("MessagesFragment", "Stop succeeded but audio file path was null.")
-            Toast.makeText(context, "Audio file not found after recording", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            File(path).delete()
+        } finally {
+            cleanupRecorder(recorder)
         }
     }
 
-
-    private fun cleanupRecorder(recorderInstance: MediaRecorder? = this.mediaRecorder) {
-        Log.d("MessagesFragment", "cleanupRecorder called.")
-        recorderInstance?.let {
-            try {
-                it.release()
-                Log.d("MessagesFragment", "MediaRecorder released.")
-            } catch (e: Exception) {
-                Log.e("MessagesFragment", "Error releasing MediaRecorder during cleanup", e)
-            }
-        }
-
-        if (recorderInstance == this.mediaRecorder || this.mediaRecorder != null) {
-            this.mediaRecorder = null
-        }
+    private fun cleanupRecorder(recorder: MediaRecorder? = mediaRecorder) {
+        recorder?.release()
+        mediaRecorder = null
         isRecording = false
         audioFilePath = null
-
-        if (view != null) {
-            try {
-            } catch (e: IllegalStateException) {
-                Log.w("MessagesFragment", "Could not reset button text, view likely destroyed.")
-            }
-        }
-        Log.d("MessagesFragment", "Recorder cleanup complete.")
-    }
-
-
-    private fun startVideoRecording() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            startVideoRecordingInternal()
-        } else {
-            requestVideoPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    }
-
-    private fun startVideoRecordingInternal() {
-        val fileName = "recorded_video_${System.currentTimeMillis()}.mp4"
-        val file = File(requireContext().cacheDir, fileName)
-        try {
-            videoUri = FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.provider",
-                file
-            )
-            Log.d("MessagesFragment", "Launching video capture intent with URI: $videoUri")
-            videoCaptureLauncher.launch(videoUri)
-        } catch (e: IllegalArgumentException) {
-            Log.e("MessagesFragment", "FileProvider failed for video recording.", e)
-            Toast.makeText(context, "Error setting up video recording", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun listenForMessages() {
+        val currentUserId = auth.currentUser?.uid ?: return
         messagesRef
             .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("MessagesFragment", "Firestore listen failed", error)
                     Toast.makeText(context, "Failed to load messages", Toast.LENGTH_LONG).show()
                     return@addSnapshotListener
                 }
 
-                val messages = snapshot?.documents?.mapNotNull {
-                    it.toObject(Message::class.java)
+                val messages = snapshot?.documents?.mapNotNull { doc ->
+                    val message = doc.toObject(Message::class.java)
+                    if (message != null && message.senderId != currentUserId && !message.notificationSent) {
+                        messagesRef.document(doc.id).update("notificationSent", true)
+                    }
+                    message
                 }.orEmpty()
 
                 adapter.submitList(messages) {
@@ -477,38 +338,5 @@ class MessagesFragment : Fragment() {
                 }
             }
     }
-    private fun fileToBase64(path: String?): String {
-        if (path == null) {
-            Log.e("MessagesFragment", "fileToBase64: Input path is null")
-            return ""
-        }
-        val file = File(path)
-        if (!file.exists()) {
-            Log.e("MessagesFragment", "fileToBase64: File does not exist at path: $path")
-            return ""
-        }
-        val fileSizeInMB = file.length() / (1024.0 * 1024.0)
-        val maxSizeMB = 1000
-        if (fileSizeInMB > maxSizeMB) {
-            Log.e("MessagesFragment", "File size (${fileSizeInMB}MB) exceeds limit (${maxSizeMB}MB) for Base64 encoding.")
-            Toast.makeText(context, "Selected file is too large (Max ${maxSizeMB}MB)", Toast.LENGTH_SHORT).show()
-            return ""
-        }
-
-        return try {
-            val bytes = file.readBytes()
-            Base64.encodeToString(bytes, Base64.NO_WRAP)
-        } catch (e: IOException) {
-            Log.e("MessagesFragment", "Failed to read file for Base64 encoding", e)
-            ""
-        } catch (e: OutOfMemoryError) {
-            Log.e("MessagesFragment", "OutOfMemoryError encoding file to Base64. File might be too large.", e)
-            Toast.makeText(context, "File is too large to process", Toast.LENGTH_SHORT).show()
-            ""
-        }
-    }
-
-    fun encodeToBase64(input: String): String {
-        return Base64.encodeToString(input.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
-    }
 }
+

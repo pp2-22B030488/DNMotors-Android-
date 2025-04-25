@@ -1,21 +1,11 @@
 package com.example.dnmotors.viewmodel
 
-import android.Manifest
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.util.Base64
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.dnmotors.R
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
@@ -36,8 +26,6 @@ class ChatViewModel : ViewModel() {
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> = _messages
 
-    private val baseRef: DatabaseReference = FirebaseDatabase.getInstance().getReference("messages")
-
     private var messagesListener: ValueEventListener? = null
     private var messagesListenerRef: DatabaseReference? = null
 
@@ -53,12 +41,15 @@ class ChatViewModel : ViewModel() {
                 val chatItems = result.documents.mapNotNull { doc ->
                     val carId = doc.getString("carId")
                     val userId = doc.getString("userId")
+                    val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
+
                     if (carId != null && userId != null) {
                         ChatItem(
                             carId = carId,
                             userId = userId,
-                            dealerId = dealerId
-                        )
+                            dealerId = dealerId,
+                            timestamp = timestamp
+                            )
                     } else null
                 }
                 _chatItems.postValue(chatItems)
@@ -88,11 +79,19 @@ class ChatViewModel : ViewModel() {
                 if (snapshot != null && !snapshot.isEmpty) {
                     val messages = snapshot.documents.mapNotNull { doc ->
                         doc.toObject(Message::class.java)?.let { message ->
-                            val decodedMessage = try {
-                                val bytes = Base64.decode(message.message, Base64.DEFAULT)
-                                String(bytes, Charsets.UTF_8)
-                            } catch (e: Exception) {
-                                "[Error decoding message]"
+                            val decodedMessage = when (message.messageType) {
+                                "text" -> {
+                                    val bytes = Base64.decode(message.message, Base64.DEFAULT)
+                                    String(bytes, Charsets.UTF_8)
+                                }
+                                "image", "audio", "video" -> message.message // Still base64, handled by decoder in UI
+                                else -> "[Unknown type]"
+                            }
+
+
+                            // Mark as notified if not already
+                            if (!message.notificationSent) {
+                                doc.reference.update("notificationSent", true)
                             }
 
                             message.copy(message = decodedMessage)
@@ -114,7 +113,7 @@ class ChatViewModel : ViewModel() {
         senderName: String,
         userId: String,
         carId: String,
-        isNotificationSent: Boolean
+        notificationSent: Boolean
     ) {
         if (messageText.isBlank()) return
 
@@ -131,12 +130,10 @@ class ChatViewModel : ViewModel() {
             messageType = "text",
             timestamp = timestamp,
             carId = carId,
-            isNotificationSent = false
+            notificationSent = false
         )
-
         val firestore = FirebaseFirestore.getInstance()
 
-        // 1. Send the actual message
         firestore.collection("chats")
             .document(chatId)
             .collection("messages")
@@ -149,8 +146,7 @@ class ChatViewModel : ViewModel() {
                     "dealerId" to senderId,
                     "carId" to carId,
                     "lastMessage" to messageText,
-                    "lastMessageTimestamp" to FieldValue.serverTimestamp(),
-                    "isNotificationSent" to isNotificationSent
+                    "timestamp" to FieldValue.serverTimestamp(),
                 )
 
                 firestore.collection("chats")
@@ -162,6 +158,7 @@ class ChatViewModel : ViewModel() {
             }
     }
 
+
     private fun removeMessagesListener() {
         messagesListener?.let { listener ->
             messagesListenerRef?.removeEventListener(listener)
@@ -171,13 +168,50 @@ class ChatViewModel : ViewModel() {
     }
 
     fun observeMessages(chatId: String, context: Context) {
-        MessageNotificationUtil.observeNewMessages(chatId, context) { newMessage ->
-            val currentMessages = _messages.value?.toMutableList() ?: mutableListOf()
-            currentMessages.add(newMessage)
-            _messages.postValue(currentMessages)
-        }
-    }
+        FirebaseFirestore.getInstance()
+            .collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(1)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null || snapshot.isEmpty) return@addSnapshotListener
 
+                for (doc in snapshot.documents) {
+                    val message = doc.toObject(Message::class.java) ?: continue
+                    if (!message.notificationSent) {
+                        // Send notification
+                        MessageNotificationUtil.sendNotification(context, message)
+
+                        // Mark message as notified
+                        doc.reference.update("notificationSent", true)
+                    }
+                }
+            }
+    }
+    fun sendMediaMessage(
+        chatId: String,
+        base64Media: String,
+        type: String,
+        senderId: String,
+        senderName: String,
+        userId: String,
+        carId: String
+    ) {
+        val message = Message(
+            message = base64Media,
+            messageType = type,
+            senderId = senderId,
+            name = senderName,
+            timestamp = System.currentTimeMillis()
+        )
+
+        val firestore = FirebaseFirestore.getInstance()
+        firestore.collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .add(message)
+    }
 
     override fun onCleared() {
         super.onCleared()

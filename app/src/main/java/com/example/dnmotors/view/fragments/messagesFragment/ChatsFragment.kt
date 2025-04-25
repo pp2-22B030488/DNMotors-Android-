@@ -10,16 +10,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.dnmotors.databinding.ChatItemBinding
 import com.example.dnmotors.databinding.FragmentChatsBinding
-import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.adapter.ChatListAdapter
 import com.example.domain.model.ChatItem
-import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 
 class ChatsFragment : Fragment() {
     private lateinit var binding: FragmentChatsBinding
@@ -56,15 +51,13 @@ class ChatsFragment : Fragment() {
                 val chatItems = result.documents.mapNotNull { doc ->
                     val carId = doc.getString("carId")
                     val dealerId = doc.getString("dealerId")
-                    val lastMessage = doc.getString("lastMessage") ?: ""
-                    val timestamp = doc.getTimestamp("lastMessageTimestamp")?.toDate()?.time ?: 0L
+                    val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
 
                     if (carId != null && dealerId != null) {
                         ChatItem(
                             carId = carId,
                             userId = userId,
                             dealerId = dealerId,
-                            lastMessage = lastMessage,
                             timestamp = timestamp,
                         )
                     } else null

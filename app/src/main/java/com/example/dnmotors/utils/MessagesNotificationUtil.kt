@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Base64
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -16,10 +17,6 @@ import com.example.dnmotors.R
 import com.example.dnmotors.view.activity.MainActivity
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.ChildEventListener
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -34,7 +31,6 @@ object MessageNotificationUtil {
         context: Context,
         onNewMessage: (Message) -> Unit = {}
     ) {
-        // Avoid duplicate listeners
         listeners[chatId]?.remove()
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
@@ -63,7 +59,7 @@ object MessageNotificationUtil {
 
                     sendNotification(context, decoded)
                     onNewMessage(decoded)
-                    doc.reference.update("isNotificationSent", true)
+                    doc.reference.update("notificationSent", true)
 
                 }
             }
@@ -76,6 +72,10 @@ object MessageNotificationUtil {
     }
 
     fun sendNotification(context: Context, message: Message) {
+        if (message.notificationSent) {
+            return
+        }
+
         val channelId = "messages_channel"
         val notificationManager = NotificationManagerCompat.from(context)
 
@@ -111,4 +111,17 @@ object MessageNotificationUtil {
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
+
+
+    fun markNotificationAsSeen(chatId: String) {
+        val chatRef = FirebaseFirestore.getInstance().collection("chats").document(chatId)
+        chatRef.update("notificationSent", true)
+            .addOnSuccessListener {
+                Log.d("Chat", "Notification marked as seen for chat: $chatId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Chat", "Failed to mark notification as seen", e)
+            }
+    }
+
 }

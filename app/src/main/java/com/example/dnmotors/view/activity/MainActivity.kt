@@ -1,5 +1,6 @@
 package com.example.dnmotors.view.activity
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -15,6 +16,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
+import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.dnmotors.viewmodel.AuthViewModel
@@ -195,8 +197,30 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     navController.navigate(R.id.carFragment)
                     binding.bottomNavigationView.visibility = View.VISIBLE
 
+                    // Start background chat listeners for this user
+                    val userId = auth.currentUser?.uid
+                    userId?.let {
+                        startMessageListenersForUser(it, this)
+                    }
                 }
+
             }
         }
     }
+
+    private fun startMessageListenersForUser(userId: String, context: Context) {
+        val firestore = FirebaseFirestore.getInstance()
+
+        firestore.collection("chats")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                for (doc in snapshot.documents) {
+                    val chatId = doc.id
+                    if (chatId.contains(userId)) {
+                        MessageNotificationUtil.observeNewMessages(chatId, context)
+                    }
+                }
+            }
+    }
+
 }
