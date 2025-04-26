@@ -8,8 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.lifecycle.findViewTreeLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -63,7 +61,7 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                     tvMessage.visibility = View.VISIBLE
                     tvMessage.text = if (!message.text.isNullOrEmpty()) {
                         try {
-                            MediaUtils.decodeFromBase64(message.mediaData)
+                            MediaUtils.decodeTextFromBase64(message.mediaData)
                         } catch (e: IllegalArgumentException) {
                             Log.e("MessagesAdapter", "Failed to decode Base64 text: ${message.mediaData}", e)
                             "[Invalid Text Message]"

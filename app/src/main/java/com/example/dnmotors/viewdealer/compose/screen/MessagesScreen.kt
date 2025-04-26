@@ -185,7 +185,7 @@ fun MessagesScreen(
                                     mediaRecorder.stop()
                                     mediaRecorder.reset()
                                     audioFile?.let { file ->
-                                        val base64 = FileUtils.fileToBase64(file.absolutePath)
+                                        val base64 = FileUtils.fileToBase64(file)
                                         viewModel.sendMediaMessage(
                                             chatId = chatId,
                                             base64Media = base64,

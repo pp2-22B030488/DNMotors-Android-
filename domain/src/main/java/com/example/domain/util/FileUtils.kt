@@ -10,16 +10,15 @@ object FileUtils {
 
     private const val TAG = "FileUtils"
 
-    fun fileToBase64(filePath: String): String {
+    fun fileToBase64(file: File): String {
         return try {
-            val file = File(filePath)
-            val bytes = FileInputStream(file).use { it.readBytes() }
-            Base64.encodeToString(bytes, Base64.DEFAULT)
+            Base64.encodeToString(file.readBytes(), Base64.DEFAULT)
         } catch (e: Exception) {
-            Log.e(TAG, "File to Base64 error: ${e.message}")
+            Log.e(TAG, "File to Base64 error: ${e.message}", e)
             ""
         }
     }
+
 
     fun encodeToBase64(text: String): String {
         return try {

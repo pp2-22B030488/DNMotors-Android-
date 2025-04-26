@@ -98,7 +98,6 @@ class MessagesFragment : Fragment() {
                 MotionEvent.ACTION_DOWN -> {
                     if (mediaRepository.isRecording()) return@setOnTouchListener true
 
-                    // First, check audio permission manually (not directly call startRecording yet)
                     if (ContextCompat.checkSelfPermission(
                             requireContext(),
                             Manifest.permission.RECORD_AUDIO
@@ -106,7 +105,6 @@ class MessagesFragment : Fragment() {
                     ) {
                         startRecordingSafely()
                     } else {
-                        // Request permission first
                         mediaRepository.requestAudioPermission(
                             requireActivity(),
                             requestAudioPermissionLauncher,
@@ -122,8 +120,8 @@ class MessagesFragment : Fragment() {
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     if (mediaRepository.isRecording()) {
                         mediaRepository.stopRecording(
-                            onSuccess = { path ->
-                                val base64 = FileUtils.fileToBase64(path)
+                            onSuccess = { file -> // <- file not path
+                                val base64 = FileUtils.fileToBase64(file)
                                 if (base64.isNotEmpty()) {
                                     sendBase64Media(base64, "audio")
                                 }
@@ -141,6 +139,7 @@ class MessagesFragment : Fragment() {
             }
         }
     }
+
 
     private fun startRecordingSafely() {
         mediaRepository.startRecording(

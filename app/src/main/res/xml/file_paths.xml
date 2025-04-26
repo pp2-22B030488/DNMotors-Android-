@@ -2,5 +2,6 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <cache-path name="cached_files" path="." />
     <cache-path name="cache" path="." />
+    <cache-path name="audio" path="." />
 
 </paths>
