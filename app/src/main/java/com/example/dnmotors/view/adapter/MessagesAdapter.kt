@@ -61,11 +61,11 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
             when (val messageType = message.messageType) {
                 "text" -> {
                     tvMessage.visibility = View.VISIBLE
-                    tvMessage.text = if (!message.message.isNullOrEmpty()) {
+                    tvMessage.text = if (!message.text.isNullOrEmpty()) {
                         try {
-                            MediaUtils.decodeFromBase64(message.message)
+                            MediaUtils.decodeFromBase64(message.mediaData)
                         } catch (e: IllegalArgumentException) {
-                            Log.e("MessagesAdapter", "Failed to decode Base64 text: ${message.message}", e)
+                            Log.e("MessagesAdapter", "Failed to decode Base64 text: ${message.mediaData}", e)
                             "[Invalid Text Message]"
                         }
                     } else {
@@ -78,7 +78,7 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                     tvMessage.text = "[${messageType.replaceFirstChar { it.uppercase() }} Message]"
                     btnPlay.text = "Play ${messageType.replaceFirstChar { it.uppercase() }}"
                     btnPlay.setOnClickListener {
-                        val currentBase64 = message.base64
+                        val currentBase64 = message.mediaData
                         if (currentBase64.isNullOrEmpty()) {
                             Toast.makeText(itemView.context, "Media data is missing", Toast.LENGTH_SHORT).show()
                             Log.w("MessagesAdapter", "Play clicked but Base64 data is null or empty for message ID: ${message.id}")
@@ -98,7 +98,7 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                     ivMediaPreview.visibility = View.VISIBLE
                     ivMediaPreview.setImageResource(R.drawable.ic_settings)
 
-                    val currentBase64 = message.base64
+                    val currentBase64 = message.mediaData
                     if (currentBase64.isNullOrEmpty()) {
                         Log.w("MessagesAdapter", "Image message has empty Base64 data. ID: ${message.id}")
                         ivMediaPreview.setImageResource(R.drawable.ic_settings)

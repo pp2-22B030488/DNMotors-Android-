@@ -6,6 +6,8 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.dnmotors.App
+import com.example.dnmotors.utils.MediaUtils
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
@@ -13,15 +15,19 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import java.io.File
 import java.util.UUID
 
 class ChatViewModel : ViewModel() {
     private val _chatItems = MutableLiveData<List<ChatItem>>()
     val chatItems: LiveData<List<ChatItem>> = _chatItems
+    private val appContext = App.context
 
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> = _messages
@@ -76,33 +82,78 @@ class ChatViewModel : ViewModel() {
                     return@addSnapshotListener
                 }
 
-                if (snapshot != null && !snapshot.isEmpty) {
-                    val messages = snapshot.documents.mapNotNull { doc ->
+                val messages = snapshot?.documents?.mapNotNull { doc ->
+                    try {
                         doc.toObject(Message::class.java)?.let { message ->
-                            val decodedMessage = when (message.messageType) {
-                                "text" -> {
-                                    val bytes = Base64.decode(message.message, Base64.DEFAULT)
-                                    String(bytes, Charsets.UTF_8)
-                                }
-                                "image", "audio", "video" -> message.message // Still base64, handled by decoder in UI
-                                else -> "[Unknown type]"
+                            when (message.messageType?.lowercase()) {
+                                "text" -> handleTextMessage(message, doc.reference)
+                                "audio", "video" -> handleAudioVideoMessage(message)
+                                "image" -> handleImageMessage(message)
+                                else -> message.copy(text = "[Unknown message type]")
+                            }.also {
+                                markAsNotifiedIfNeeded(it, doc.reference)
                             }
-
-
-                            // Mark as notified if not already
-                            if (!message.notificationSent) {
-                                doc.reference.update("notificationSent", true)
-                            }
-
-                            message.copy(message = decodedMessage)
                         }
+                    } catch (e: Exception) {
+                        Log.e("MessageDecode", "Error processing message ${doc?.id}", e)
+                        null
                     }
+                } ?: emptyList()
 
-                    _messages.postValue(messages)
-                } else {
-                    _messages.postValue(emptyList())
-                }
+                _messages.postValue(messages)
             }
+    }
+
+    private fun handleTextMessage(message: Message, ref: DocumentReference): Message {
+        return try {
+            val decodedText = if (!message.mediaData.isNullOrEmpty()) {
+                Base64.decode(message.mediaData, Base64.DEFAULT).toString(Charsets.UTF_8)
+            } else {
+                Log.w("MessageDecode", "Empty text field in message")
+                "[Empty message]"
+            }
+            message.copy(text = decodedText)
+        } catch (e: Exception) {
+            Log.e("MessageDecode", "Base64 decoding error", e)
+            message.copy(text = "[Decoding error]")
+        }
+    }
+
+    private fun handleAudioVideoMessage(message: Message): Message {
+        return try {
+            val filePath = if (!message.mediaData.isNullOrEmpty()) {
+                MediaUtils.decodeBase64ToFile(
+                    message.mediaData,
+                    message.messageType!!,
+                    appContext
+                )?.absolutePath ?: ""
+            } else {
+                Log.w("MessageDecode", "Empty mediaData for audio/video")
+                ""
+            }
+            message.copy(mediaData = filePath)
+        } catch (e: Exception) {
+            Log.e("MessageDecode", "Media processing error", e)
+            message.copy(mediaData = "[Media error]")
+        }
+    }
+
+    private fun handleImageMessage(message: Message): Message {
+        return if (!message.mediaData.isNullOrEmpty()) {
+            message // Return as-is for lazy loading
+        } else {
+            Log.w("MessageDecode", "Empty mediaData for image")
+            message.copy(mediaData = "")
+        }
+    }
+
+    private fun markAsNotifiedIfNeeded(message: Message, ref: DocumentReference) {
+        if (!message.notificationSent) {
+            ref.update("notificationSent", true)
+                .addOnFailureListener { e ->
+                    Log.e("Notification", "Failed to update notification status", e)
+                }
+        }
     }
 
 
@@ -126,7 +177,8 @@ class ChatViewModel : ViewModel() {
             id = messageId,
             senderId = senderId,
             name = senderName,
-            message = encodedMessage,
+            text = messageText,
+            mediaData = encodedMessage,
             messageType = "text",
             timestamp = timestamp,
             carId = carId,
@@ -160,6 +212,7 @@ class ChatViewModel : ViewModel() {
 
 
     private fun removeMessagesListener() {
+        dealerMessagesListener?.remove()
         messagesListener?.let { listener ->
             messagesListenerRef?.removeEventListener(listener)
         }
@@ -167,28 +220,6 @@ class ChatViewModel : ViewModel() {
         messagesListenerRef = null
     }
 
-    fun observeMessages(chatId: String, context: Context) {
-        FirebaseFirestore.getInstance()
-            .collection("chats")
-            .document(chatId)
-            .collection("messages")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(1)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || snapshot.isEmpty) return@addSnapshotListener
-
-                for (doc in snapshot.documents) {
-                    val message = doc.toObject(Message::class.java) ?: continue
-                    if (!message.notificationSent) {
-                        // Send notification
-                        MessageNotificationUtil.sendNotification(context, message)
-
-                        // Mark message as notified
-                        doc.reference.update("notificationSent", true)
-                    }
-                }
-            }
-    }
     fun sendMediaMessage(
         chatId: String,
         base64Media: String,
@@ -199,7 +230,7 @@ class ChatViewModel : ViewModel() {
         carId: String
     ) {
         val message = Message(
-            message = base64Media,
+            text = base64Media,
             messageType = type,
             senderId = senderId,
             name = senderName,
@@ -211,6 +242,70 @@ class ChatViewModel : ViewModel() {
             .document(chatId)
             .collection("messages")
             .add(message)
+    }
+    private var dealerMessagesListener: ListenerRegistration? = null
+
+    private val _currentChatId = MutableLiveData<String?>()
+    val currentChatId: LiveData<String?> = _currentChatId
+
+
+    fun observeAllDealerMessages(context: Context) {
+        val dealerId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val currentUserId = dealerId
+
+        dealerMessagesListener?.remove()
+
+        FirebaseFirestore.getInstance().collectionGroup("messages")
+            .whereEqualTo("dealerId", dealerId)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+
+                for (doc in snapshot.documents) {
+                    val message = doc.toObject(Message::class.java) ?: continue
+
+                    val messageChatId = doc.reference.parent.parent?.id ?: continue
+
+                    if (message.senderId == currentUserId ||
+                        messageChatId == _currentChatId.value) {
+                        continue
+                    }
+
+                    if (!message.notificationSent) {
+                        MessageNotificationUtil.sendNotification(context, message)
+                        doc.reference.update("notificationSent", true)
+                    }
+                }
+            }
+    }
+
+    fun observeMessages(chatId: String, context: Context) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(1)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+
+                for (doc in snapshot.documents) {
+                    val message = doc.toObject(Message::class.java) ?: continue
+
+                    // Skip if: current user sent it OR user is in this chat
+                    if (message.senderId == currentUserId ||
+                        chatId == _currentChatId.value) {
+                        continue
+                    }
+
+                    if (!message.notificationSent) {
+                        MessageNotificationUtil.sendNotification(context, message)
+                        doc.reference.update("notificationSent", true)
+                    }
+                }
+            }
     }
 
     override fun onCleared() {

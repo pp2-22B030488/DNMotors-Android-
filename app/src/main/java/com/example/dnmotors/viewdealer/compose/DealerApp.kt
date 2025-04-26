@@ -24,7 +24,10 @@ fun DealerApp() {
             }
         }
         chatViewModel.loadChatListForDealer()
+
+        chatViewModel.observeAllDealerMessages(context)
     }
+
 
     Scaffold(
         bottomBar = {

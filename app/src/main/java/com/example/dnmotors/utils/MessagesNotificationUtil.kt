@@ -49,8 +49,8 @@ object MessageNotificationUtil {
                     if (it.senderId == currentUserId) return@addSnapshotListener
 
                     val decoded = it.copy(
-                        message = try {
-                            val bytes = Base64.decode(it.message, Base64.DEFAULT)
+                        text = try {
+                            val bytes = Base64.decode(it.text, Base64.DEFAULT)
                             String(bytes, Charsets.UTF_8)
                         } catch (e: Exception) {
                             "[Error decoding]"
@@ -103,7 +103,7 @@ object MessageNotificationUtil {
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_settings)
             .setContentTitle("New message from ${message.name}")
-            .setContentText(message.message ?: "You have a new message")
+            .setContentText(message.text ?: "You have a new message")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

@@ -1,6 +1,7 @@
 package com.example.dnmotors
 
 import android.app.Application
+import android.content.Context
 import com.example.dnmotors.di.appModules
 import com.example.dnmotors.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
@@ -9,8 +10,19 @@ import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 
 class App : Application() {
+
+    companion object {
+        lateinit var instance: App
+            private set
+
+        val context: Context
+            get() = instance.applicationContext
+    }
+
     override fun onCreate() {
         super.onCreate()
+        instance = this
+
         startKoin {
             androidLogger(Level.DEBUG)
             androidContext(this@App)

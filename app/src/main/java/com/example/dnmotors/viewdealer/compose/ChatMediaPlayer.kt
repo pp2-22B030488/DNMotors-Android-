@@ -5,7 +5,7 @@ import android.net.Uri
 import android.util.Base64
 import com.example.dnmotors.viewmodel.ChatViewModel
 
-object MediaPlayer {
+object ChatMediaPlayer {
 
     fun handleMediaMessage(
         uri: Uri? = null,
@@ -19,28 +19,32 @@ object MediaPlayer {
         carId: String,
         context: Context
     ) {
-        val finalBase64 = base64 ?: run {
-            try {
-                val inputStream = uri?.let { context.contentResolver.openInputStream(it) }
-                val bytes = inputStream?.readBytes()
-                inputStream?.close()
-                bytes?.let { Base64.encodeToString(it, Base64.DEFAULT) }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
+        val mediaBase64 = base64 ?: run {
+            if (uri != null) {
+                try {
+                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        val bytes = inputStream.readBytes()
+                        Base64.encodeToString(bytes, Base64.NO_WRAP) // use NO_WRAP to avoid \n breaks
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+            } else null
         }
 
-        if (finalBase64 != null) {
+        if (mediaBase64 != null) {
             viewModel.sendMediaMessage(
                 chatId = chatId,
-                base64Media = finalBase64,
+                base64Media = mediaBase64,
                 type = type,
                 senderId = dealerId,
                 senderName = dealerName,
                 userId = userId,
                 carId = carId
             )
+        } else {
+            // Optionally, show an error: no media found
         }
     }
 

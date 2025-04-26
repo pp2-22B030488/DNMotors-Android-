@@ -5,8 +5,7 @@ import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Base64
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -45,14 +45,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
 import androidx.compose.ui.input.pointer.pointerInput
-import com.example.dnmotors.viewdealer.compose.MediaPlayer.handleMediaMessage
+import com.example.dnmotors.utils.MediaUtils
+import com.example.dnmotors.viewdealer.compose.ChatMediaPlayer
+import com.example.domain.repository.MediaRepository
+import com.example.domain.util.FileUtils
 import java.io.File
-import java.util.UUID
+import java.io.IOException
 
 @Composable
 fun MessagesScreen(
@@ -67,44 +67,7 @@ fun MessagesScreen(
     val messages by viewModel.messages.observeAsState(emptyList())
     var input by remember { mutableStateOf("") }
     val context = LocalContext.current
-
-    val launcherImagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            // Convert image uri to base64 and send
-            handleMediaMessage(
-                uri = uri,
-                type = "image",
-                viewModel = viewModel,
-                chatId = chatId,
-                dealerId = dealerId,
-                dealerName = dealerName,
-                userId = userId,
-                carId = carId,
-                context = context
-            )
-        }
-    }
-
-    val launcherFilePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            // Convert file uri to base64 and send
-            handleMediaMessage(
-                uri = uri,
-                type = "file",
-                viewModel = viewModel,
-                chatId = chatId,
-                dealerId = dealerId,
-                dealerName = dealerName,
-                userId = userId,
-                carId = carId,
-                context = context
-            )
-        }
-    }
+    val mediaRepository = remember { MediaRepository(context) }
 
     LaunchedEffect(chatId) {
         viewModel.loadMessages(chatId)
@@ -130,29 +93,42 @@ fun MessagesScreen(
         ) {
             items(messages) { msg ->
                 when (msg.messageType) {
-                    "text" -> Text("${msg.name}: ${msg.message}")
-                    "image" -> {
-                        msg.message?.let {
-                            val imageBytes = Base64.decode(it, Base64.DEFAULT)
-                            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                            Image(bitmap = bitmap.asImageBitmap(), contentDescription = null)
-                        } ?: Text("${msg.name}: [Image not available]")
+                    "text" -> {
+                        Text("${msg.name}: ${msg.text}")
                     }
+
+                    "image" -> {
+                        msg.mediaData?.let {
+                            val decodedBitmap = runCatching {
+                                val bytes = Base64.decode(it, Base64.NO_WRAP)
+                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            }.getOrNull()
+
+                            decodedBitmap?.let { bitmap ->
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .padding(vertical = 8.dp)
+                                )
+                            } ?: Text("${msg.name}: [Image not available]")
+                        }
+                    }
+
                     "audio" -> {
-                        msg.message?.let {
-                            val audioBytes = Base64.decode(it, Base64.DEFAULT)
-                            AudioPlayer(audioBytes)
+                        msg.mediaData?.let {
+                            AudioPlayer(it) // Pass Base64 string
                         } ?: Text("${msg.name}: [Audio not available]")
                     }
+
                     "file" -> {
-                        msg.message?.let {
-                            Text("${msg.name}: [File attached]")
-                        } ?: Text("${msg.name}: [File missing]")
+                        Text("${msg.name}: [File attached]")
                     }
 
-                    else -> Text("${msg.name}: [Unsupported]")
+                    else -> Text("${msg.name}: [Unsupported message type]")
                 }
-
             }
         }
 
@@ -164,106 +140,67 @@ fun MessagesScreen(
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val audioFile = remember {
-                File(context.cacheDir, "${UUID.randomUUID()}.3gp")
-            }
-
             var isRecording by remember { mutableStateOf(false) }
-            val mediaRecorder = remember {
-                MediaRecorder()
-            }
-            var expanded by remember { mutableStateOf(false) }
-            IconButton(onClick = { expanded = true }) {
-                Icon(Icons.Default.AttachFile, contentDescription = null)
-            }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                DropdownMenuItem(
-                    text = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Image, contentDescription = "Send Image", modifier = Modifier.padding(end = 8.dp))
-                            Text("Send Image")
-                        }
-                    },
-                    onClick = {
-                        expanded = false
-                        launcherImagePicker.launch("image/*")
-                    }
-                )
+            val mediaRecorder = remember { MediaRecorder() }
+            var audioFile: File? by remember { mutableStateOf(null) }
 
-                DropdownMenuItem(
-                    text = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Mic, contentDescription = "Record Audio", modifier = Modifier.padding(end = 8.dp))
-                            Text("Hold to Record")
-                        }
-                    },
-                    onClick = { /* Handled by pointerInput below */ },
-                    modifier = Modifier.pointerInput(Unit) {
+            IconButton(onClick = { /* Handle file attachment */ }) {
+                Icon(Icons.Default.AttachFile, contentDescription = "Attach File")
+            }
+
+            IconButton(
+                onClick = { /* Required but handled by gesture detector */ },
+
+                modifier = Modifier
+                    .pointerInput(Unit) {
                         detectTapGestures(
                             onPress = {
                                 try {
-                                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-                                    mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                                    mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                                    mediaRecorder.setOutputFile(audioFile.absolutePath)
-                                    mediaRecorder.prepare()
-                                    mediaRecorder.start()
-                                    isRecording = true
+                                    // Start recording
+                                    mediaRecorder.apply {
+                                        setAudioSource(MediaRecorder.AudioSource.MIC)
+                                        setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                                        setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                                        audioFile = FileUtils.createTempFile(context, "audio").also {
+                                            if (it != null) {
+                                                setOutputFile(it.absolutePath)
+                                            }
+                                        }
+                                        prepare()
+                                        start()
+                                        isRecording = true
+                                    }
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    Toast.makeText(context, "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
-
-                                // Wait for release
                                 tryAwaitRelease()
 
                                 if (isRecording) {
-                                    try {
-                                        mediaRecorder.stop()
-                                        mediaRecorder.reset()
-                                        isRecording = false
-
-                                        // Send recorded audio
-                                        val bytes = audioFile.readBytes()
-                                        val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                                        handleMediaMessage(
-                                            uri = Uri.fromFile(audioFile),
-                                            base64 = base64,
-                                            type = "audio",
-                                            viewModel = viewModel,
+                                    mediaRecorder.stop()
+                                    mediaRecorder.reset()
+                                    audioFile?.let { file ->
+                                        val base64 = FileUtils.fileToBase64(file.absolutePath)
+                                        viewModel.sendMediaMessage(
                                             chatId = chatId,
-                                            dealerName = dealerName,
-                                            dealerId = dealerId,
+                                            base64Media = base64,
+                                            type = "audio",
+                                            senderId = dealerId,
+                                            senderName = dealerName,
                                             userId = userId,
-                                            carId = carId,
-                                            context = context
-                                            )
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
+                                            carId = carId
+                                        )
                                     }
+                                    isRecording = false
                                 }
-
-                                expanded = false
                             }
                         )
                     }
+            ) {
+                Icon(
+                    imageVector = if (isRecording) Icons.Default.Pause else Icons.Default.Mic,
+                    contentDescription = if (isRecording) "Stop Recording" else "Record Audio"
                 )
-
-
-                DropdownMenuItem(
-                    text = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.AttachFile, contentDescription = "Send File", modifier = Modifier.padding(end = 8.dp))
-                            Text("Send File")
-                        }
-                    },
-                    onClick = {
-                        expanded = false
-                        launcherFilePicker.launch("*/*")
-                    }
-                )
-
             }
-
 
             TextField(
                 value = input,
@@ -271,7 +208,9 @@ fun MessagesScreen(
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Type a message...") }
             )
+
             Spacer(modifier = Modifier.width(8.dp))
+
             Button(
                 onClick = {
                     if (input.isNotBlank()) {
@@ -293,46 +232,61 @@ fun MessagesScreen(
         }
     }
 }
-@Composable
-fun AudioPlayer(audioBytes: ByteArray) {
-    val context = LocalContext.current
-    val tempFile = remember(audioBytes) {
-        File.createTempFile("temp_audio", ".mp3", context.cacheDir).apply {
-            writeBytes(audioBytes)
-        }
-    }
 
+@Composable
+fun AudioPlayer(base64Audio: String) {
+    val context = LocalContext.current
     var mediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
     var isPlaying by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
-    DisposableEffect(tempFile.absolutePath) {
+    DisposableEffect(base64Audio) {
+        val tempFile = MediaUtils.decodeBase64ToFile(base64Audio, "audio", context)
         mediaPlayer = MediaPlayer().apply {
-            setDataSource(tempFile.absolutePath)
-            prepare()
+            try {
+                setDataSource(tempFile?.absolutePath ?: "")
+                setOnPreparedListener { mp ->
+                    // Update UI state if needed
+                }
+                setOnCompletionListener {
+                    isPlaying = false
+                }
+                prepareAsync() // Non-blocking preparation
+            } catch (e: IOException) {
+                error = "Error preparing audio: ${e.message}"
+            }
         }
 
         onDispose {
             mediaPlayer?.release()
-            tempFile.delete()
+            tempFile?.delete()
         }
     }
 
+    if (error != null) {
+        Text(text = error!!)
+        return
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = {
-            mediaPlayer?.let {
-                if (isPlaying) {
-                    it.pause()
-                } else {
-                    it.start()
+        IconButton(
+            onClick = {
+                mediaPlayer?.let { player ->
+                    if (isPlaying) {
+                        player.pause()
+                        isPlaying = false
+                    } else {
+                        player.start()
+                        isPlaying = true
+                    }
                 }
-                isPlaying = !isPlaying
             }
-        }) {
+        ) {
             Icon(
                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                 contentDescription = if (isPlaying) "Pause" else "Play"
             )
         }
-        Text(text = if (isPlaying) "Playing..." else "Paused")
+        Text(text = if (isPlaying) "Playing..." else "Tap to play")
     }
 }
