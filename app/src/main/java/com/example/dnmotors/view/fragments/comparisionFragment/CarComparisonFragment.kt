@@ -8,7 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.dnmotors.databinding.FragmentCarComparisonBinding
-import com.example.dnmotors.view.fragments.carFragment.Car
+import com.example.dnmotors.model.Car
 import com.google.firebase.firestore.FirebaseFirestore
 
 class CarComparisonFragment : Fragment() {

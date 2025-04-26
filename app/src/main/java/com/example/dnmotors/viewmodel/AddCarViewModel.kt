@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dnmotors.view.fragments.carFragment.Car
+import com.example.dnmotors.model.Car
 import com.example.dnmotors.viewdealer.repository.CarRepository
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue

@@ -6,13 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentCarBinding
+import com.example.dnmotors.model.Car
+import com.example.dnmotors.view.adapter.CarAdapter
 import com.example.dnmotors.view.fragments.favouritesFragment.FavouritesManager
 import com.google.firebase.firestore.FirebaseFirestore
 

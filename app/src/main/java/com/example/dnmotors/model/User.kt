@@ -1,4 +1,4 @@
-package com.example.dnmotors.view.fragments.profileFragment
+package com.example.dnmotors.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

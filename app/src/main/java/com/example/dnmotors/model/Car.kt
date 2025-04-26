@@ -1,4 +1,4 @@
-package com.example.dnmotors.view.fragments.carFragment
+package com.example.dnmotors.model
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
@@ -6,7 +6,7 @@ import kotlinx.parcelize.Parcelize
 data class Car(
     val id: String = "",
     val vin: String = "",
-    val dealerId: String? = null,
+    val dealerId: String = "",
     val brand: String = "",
     val model: String = "",
     val year: Int = 0,

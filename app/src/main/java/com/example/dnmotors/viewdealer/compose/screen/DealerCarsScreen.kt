@@ -2,7 +2,6 @@ package com.example.dnmotors.viewdealer.compose.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,11 +18,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
-import com.example.dnmotors.view.fragments.carFragment.Car
-import com.example.dnmotors.view.fragments.profileFragment.User
+import com.example.dnmotors.model.Car
+import com.example.dnmotors.model.User
 import com.example.dnmotors.viewdealer.repository.CarRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
