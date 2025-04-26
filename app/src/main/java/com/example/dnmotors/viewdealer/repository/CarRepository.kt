@@ -1,7 +1,7 @@
 package com.example.dnmotors.viewdealer.repository
 
-import com.example.dnmotors.view.fragments.carFragment.Car
-import com.example.dnmotors.view.fragments.profileFragment.User
+import com.example.dnmotors.model.Car
+import com.example.dnmotors.model.User
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -44,7 +44,7 @@ class CarRepository {
             false
         }
     }
-    suspend fun addCar(car: com.example.dnmotors.view.fragments.carFragment.Car
+    suspend fun addCar(car: Car
     ): Boolean {
         return try {
             db.collection("Cars")

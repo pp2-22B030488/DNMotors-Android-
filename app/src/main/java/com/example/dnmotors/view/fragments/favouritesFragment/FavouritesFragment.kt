@@ -8,8 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dnmotors.R
-import com.example.dnmotors.view.fragments.carFragment.Car
-import com.example.dnmotors.view.fragments.carFragment.CarAdapter
+import com.example.dnmotors.view.adapter.CarAdapter
 
 class FavouritesFragment : Fragment() {
 

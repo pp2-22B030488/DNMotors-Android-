@@ -12,11 +12,10 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.dnmotors.view.fragments.carFragment.Car
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentSearchBinding
 import com.example.dnmotors.model.SearchFilters
-import com.example.dnmotors.view.fragments.carFragment.CarAdapter
+import com.example.dnmotors.view.adapter.CarAdapter
 import com.example.dnmotors.viewmodel.SearchViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
