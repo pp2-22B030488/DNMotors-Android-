@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.net.Uri
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -46,11 +47,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.input.pointer.pointerInput
 import com.example.dnmotors.utils.MediaUtils
 import com.example.dnmotors.viewdealer.compose.ChatMediaPlayer
 import com.example.domain.repository.MediaRepository
 import com.example.domain.util.FileUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 
@@ -236,57 +242,66 @@ fun MessagesScreen(
 @Composable
 fun AudioPlayer(base64Audio: String) {
     val context = LocalContext.current
-    var mediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
-    var isPlaying by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-
-    DisposableEffect(base64Audio) {
-        val tempFile = MediaUtils.decodeBase64ToFile(base64Audio, "audio", context)
-        mediaPlayer = MediaPlayer().apply {
-            try {
-                setDataSource(tempFile?.absolutePath ?: "")
-                setOnPreparedListener { mp ->
-                    // Update UI state if needed
-                }
-                setOnCompletionListener {
-                    isPlaying = false
-                }
-                prepareAsync() // Non-blocking preparation
-            } catch (e: IOException) {
-                error = "Error preparing audio: ${e.message}"
-            }
-        }
-
-        onDispose {
-            mediaPlayer?.release()
-            tempFile?.delete()
-        }
-    }
-
-    if (error != null) {
-        Text(text = error!!)
-        return
-    }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(
             onClick = {
-                mediaPlayer?.let { player ->
-                    if (isPlaying) {
-                        player.pause()
-                        isPlaying = false
-                    } else {
-                        player.start()
-                        isPlaying = true
+                scope.launch {
+                    isLoading = true
+                    error = null
+                    try {
+                        // Decode base64 to temp file
+                        val audioFile = withContext(Dispatchers.IO) {
+                            MediaUtils.decodeBase64ToFile(
+                                base64Audio,
+                                "audio",
+                                context
+                            ) ?: throw IOException("Failed to decode audio file")
+                        }
+
+                        // Play using external player
+                        MediaUtils.playFile(
+                            file = audioFile,
+                            mediaType = "audio",
+                            context = context
+                        )
+                    } catch (e: Exception) {
+                        error = "Error playing audio: ${e.message}"
+                        Log.e("AudioPlayer", error!!, e)
+                    } finally {
+                        isLoading = false
                     }
                 }
-            }
+            },
+            enabled = !isLoading
         ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = if (isPlaying) "Pause" else "Play"
-            )
+            if (isLoading) {
+//                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            } else {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = "Play audio"
+                )
+            }
         }
-        Text(text = if (isPlaying) "Playing..." else "Tap to play")
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(text = when {
+            isLoading -> "Preparing..."
+            error != null -> error!!
+            else -> "Play audio"
+        })
+    }
+
+    // Show error toast
+    if (error != null) {
+        LaunchedEffect(error) {
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            error = null // Clear error after showing
+        }
     }
 }

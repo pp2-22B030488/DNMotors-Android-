@@ -82,13 +82,20 @@ object MediaUtils {
         }
     }
 
-    fun decodeFromBase64(base64: String?): String {
-        if (base64.isNullOrEmpty()) return ""
+    fun decodeBase64ToFile(base64: String, type: String, context: Context): File? {
         return try {
-            String(Base64.decode(base64, Base64.NO_WRAP), Charsets.UTF_8)
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to decode Base64 string to text.", e)
-            ""
+            val bytes = Base64.decode(base64, Base64.DEFAULT)
+            val ext = when (type.lowercase()) {
+                "audio" -> ".mp3"
+                "video" -> ".mp4"
+                else -> ".tmp"
+            }
+            val file = File.createTempFile("media_", ext, context.cacheDir)
+            file.writeBytes(bytes)
+            file
+        } catch (e: Exception) {
+            Log.e("MediaUtils", "Base64 decode failed", e)
+            null
         }
     }
 
