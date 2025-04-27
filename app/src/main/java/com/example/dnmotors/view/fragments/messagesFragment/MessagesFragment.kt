@@ -1,10 +1,7 @@
 package com.example.dnmotors.view.fragments.messagesFragment
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
-import android.media.MediaRecorder
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -16,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentMessagesBinding
-import com.example.domain.util.FileUtils
+import com.example.dnmotors.utils.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth

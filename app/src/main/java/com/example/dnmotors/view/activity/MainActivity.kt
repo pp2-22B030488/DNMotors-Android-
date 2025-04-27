@@ -16,9 +16,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.example.dnmotors.App.Companion.context
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
+import com.example.dnmotors.services.MessageService
+import com.example.dnmotors.services.MessageWorker
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
@@ -85,13 +90,17 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     navController.navigate(R.id.carFragment)
                     binding.bottomNavigationView.visibility = View.VISIBLE
                     setupChatListeners()
+                    startMessageService()
 
+                    val messageWorkerRequest: WorkRequest = OneTimeWorkRequestBuilder<MessageWorker>()
+                        .build()
+
+                    WorkManager.getInstance(this).enqueue(messageWorkerRequest)
                 }
 
             }
         }
     }
-
     private fun setupChatListeners() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -115,13 +124,12 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     val message = doc.toObject(Message::class.java) ?: continue
                     val messageChatId = doc.reference.parent.parent?.id ?: continue
 
-                    if (message.senderId == userId ||
-                        message.notificationSent == true ||
-                        messageChatId == currentChatId) {
+                    if (message.senderId == userId || message.notificationSent || messageChatId == currentChatId) {
                         continue
                     }
 
                     MessageNotificationUtil.sendNotification(this, message)
+
                     doc.reference.update("notificationSent", true)
                         .addOnFailureListener { e ->
                             Log.e(TAG, "Failed to update notification status", e)
@@ -129,6 +137,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                 }
             }
     }
+
 
     private fun navigateToLoginScreen() {
         val navHostFragment = supportFragmentManager
@@ -229,7 +238,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                         }
 
                         override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {
-                            // Optional: Show placeholder while loading
                         }
                     })
             } else {
@@ -249,6 +257,9 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         navController.navigate(R.id.action_signInFragment_to_mainFragment)
         binding.bottomNavigationView.visibility = View.VISIBLE
     }
-
+    private fun startMessageService() {
+        val intent = Intent(this, MessageService::class.java)
+        startService(intent)
+    }
 
 }

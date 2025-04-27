@@ -1,10 +1,8 @@
-package com.example.domain.util
+package com.example.dnmotors.utils
 
-import android.content.Context
 import android.util.Base64
 import android.util.Log
 import java.io.File
-import java.io.FileInputStream
 
 object FileUtils {
 

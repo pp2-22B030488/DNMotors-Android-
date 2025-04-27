@@ -198,7 +198,6 @@ class ChatViewModel : ViewModel() {
             .document(messageId)
             .set(message)
             .addOnSuccessListener {
-                // 2. Update the metadata of the chat document
                 val chatMetadata = mapOf(
                     "userId" to userId,
                     "dealerId" to senderId,
@@ -268,36 +267,6 @@ class ChatViewModel : ViewModel() {
     val currentChatId: LiveData<String?> = _currentChatId
 
 
-    fun observeAllDealerMessages(context: Context) {
-        val dealerId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val currentUserId = dealerId
-
-        dealerMessagesListener?.remove()
-
-        FirebaseFirestore.getInstance().collectionGroup("messages")
-            .whereEqualTo("dealerId", dealerId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
-
-                for (doc in snapshot.documents) {
-                    val message = doc.toObject(Message::class.java) ?: continue
-
-                    val messageChatId = doc.reference.parent.parent?.id ?: continue
-
-                    if (message.senderId == currentUserId ||
-                        messageChatId == _currentChatId.value) {
-                        continue
-                    }
-
-                    if (!message.notificationSent) {
-                        MessageNotificationUtil.sendNotification(context, message)
-                        doc.reference.update("notificationSent", true)
-                    }
-                }
-            }
-    }
-
     fun observeMessages(chatId: String, context: Context) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -330,4 +299,10 @@ class ChatViewModel : ViewModel() {
         super.onCleared()
         removeMessagesListener()
     }
+}
+
+sealed class ChatResult {
+    object Success : ChatResult()
+    data class Error(val message: String) : ChatResult()
+    object Loading : ChatResult()
 }

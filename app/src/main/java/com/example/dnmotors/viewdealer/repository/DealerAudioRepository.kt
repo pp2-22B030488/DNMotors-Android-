@@ -5,7 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import com.example.dnmotors.viewmodel.ChatViewModel
 import com.example.domain.repository.MediaRepository
-import com.example.domain.util.FileUtils
+import com.example.dnmotors.utils.FileUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
