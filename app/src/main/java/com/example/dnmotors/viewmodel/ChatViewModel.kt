@@ -8,7 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dnmotors.App
-import com.example.dnmotors.utils.MediaUtils
+import com.example.domain.util.MediaUtils
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.domain.model.ChatItem
 import com.example.domain.model.Message

@@ -1,4 +1,4 @@
-package com.example.dnmotors.utils
+package com.example.domain.util
 
 import android.util.Base64
 import android.util.Log

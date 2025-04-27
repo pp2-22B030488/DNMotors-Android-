@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentMessagesBinding
-import com.example.dnmotors.utils.FileUtils
+import com.example.domain.util.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth

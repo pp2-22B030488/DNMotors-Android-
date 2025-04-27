@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.UserListBinding
-import com.example.dnmotors.utils.MediaUtils
+import com.example.domain.util.MediaUtils
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope

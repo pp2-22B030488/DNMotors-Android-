@@ -1,4 +1,4 @@
-package com.example.dnmotors.utils
+package com.example.domain.util
 
 import android.content.ActivityNotFoundException
 import android.content.Context
