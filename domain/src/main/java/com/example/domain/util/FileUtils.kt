@@ -29,21 +29,4 @@ object FileUtils {
         }
     }
 
-    fun createTempFile(context: Context, type: String): File? {
-        return try {
-            val (prefix, suffix) = when (type.lowercase()) {
-                "audio" -> Pair("audio_", ".3gp")
-                "image" -> Pair("image_", ".jpg")
-                "video" -> Pair("video_", ".mp4")
-                else -> Pair("file_", ".tmp")
-            }
-
-            File.createTempFile(prefix, suffix, context.cacheDir).apply {
-                createNewFile()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error creating temp file: ${e.message}")
-            null
-        }
-    }
 }

@@ -226,15 +226,16 @@ class ChatViewModel : ViewModel() {
         type: String,
         senderId: String,
         senderName: String,
-        userId: String,
         carId: String
     ) {
         val message = Message(
-            text = base64Media,
+            mediaData = base64Media,
             messageType = type,
             senderId = senderId,
             name = senderName,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            id = System.currentTimeMillis().toString(),
+            carId = carId,
         )
 
         val firestore = FirebaseFirestore.getInstance()
@@ -243,6 +244,9 @@ class ChatViewModel : ViewModel() {
             .collection("messages")
             .add(message)
     }
+
+
+
     private var dealerMessagesListener: ListenerRegistration? = null
 
     private val _currentChatId = MutableLiveData<String?>()
