@@ -103,12 +103,6 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                         return@with
                     }
 
-//                    val lifecycleOwner = itemView.findViewTreeLifecycleOwner()
-//                    if (lifecycleOwner == null) {
-//                        Log.e("MessagesAdapter", "Cannot find LifecycleOwner for image loading. ID: ${message.id}")
-//                        ivMediaPreview.setImageResource(R.drawable.ic_settings)
-//                        return@with
-//                    }
 
                     imageLoadingJob = CoroutineScope(Dispatchers.Main).launch {
                         Log.d("MessagesAdapter", "Starting background decode for image ID: ${message.id}")

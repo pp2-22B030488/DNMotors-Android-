@@ -16,7 +16,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentMessagesBinding
-import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.domain.util.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
 import com.example.domain.model.Message
@@ -41,11 +40,12 @@ class MessagesFragment : Fragment() {
 
     private lateinit var carId: String
     private lateinit var dealerId: String
+
     override fun onStart() {
         super.onStart()
-        observeMessages() // Start listening when the fragment starts
+        observeMessages()
     }
-    private var latestTmpUri: Uri? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -78,8 +78,6 @@ class MessagesFragment : Fragment() {
 
         binding.sendButton.setOnClickListener { sendMessage() }
         setupAudioRecordButton()
-//        observeMessages()
-//        listenForMessages()
         return binding.root
     }
 
@@ -182,6 +180,7 @@ class MessagesFragment : Fragment() {
                     "userId" to senderId,
                     "dealerId" to dealerId,
                     "carId" to carId,
+                    "name" to senderName,
                     "timestamp" to FieldValue.serverTimestamp()
                 )
                 firestore.collection("chats").document(chatId)
@@ -208,7 +207,8 @@ class MessagesFragment : Fragment() {
             mediaData = base64,
             messageType = mediaType,
             timestamp = System.currentTimeMillis(),
-            carId = carId
+            carId = carId,
+            notificationSent = false
         )
 
         messagesRef.add(message)
@@ -216,6 +216,7 @@ class MessagesFragment : Fragment() {
                 Toast.makeText(context, "Failed to send media", Toast.LENGTH_SHORT).show()
             }
     }
+
     private fun observeMessages() {
         val currentUserId = auth.currentUser?.uid ?: return
         val chatId = "${dealerId}_$currentUserId"
@@ -249,6 +250,6 @@ class MessagesFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        snapshotListener?.remove()  // Ensure listeners are removed when the fragment stops
+        snapshotListener?.remove()
     }
 }

@@ -11,19 +11,26 @@ import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.example.dnmotors.App.Companion.context
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.dnmotors.viewmodel.AuthViewModel
+import com.example.dnmotors.viewmodel.ChatViewModel
+import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
@@ -32,18 +39,20 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var authViewModel: AuthViewModel
-
+    private lateinit var chatViewModel: ChatViewModel
     private val TAG = "MainActivity"
+    private var currentChatId: String? = null
+    private var messageListener: ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         auth = Firebase.auth
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
+        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
         val currentUser = auth.currentUser
         if (currentUser != null) {
@@ -52,10 +61,73 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             setupActionBar()
             fetchAndNavigateUserRole()
             handleDeepLink(intent?.data)
+
         } else {
             navigateToLoginScreen()
         }
+    }
+    private fun fetchAndNavigateUserRole() {
+        authViewModel.fetchUserRole { role ->
+            val cleanRole = role.trim().lowercase()
+            Log.d(TAG, "Fetched user role: '$cleanRole'")
 
+            when (cleanRole) {
+                "dealer" -> {
+                    Log.i(TAG, "Navigating to DealerActivity for dealer user.")
+                    val intent = Intent(this, DealerActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+                else -> {
+                    Log.i(TAG, "Navigating to main fragment for non-dealer user.")
+                    val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                    val navController = navHostFragment.navController
+                    navController.navigate(R.id.carFragment)
+                    binding.bottomNavigationView.visibility = View.VISIBLE
+                    setupChatListeners()
+
+                }
+
+            }
+        }
+    }
+
+    private fun setupChatListeners() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        chatViewModel.chatItems.observe(this) { chats ->
+            chats.forEach { chat ->
+                chatViewModel.observeMessages("${chat.dealerId}_${chat.userId}", this)
+            }
+        }
+
+        messageListener = FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("dealerId", userId)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) {
+                    Log.e(TAG, "Message listener error", error)
+                    return@addSnapshotListener
+                }
+
+                for (doc in snapshot.documents) {
+                    val message = doc.toObject(Message::class.java) ?: continue
+                    val messageChatId = doc.reference.parent.parent?.id ?: continue
+
+                    if (message.senderId == userId ||
+                        message.notificationSent == true ||
+                        messageChatId == currentChatId) {
+                        continue
+                    }
+
+                    MessageNotificationUtil.sendNotification(this, message)
+                    doc.reference.update("notificationSent", true)
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Failed to update notification status", e)
+                        }
+                }
+            }
     }
 
     private fun navigateToLoginScreen() {
@@ -178,49 +250,5 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         binding.bottomNavigationView.visibility = View.VISIBLE
     }
 
-    private fun fetchAndNavigateUserRole() {
-        authViewModel.fetchUserRole { role ->
-            val cleanRole = role.trim().lowercase()
-            Log.d(TAG, "Fetched user role: '$cleanRole'")
-
-            when (cleanRole) {
-                "dealer" -> {
-                    Log.i(TAG, "Navigating to DealerActivity for dealer user.")
-                    val intent = Intent(this, DealerActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                }
-                else -> {
-                    Log.i(TAG, "Navigating to main fragment for non-dealer user.")
-                    val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-                    val navController = navHostFragment.navController
-                    navController.navigate(R.id.carFragment)
-                    binding.bottomNavigationView.visibility = View.VISIBLE
-
-                    // Start background chat listeners for this user
-                    val userId = auth.currentUser?.uid
-                    userId?.let {
-                        startMessageListenersForUser(it, this)
-                    }
-                }
-
-            }
-        }
-    }
-
-    private fun startMessageListenersForUser(userId: String, context: Context) {
-        val firestore = FirebaseFirestore.getInstance()
-
-        firestore.collection("chats")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                for (doc in snapshot.documents) {
-                    val chatId = doc.id
-                    if (chatId.contains(userId)) {
-                        MessageNotificationUtil.observeNewMessages(chatId, context)
-                    }
-                }
-            }
-    }
 
 }

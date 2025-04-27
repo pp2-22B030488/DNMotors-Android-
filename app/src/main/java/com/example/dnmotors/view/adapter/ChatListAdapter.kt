@@ -13,7 +13,7 @@ class ChatListAdapter(
 ) : RecyclerView.Adapter<ChatListAdapter.ViewHolder>() {
     inner class ViewHolder(val binding: ChatItemBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: ChatItem) {
-            binding.chatTitle.text = "Chat for ${item.dealerId}"
+            binding.chatTitle.text = "Chat for ${item.name}"
             binding.root.setOnClickListener { onClick(item) }
         }
     }
