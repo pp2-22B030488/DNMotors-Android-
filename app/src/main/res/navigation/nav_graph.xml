@@ -121,6 +121,7 @@
         android:id="@+id/messagesFragment"
         android:name="com.example.dnmotors.view.fragments.messagesFragment.MessagesFragment"
         tools:layout="@layout/fragment_messages">
+
         <argument
             android:name="carId"
             app:argType="string" />

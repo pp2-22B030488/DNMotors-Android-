@@ -1,5 +1,9 @@
 package com.example.dnmotors.viewdealer.compose
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,21 +15,29 @@ import androidx.navigation.compose.rememberNavController
 import com.example.dnmotors.viewmodel.ChatViewModel
 
 @Composable
-fun DealerApp() {
+fun DealerApp(messageData: Pair<String?, String?>?) {
     val navController = rememberNavController()
     val showBottomBar = rememberSaveable { mutableStateOf(true) }
     val context = LocalContext.current
     val chatViewModel: ChatViewModel = viewModel()
 
     LaunchedEffect(Unit) {
+
         chatViewModel.chatItems.observeForever { chats ->
             chats.forEach { chat ->
                 chatViewModel.observeMessages(chatId = "${chat.dealerId}_${chat.userId}", context)
             }
         }
         chatViewModel.loadChatListForDealer()
-    }
 
+    }
+    LaunchedEffect(messageData) {
+        messageData?.let { (userId, carId) ->
+            if (userId != null && carId != null) {
+                navController.navigate("messages/$userId/$carId")
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -37,4 +49,5 @@ fun DealerApp() {
         DealerNavGraph(navController = navController, padding = padding, onToggleBottomBar = { showBottomBar.value = it }
         )
     }
+
 }

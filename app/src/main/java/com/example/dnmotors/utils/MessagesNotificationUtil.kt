@@ -25,10 +25,12 @@ object MessageNotificationUtil {
         val channelId = "messages_channel"
         val notificationManager = NotificationManagerCompat.from(context)
 
+        // Check if the notification permission is granted
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return
         }
 
+        // Create the notification channel if not already created
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId, "Messages", NotificationManager.IMPORTANCE_HIGH
@@ -38,23 +40,29 @@ object MessageNotificationUtil {
             notificationManager.createNotificationChannel(channel)
         }
 
+        // Intent to open MainActivity with necessary data (chatId)
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("chatId", message.carId)
+            putExtra("senderId", message.senderId)
         }
 
+        // Create a pending intent to open MainActivity when the notification is tapped
         val pendingIntent = PendingIntent.getActivity(
             context, 0, intent, PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Build the notification
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_settings)
             .setContentTitle("New message from ${message.name}")
             .setContentText(message.text ?: "You have a new message")
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setAutoCancel(true)  // Dismiss notification after tapping
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
+        // Send the notification
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
 

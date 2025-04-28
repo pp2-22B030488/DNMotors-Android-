@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <application
         android:name=".App"
@@ -56,6 +57,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <service
+            android:name="com.example.app.service.MessageService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         <receiver android:name=".utils.MessageBroadcastReceiver" android:enabled="true" android:exported="false"/>
 
     </application>

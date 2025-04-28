@@ -2,28 +2,23 @@ package com.example.dnmotors.view.activity
 
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
-import com.example.dnmotors.App.Companion.context
+import com.example.app.service.MessageService
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
-import com.example.dnmotors.services.MessageService
-import com.example.dnmotors.services.MessageWorker
+import com.example.dnmotors.utils.MessageBroadcastReceiver
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
@@ -48,6 +43,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private val TAG = "MainActivity"
     private var currentChatId: String? = null
     private var messageListener: ListenerRegistration? = null
+    private lateinit var receiver: MessageBroadcastReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,6 +66,16 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         } else {
             navigateToLoginScreen()
         }
+        // Start message listening service
+        startService(Intent(this, MessageService::class.java))
+
+        // Register receiver
+        receiver = MessageBroadcastReceiver()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(receiver, IntentFilter("com.example.app.NEW_MESSAGE"), RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(receiver, IntentFilter("com.example.app.NEW_MESSAGE"))
+        }
     }
     private fun fetchAndNavigateUserRole() {
         authViewModel.fetchUserRole { role ->
@@ -91,16 +97,14 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     binding.bottomNavigationView.visibility = View.VISIBLE
                     setupChatListeners()
                     startMessageService()
+                    handleNotificationIntent(intent)
 
-                    val messageWorkerRequest: WorkRequest = OneTimeWorkRequestBuilder<MessageWorker>()
-                        .build()
-
-                    WorkManager.getInstance(this).enqueue(messageWorkerRequest)
                 }
 
             }
         }
     }
+
     private fun setupChatListeners() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -136,6 +140,30 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                         }
                 }
             }
+    }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        val carId = intent?.getStringExtra("carId")
+        val senderId = intent?.getStringExtra("senderId")
+        if (!carId.isNullOrEmpty()) {
+            navigateToChatFragment(carId, senderId)
+        }
+    }
+
+    private fun navigateToChatFragment(carId: String, senderId: String?) {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+        val bundle = Bundle().apply {
+            putString("carId", carId)
+            senderId?.let {
+                putString("senderId", it)
+            }
+        }
+
+        Log.d("MainActivity", "Navigating to chat with carId: $carId, senderId: $senderId")
+
+        navController.navigate(R.id.messagesFragment, bundle)
     }
 
 
