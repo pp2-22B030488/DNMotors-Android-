@@ -128,8 +128,11 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     val message = doc.toObject(Message::class.java) ?: continue
                     val messageChatId = doc.reference.parent.parent?.id ?: continue
 
-                    if (message.senderId == userId || message.notificationSent || messageChatId == currentChatId) {
-                        continue
+                    if (message.senderId == userId || message.notificationSent) {
+                        doc.reference.update("notificationSent", true)
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "Failed to update notification status", e)
+                            }
                     }
 
                     MessageNotificationUtil.sendNotification(this, message)
