@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.dnmotors.App
 import com.example.dnmotors.utils.MediaUtils
 import com.example.dnmotors.utils.MessageNotificationUtil
@@ -13,7 +14,6 @@ import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
@@ -21,7 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
-import java.io.File
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ChatViewModel : ViewModel() {
@@ -47,15 +47,21 @@ class ChatViewModel : ViewModel() {
                 val chatItems = result.documents.mapNotNull { doc ->
                     val carId = doc.getString("carId")
                     val userId = doc.getString("userId")
+                    val name = doc.getString("name")
                     val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
 
                     if (carId != null && userId != null) {
-                        ChatItem(
-                            carId = carId,
-                            userId = userId,
-                            dealerId = dealerId,
-                            timestamp = timestamp
+                        if (name != null) {
+                            ChatItem(
+                                carId = carId,
+                                userId = userId,
+                                dealerId = dealerId,
+                                timestamp = timestamp,
+                                name = name
                             )
+                        } else {
+                            null
+                        }
                     } else null
                 }
                 _chatItems.postValue(chatItems)
@@ -196,6 +202,7 @@ class ChatViewModel : ViewModel() {
                 val chatMetadata = mapOf(
                     "userId" to userId,
                     "dealerId" to senderId,
+                    "name" to senderName,
                     "carId" to carId,
                     "lastMessage" to messageText,
                     "timestamp" to FieldValue.serverTimestamp(),
@@ -226,23 +233,35 @@ class ChatViewModel : ViewModel() {
         type: String,
         senderId: String,
         senderName: String,
-        userId: String,
-        carId: String
+        carId: String,
     ) {
         val message = Message(
-            text = base64Media,
+            mediaData = base64Media,
             messageType = type,
             senderId = senderId,
             name = senderName,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            id = System.currentTimeMillis().toString(),
+            carId = carId,
+            notificationSent = false
         )
 
-        val firestore = FirebaseFirestore.getInstance()
-        firestore.collection("chats")
-            .document(chatId)
-            .collection("messages")
-            .add(message)
+        viewModelScope.launch {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                firestore.collection("chats")
+                    .document(chatId)
+                    .collection("messages")
+                    .add(message)
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Failed to send message")
+            }
+        }
     }
+
+
+
     private var dealerMessagesListener: ListenerRegistration? = null
 
     private val _currentChatId = MutableLiveData<String?>()
@@ -294,7 +313,6 @@ class ChatViewModel : ViewModel() {
                 for (doc in snapshot.documents) {
                     val message = doc.toObject(Message::class.java) ?: continue
 
-                    // Skip if: current user sent it OR user is in this chat
                     if (message.senderId == currentUserId ||
                         chatId == _currentChatId.value) {
                         continue

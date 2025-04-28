@@ -44,7 +44,7 @@ fun ChatScreen(
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(chatItems) { item ->
                 ListItem(
-                    headlineContent = { Text("User ID: ${item.userId}") },
+                    headlineContent = { Text("User name: ${item.name}") },
                     supportingContent = { Text("Car VIN: ${item.carId}") },
                     modifier = Modifier
                         .fillMaxWidth()

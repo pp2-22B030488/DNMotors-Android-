@@ -52,14 +52,18 @@ class ChatsFragment : Fragment() {
                     val carId = doc.getString("carId")
                     val dealerId = doc.getString("dealerId")
                     val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
-
+                    val name = doc.getString("name")
                     if (carId != null && dealerId != null) {
-                        ChatItem(
-                            carId = carId,
-                            userId = userId,
-                            dealerId = dealerId,
-                            timestamp = timestamp,
-                        )
+                        if (name != null) {
+                            ChatItem(
+                                carId = carId,
+                                userId = userId,
+                                dealerId = dealerId,
+                                timestamp = timestamp,
+                                name = name
+                            )
+                        }
+                        else null
                     } else null
                 }
 

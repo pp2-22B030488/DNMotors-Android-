@@ -112,16 +112,4 @@ object MessageNotificationUtil {
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
 
-
-    fun markNotificationAsSeen(chatId: String) {
-        val chatRef = FirebaseFirestore.getInstance().collection("chats").document(chatId)
-        chatRef.update("notificationSent", true)
-            .addOnSuccessListener {
-                Log.d("Chat", "Notification marked as seen for chat: $chatId")
-            }
-            .addOnFailureListener { e ->
-                Log.e("Chat", "Failed to mark notification as seen", e)
-            }
-    }
-
 }

@@ -4,23 +4,35 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaRecorder
+import android.os.Environment
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MediaRepository(private val context: Context) {
+    private val TAG = "Media Repository"
 
     private var mediaRecorder: MediaRecorder? = null
     private var audioFilePath: String? = null
     private var isRecording = false
+    private var recordedFile: File? = null
 
     fun startRecording(onStart: () -> Unit, onFailure: (String) -> Unit) {
         if (isRecording) return
 
-        val fileName = "recorded_audio_${System.currentTimeMillis()}.3gp"
+        val fileName = "recorded_audio_${System.currentTimeMillis()}.mp3"
         val file = File(context.cacheDir, fileName)
         audioFilePath = file.absolutePath
+        recordedFile = file
         var recorder: MediaRecorder? = null
 
         try {
@@ -42,15 +54,33 @@ class MediaRepository(private val context: Context) {
         }
     }
 
-    fun stopRecording(onSuccess: (String) -> Unit, onFailure: () -> Unit) {
-        val recorder = mediaRecorder ?: return onFailure()
-        val path = audioFilePath ?: return onFailure()
+    fun stopRecording(onSuccess: (File) -> Unit, onFailure: () -> Unit) {
+        val recorder = mediaRecorder
+        val file = recordedFile
+
+        if (recorder == null || file == null) {
+            onFailure()
+            cleanupRecorder()
+            return
+        }
+
+        if (!isRecording) {
+            file.delete()
+            onFailure()
+            cleanupRecorder()
+            return
+        }
 
         try {
             recorder.stop()
-            onSuccess(path)
-        } catch (e: Exception) {
-            File(path).delete()
+            onSuccess(file)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "IllegalStateException when stopping recorder: ${e.message}", e)
+            file.delete()
+            onFailure()
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "RuntimeException when stopping recorder: ${e.message}", e)
+            file.delete()
             onFailure()
         } finally {
             cleanupRecorder()
@@ -62,10 +92,10 @@ class MediaRepository(private val context: Context) {
         mediaRecorder = null
         isRecording = false
         audioFilePath = null
+        recordedFile = null
     }
 
     fun isRecording(): Boolean = isRecording
-
 
     fun requestAudioPermission(
         activity: Activity,
@@ -81,5 +111,4 @@ class MediaRepository(private val context: Context) {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
-
 }

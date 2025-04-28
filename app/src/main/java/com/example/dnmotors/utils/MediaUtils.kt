@@ -24,7 +24,7 @@ object MediaUtils {
         return try {
             val bytes = Base64.decode(base64, Base64.NO_WRAP)
             val extension = when (mediaType.lowercase()) {
-                "audio" -> ".3gp"
+                "audio" -> ".mp3"
                 "video" -> ".mp4"
                 else -> ".tmp"
             }
@@ -82,7 +82,7 @@ object MediaUtils {
         }
     }
 
-    fun decodeFromBase64(base64: String?): String {
+    fun decodeTextFromBase64(base64: String?): String {
         if (base64.isNullOrEmpty()) return ""
         return try {
             String(Base64.decode(base64, Base64.NO_WRAP), Charsets.UTF_8)
