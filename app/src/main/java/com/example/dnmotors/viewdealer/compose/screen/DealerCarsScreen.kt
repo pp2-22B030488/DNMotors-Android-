@@ -121,7 +121,7 @@ fun DealerCarsScreen(navController: NavHostController, paddingValues: PaddingVal
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (car.imageUrl.isNotEmpty()) {
+                        if (car.imageUrl.isNotEmpty() && car.imageUrl.first().isNotBlank()) {
                             Image(
                                 painter = rememberAsyncImagePainter(car.imageUrl.first()),
                                 contentDescription = null,
@@ -130,7 +130,8 @@ fun DealerCarsScreen(navController: NavHostController, paddingValues: PaddingVal
                                     .clip(MaterialTheme.shapes.small),
                                 contentScale = ContentScale.Crop
                             )
-                        } else {
+                        }
+                        else {
                             Box(
                                 modifier = Modifier
                                     .size(48.dp)
