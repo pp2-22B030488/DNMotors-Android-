@@ -55,7 +55,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun register(email: String, password: String, name: String) {
+    fun register(email: String, password: String, name: String, location: String, phoneNumber: String) {
         viewModelScope.launch {
             try {
                 _authState.value = AuthResult.Loading
@@ -65,6 +65,7 @@ class AuthViewModel : ViewModel() {
                 result.user?.updateProfile(
                     com.google.firebase.auth.UserProfileChangeRequest.Builder()
                         .setDisplayName(name)
+                        .setPhotoUri(android.net.Uri.parse("https://example.com/default_profile_image.jpg"))
                         .build()
                 )?.await()
 
@@ -73,6 +74,8 @@ class AuthViewModel : ViewModel() {
                     val userData = hashMapOf(
                         "name" to name,
                         "email" to email,
+                        "location" to location,
+                        "phoneNumber" to phoneNumber,
                         "role" to "user"
                     )
                     firestore.collection("users").document(user.uid).set(userData).await()
