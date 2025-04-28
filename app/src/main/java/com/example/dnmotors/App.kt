@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.example.app.service.MessageService
+import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.di.appModules
 import com.example.dnmotors.di.viewModelModule
 import com.google.firebase.auth.FirebaseAuth

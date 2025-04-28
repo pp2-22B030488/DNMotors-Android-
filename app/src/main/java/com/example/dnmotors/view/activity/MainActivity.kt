@@ -1,6 +1,5 @@
 package com.example.dnmotors.view.activity
 
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
@@ -15,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.app.service.MessageService
+import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
 import com.example.dnmotors.utils.MessageBroadcastReceiver

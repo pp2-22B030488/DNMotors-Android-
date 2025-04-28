@@ -2,10 +2,8 @@ package com.example.dnmotors.viewdealer.activity
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,15 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.NotificationCompat
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.rememberNavController
-import com.example.app.service.MessageService
+import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.viewdealer.compose.DealerApp
-import com.example.dnmotors.viewdealer.compose.screen.DealerCarsScreen
-import com.example.dnmotors.viewmodel.AuthViewModel
-import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 
 class DealerActivity : ComponentActivity() {

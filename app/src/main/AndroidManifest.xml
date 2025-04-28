@@ -58,7 +58,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
         <service
-            android:name="com.example.app.service.MessageService"
+            android:name=".services.MessageService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <receiver android:name=".utils.MessageBroadcastReceiver"
