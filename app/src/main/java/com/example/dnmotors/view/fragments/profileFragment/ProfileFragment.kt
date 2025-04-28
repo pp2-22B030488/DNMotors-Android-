@@ -9,12 +9,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
+import androidx.constraintlayout.widget.ConstraintSet.Layout
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentProfileBinding
+import com.example.dnmotors.view.activity.MainActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
 
@@ -25,6 +29,7 @@ class ProfileFragment : Fragment() {
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private val storageRef = FirebaseStorage.getInstance().reference
+
 
     private val PICK_IMAGE_REQUEST = 1
     private var imageUri: Uri? = null
@@ -40,24 +45,25 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
-        toolbar.inflateMenu(R.menu.settings_menu)
+        val logoutLayout = view.findViewById<View>(R.id.logout)
+        logoutLayout.setOnClickListener {
+            auth.signOut()
 
-        toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.btnSettings -> {
-                    findNavController().navigate(R.id.action_profileFragment_to_settingsFragment)
-                    true
-                }
-                else -> false
-            }
+            val intent = Intent(requireActivity(), MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+
+            true
+        }
+        binding.editProfile.setOnClickListener {
+            findNavController().navigate(R.id.action_profileFragment_to_editProfileFragment)
         }
         loadUserName()
         loadUserData()
 
-        binding.avatarChange.setOnClickListener {
-            openFileChooser()
-        }
+//        binding.avatarChange.setOnClickListener {
+//            openFileChooser()
+//        }
     }
     private fun openFileChooser() {
         val intent = Intent()

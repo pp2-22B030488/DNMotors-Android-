@@ -78,8 +78,10 @@ class RegisterFragment : Fragment() {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
             val name = binding.etName.text.toString().trim()
+            val location = binding.etLocation.text.toString().trim()
+            val phoneNumber = binding.etPhoneNumber.text.toString().trim()
 
-            if (email.isBlank() || password.isBlank() || name.isBlank()) {
+            if (email.isBlank() || password.isBlank() || name.isBlank() || location.isBlank() || phoneNumber.isBlank()) {
                 showError("Please fill in all fields.")
                 return@setOnClickListener
             }
@@ -89,7 +91,7 @@ class RegisterFragment : Fragment() {
             }
 
             Log.d(TAG, "Attempting registration for: $email, Name: $name")
-            authViewModel.register(email, password, name)
+            authViewModel.register(email, password, name, location, phoneNumber)
         }
 
         binding.btnGoogle.setOnClickListener {

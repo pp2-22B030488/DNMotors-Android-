@@ -13,17 +13,30 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+    <!-- Car Photo -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerCarImages"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/black"/>
+
+    <com.tbuonomo.viewpagerdotsindicator.DotsIndicator
+        android:id="@+id/dotsIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        app:dotsColor="@color/secondary_text"
+        app:selectedDotColor="@color/primary_red"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
-
-        <!-- Car Photo -->
-        <ImageView
-            android:id="@+id/imageViewCar"
-            android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/tayota_camry_xv80"
-            android:layout_marginBottom="16dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -185,7 +198,7 @@
             android:layout_marginBottom="16dp" />
 
     </LinearLayout>
-
+    </LinearLayout>
 </ScrollView>
     <!-- Fixed bottom buttons -->
     <LinearLayout

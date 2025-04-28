@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentCarDetailsBinding
 import com.example.dnmotors.model.Car
+import com.example.dnmotors.view.adapter.CarImageAdapter
 import com.google.firebase.firestore.FirebaseFirestore
 
 class CarDetailsFragment : Fragment() {
@@ -98,15 +99,19 @@ class CarDetailsFragment : Fragment() {
             }
     }
     private fun displayCarInfo(car: Car) {
-        Glide.with(requireContext())
-            .load(car.imageUrl.firstOrNull())
-            .placeholder(R.drawable.tayota_camry_xv80)
-            .into(binding.imageViewCar)
+        val adapter = CarImageAdapter(car.imageUrl)
+        binding.viewPagerCarImages.adapter = adapter
+
+        // Подключаем индикатор
+        binding.dotsIndicator.attachTo(binding.viewPagerCarImages)
 
         binding.textViewBrandModel.text = "${car.brand} ${car.model} ${car.year}"
         binding.textViewPrice.text = "${car.price} ₸"
         binding.textViewDescription.text = car.description
     }
+
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -27,6 +27,13 @@
         <item name="android:textColor">#555555</item>
         <item name="android:layout_marginBottom">4dp</item>
     </style>
+    <style name="CircleImageView">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+
+
 
 
 
