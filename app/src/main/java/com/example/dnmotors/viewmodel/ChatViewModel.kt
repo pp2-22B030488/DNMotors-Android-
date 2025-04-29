@@ -105,9 +105,8 @@ class ChatViewModel : ViewModel() {
                                 "audio", "video" -> handleAudioVideoMessage(message)
                                 "image" -> handleImageMessage(message)
                                 else -> message.copy(text = "[Unknown message type]")
-                            }.also {
-                                markAsNotifiedIfNeeded(it, doc.reference)
                             }
+
                         }
                     } catch (e: Exception) {
                         Log.e("MessageDecode", "Error processing message ${doc?.id}", e)
@@ -279,7 +278,6 @@ class ChatViewModel : ViewModel() {
     fun observeMessages(chatId: String, context: Context) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        // Creating a listener that will listen for message changes
         val messagesRef = FirebaseFirestore.getInstance()
             .collection("chats")
             .document(chatId)

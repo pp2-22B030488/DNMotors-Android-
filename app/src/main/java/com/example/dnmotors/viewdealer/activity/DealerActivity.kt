@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.dnmotors.services.MessageService
+import com.example.dnmotors.services.MessageWorkScheduler
 import com.example.dnmotors.viewdealer.compose.DealerApp
 import com.google.firebase.auth.FirebaseAuth
 
@@ -26,6 +27,9 @@ class DealerActivity : ComponentActivity() {
         createNotificationChannel(applicationContext)
         val userId = intent?.getStringExtra("userId")
         val carId = intent?.getStringExtra("carId")
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            MessageWorkScheduler.scheduleWorker(this)
+        }
         if (FirebaseAuth.getInstance().currentUser != null) {
             val serviceIntent = Intent(this, MessageService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
