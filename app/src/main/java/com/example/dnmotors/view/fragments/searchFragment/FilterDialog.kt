@@ -1,5 +1,6 @@
 package com.example.androidadvanceddnmotors.ui.dialogs
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +13,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.example.dnmotors.R
 import android.widget.LinearLayout
 import android.widget.AutoCompleteTextView
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 
 class FilterDialog : BottomSheetDialogFragment() {
     private var _binding: DialogFilterBinding? = null
@@ -33,6 +36,19 @@ class FilterDialog : BottomSheetDialogFragment() {
     )
 
     enum class State { ALL, NEW, USED }
+
+    override fun onStart() {
+        super.onStart()
+
+        dialog?.let { dialog ->
+            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            bottomSheet?.layoutParams?.height = ViewGroup.LayoutParams.MATCH_PARENT
+
+            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet)
+            behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            behavior.skipCollapsed = true
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -71,14 +87,18 @@ class FilterDialog : BottomSheetDialogFragment() {
     }
 
     private fun updateTabStyles() {
-        val selectedBg = ContextCompat.getDrawable(requireContext(), com.example.dnmotors.R.drawable.edittext_bg_carcredit)
-        val unselectedBg = ContextCompat.getDrawable(requireContext(), android.R.color.transparent)
-        val selectedText = ContextCompat.getColor(requireContext(), com.example.dnmotors.R.color.white)
-        val unselectedText = ContextCompat.getColor(requireContext(), com.example.dnmotors.R.color.white)
+        val selectedColor = ContextCompat.getColor(requireContext(), R.color.primary_red)
+        val unselectedColor = ContextCompat.getColor(requireContext(), android.R.color.transparent)
+        val selectedTextColor = ContextCompat.getColor(requireContext(), R.color.white)
+        val unselectedTextColor = ContextCompat.getColor(requireContext(), R.color.black)
+
         val tabs = listOf(binding.stateAll, binding.stateNew, binding.stateUsed)
         tabs.forEach { btn ->
-            btn.background = if (btn.isSelected) selectedBg else unselectedBg
-            btn.setTextColor(if (btn.isSelected) selectedText else unselectedText)
+            val color = if (btn.isSelected) selectedColor else unselectedColor
+            val textColor = if (btn.isSelected) selectedTextColor else unselectedTextColor
+
+            btn.backgroundTintList = ColorStateList.valueOf(color)
+            btn.setTextColor(textColor)
         }
     }
 
@@ -95,47 +115,61 @@ class FilterDialog : BottomSheetDialogFragment() {
     }
 
     private fun setupYearButtons() {
-        val container = binding.root.findViewById<LinearLayout>(com.example.dnmotors.R.id.yearButtonsContainer)
+        val container = binding.yearChipGroup
         container.removeAllViews()
+        container.isSingleSelection = true
         val years = (2024 downTo 2010).toList()
-        val buttons = mutableListOf<Button>()
+
+        val chips = mutableListOf<Chip>()
+
         years.forEach { year ->
-            val btn = Button(requireContext()).apply {
+            val chip = Chip(requireContext()).apply {
                 text = year.toString()
-                textSize = 15f
-                setTextColor(ContextCompat.getColor(context, com.example.dnmotors.R.color.black))
-                setBackgroundColor(ContextCompat.getColor(context, android.R.color.white))
-                isAllCaps = false
-                val params = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    80 // px, можно заменить на dp через TypedValue
+                textSize = 16f
+                isCheckable = true
+                isCheckedIconVisible = false
+                setTextColor(ContextCompat.getColor(context, R.color.black))
+
+                chipBackgroundColor = ColorStateList.valueOf(ContextCompat.getColor(context, android.R.color.white))
+
+                chipStrokeWidth = 2f
+                chipStrokeColor = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.secondary_text))
+                chipCornerRadius = 8f
+
+                setPadding(60, 50, 60, 50)
+
+                val params = ChipGroup.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 )
-                params.setMargins(0, 0, 16, 0)
+                params.setMargins(0, 0, 20, 0)
                 layoutParams = params
-                setOnClickListener {
-                    if (selectedYear == year) {
-                        // Сбросить выбор
-                        selectedYear = null
-                        buttons.forEach { it.isSelected = false }
-                    } else {
-                        buttons.forEach { it.isSelected = false }
-                        this.isSelected = true
+
+
+
+                setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
                         selectedYear = year
+                        setTextColor(ContextCompat.getColor(context, android.R.color.white))
+                        chipBackgroundColor = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.primary_red))
+                    } else {
+                        if (selectedYear == year) selectedYear = null
+                        setTextColor(ContextCompat.getColor(context, R.color.black))
+                        chipBackgroundColor = ColorStateList.valueOf(ContextCompat.getColor(context, android.R.color.white))
                     }
-                    updateYearStyles()
                 }
             }
-            container.addView(btn)
-            buttons.add(btn)
+
+            container.addView(chip)
+            chips.add(chip)
         }
-        yearButtons = buttons
-        // Выделить ранее выбранный год, если есть
+
+        yearButtons = chips
+
+        // Отметить ранее выбранный год
         selectedYear?.let { year ->
-            buttons.find { it.text == year.toString() }?.let {
-                it.isSelected = true
-            }
+            chips.find { it.text == year.toString() }?.isChecked = true
         }
-        updateYearStyles()
     }
 
     private fun updateYearStyles() {

@@ -4,19 +4,26 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import android.util.Log
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.androidadvanceddnmotors.ui.dialogs.FilterDialog
+import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentSearchBinding
 import com.example.dnmotors.model.Car
 import com.example.dnmotors.view.adapter.CarAdapter
+import com.example.dnmotors.view.fragments.favouritesFragment.FavouritesManager
+import com.google.firebase.firestore.FirebaseFirestore
 
 class SearchFragment : Fragment() {
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
     private lateinit var carAdapter: CarAdapter
-    private var allCars: List<Car> = emptyList()
     private var filterDialog: FilterDialog? = null
+    private val db = FirebaseFirestore.getInstance()
+    private val carList = mutableListOf<Car>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,7 +45,10 @@ class SearchFragment : Fragment() {
         carAdapter = CarAdapter(
             mutableListOf(),
             onItemClick = { car ->
-                // TODO: обработка клика по машине
+                val bundle = Bundle().apply {
+                    putParcelable("car", car)
+                }
+                findNavController().navigate(R.id.action_searchFragment_to_carDetailsFragment, bundle)
             }
         )
 
@@ -49,15 +59,21 @@ class SearchFragment : Fragment() {
     }
 
     private fun loadCars() {
-        // Пример тестовых данных (замените на загрузку из Firebase)
-        allCars = listOf(
-            Car(brand = "BMW", model = "X5", year = 2024, price = 50000, condition = "new", imageUrl = listOf("")),
-            Car(brand = "Toyota", model = "Camry", year = 2023, price = 30000, condition = "used", imageUrl = listOf("")),
-            Car(brand = "Honda", model = "Civic", year = 2022, price = 20000, condition = "used", imageUrl = listOf("")),
-            Car(brand = "BMW", model = "3 Series", year = 2021, price = 25000, condition = "used", imageUrl = listOf("")),
-            Car(brand = "Audi", model = "A4", year = 2024, price = 40000, condition = "new", imageUrl = listOf(""))
-        )
-        carAdapter.updateList(allCars)
+        db.collection("Cars")
+            .get()
+            .addOnSuccessListener { result ->
+                carList.clear()
+                for (document in result) {
+                    val car = document.toObject(Car::class.java)
+                    Log.d("SearchFragment", "Loaded car: $car") // Логируем полученные машины
+                    car.isLiked = FavouritesManager.likedCars.any { it.vin == car.vin }
+                    carList.add(car)
+                }
+                carAdapter.notifyDataSetChanged()
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Failed to load cars", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun showFilterDialog() {
@@ -71,7 +87,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun filterCars(filter: FilterDialog.Filter): List<Car> {
-        return allCars.filter { car ->
+        return carList.filter { car ->
             (filter.state == FilterDialog.State.ALL ||
                 (filter.state == FilterDialog.State.NEW && car.condition.equals("new", true)) ||
                 (filter.state == FilterDialog.State.USED && car.condition.equals("used", true))) &&
