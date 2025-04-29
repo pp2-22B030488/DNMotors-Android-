@@ -37,6 +37,7 @@ media3CommonKtx = "1.6.1"
 media3Exoplayer = "1.6.1"
 media3Ui = "1.6.1"
 workRuntimeKtx = "2.10.1"
+firebaseCrashlyticsBuildtools = "3.0.3"
 
 
 [libraries]
@@ -76,6 +77,7 @@ firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messa
 androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3Ui" }
+firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 
 

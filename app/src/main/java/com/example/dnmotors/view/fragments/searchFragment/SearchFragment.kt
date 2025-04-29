@@ -4,30 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Toast
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.dnmotors.R
+import com.example.androidadvanceddnmotors.ui.dialogs.FilterDialog
 import com.example.dnmotors.databinding.FragmentSearchBinding
-import com.example.dnmotors.model.SearchFilters
+import com.example.dnmotors.model.Car
 import com.example.dnmotors.view.adapter.CarAdapter
-import com.example.dnmotors.viewmodel.SearchViewModel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.util.Locale
 
 class SearchFragment : Fragment() {
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: SearchViewModel by viewModels()
     private lateinit var carAdapter: CarAdapter
-    private var currentFilters = SearchFilters()
+    private var allCars: List<Car> = emptyList()
+    private var filterDialog: FilterDialog? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,184 +30,61 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
-        setupSearchBar()
-        setupFilterButton()
-        setupObservers()
-        setupFilterDialog()
+        loadCars()
+        showFilterDialog()
     }
 
     private fun setupRecyclerView() {
         carAdapter = CarAdapter(
-            cars = mutableListOf(),
+            mutableListOf(),
             onItemClick = { car ->
-                val bundle = Bundle().apply {
-                    putString("carId", car.id)
-                }
-                findNavController().navigate(R.id.action_searchFragment_to_carDetailsFragment, bundle)
+                // TODO: обработка клика по машине
             }
         )
 
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
+        binding.rvCars.apply {
+            layoutManager = LinearLayoutManager(requireContext())
             adapter = carAdapter
         }
     }
 
-    private fun setupSearchBar() {
-        binding.searchEditText.addTextChangedListener { text ->
-            currentFilters = currentFilters.copy(query = text.toString())
-            viewModel.searchCars(currentFilters)
-        }
-    }
-
-    private fun setupFilterButton() {
-        binding.filterButton.setOnClickListener {
-            showFilterDialog()
-        }
-    }
-
-    private fun setupObservers() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.searchResults.observe(viewLifecycleOwner) { cars ->
-                carAdapter.updateList(cars)
-                binding.emptyState.visibility = if (cars.isEmpty()) View.VISIBLE else View.GONE
-            }
-
-            viewModel.isLoading.collectLatest { isLoading ->
-                binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            }
-
-            viewModel.error.observe(viewLifecycleOwner) { error ->
-                error?.let {
-                    Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
-
-    private fun setupFilterDialog() {
-        viewModel.availableBrands.observe(viewLifecycleOwner) { brands ->
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, brands)
-            binding.brandAutoComplete.setAdapter(adapter)
-        }
-
-        viewModel.availableBodyTypes.observe(viewLifecycleOwner) { bodyTypes ->
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, bodyTypes)
-            binding.bodyTypeAutoComplete.setAdapter(adapter)
-        }
-
-        viewModel.availableFuelTypes.observe(viewLifecycleOwner) { fuelTypes ->
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, fuelTypes)
-            binding.fuelTypeAutoComplete.setAdapter(adapter)
-        }
-
-        viewModel.availableTransmissionTypes.observe(viewLifecycleOwner) { transmissionTypes ->
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, transmissionTypes)
-            binding.transmissionAutoComplete.setAdapter(adapter)
-        }
+    private fun loadCars() {
+        // Пример тестовых данных (замените на загрузку из Firebase)
+        allCars = listOf(
+            Car(brand = "BMW", model = "X5", year = 2024, price = 50000, condition = "new", imageUrl = listOf("")),
+            Car(brand = "Toyota", model = "Camry", year = 2023, price = 30000, condition = "used", imageUrl = listOf("")),
+            Car(brand = "Honda", model = "Civic", year = 2022, price = 20000, condition = "used", imageUrl = listOf("")),
+            Car(brand = "BMW", model = "3 Series", year = 2021, price = 25000, condition = "used", imageUrl = listOf("")),
+            Car(brand = "Audi", model = "A4", year = 2024, price = 40000, condition = "new", imageUrl = listOf(""))
+        )
+        carAdapter.updateList(allCars)
     }
 
     private fun showFilterDialog() {
-        binding.filterDialog.visibility = View.VISIBLE
-
-        // Setup price range slider
-        binding.priceRangeSlider.addOnChangeListener { slider, _, fromUser ->
-            if (fromUser) {
-                val values = slider.values
-                currentFilters = currentFilters.copy(
-                    minPrice = values[0].toDouble(),
-                    maxPrice = values[1].toDouble()
-                )
-                updatePriceText()
+        filterDialog = FilterDialog().apply {
+            setOnFilterAppliedListener { filter ->
+                val filteredCars = filterCars(filter)
+                carAdapter.updateList(filteredCars)
             }
         }
-
-        // Setup year range slider
-        binding.yearRangeSlider.addOnChangeListener { slider, _, fromUser ->
-            if (fromUser) {
-                val values = slider.values
-                currentFilters = currentFilters.copy(
-                    minYear = values[0].toInt(),
-                    maxYear = values[1].toInt()
-                )
-                updateYearText()
-            }
-        }
-
-        // Setup mileage range slider
-        binding.mileageRangeSlider.addOnChangeListener { slider, _, fromUser ->
-            if (fromUser) {
-                val values = slider.values
-                currentFilters = currentFilters.copy(
-                    minMileage = values[0].toInt(),
-                    maxMileage = values[1].toInt()
-                )
-                updateMileageText()
-            }
-        }
-
-        // Setup sort options
-        binding.sortOptions.setOnCheckedChangeListener { _, checkedId ->
-            currentFilters = currentFilters.copy(
-                sortBy = when (checkedId) {
-                    R.id.sort_newest -> SearchFilters.SortOption.NEWEST
-                    R.id.sort_oldest -> SearchFilters.SortOption.OLDEST
-                    R.id.sort_price_low -> SearchFilters.SortOption.PRICE_LOW_TO_HIGH
-                    R.id.sort_price_high -> SearchFilters.SortOption.PRICE_HIGH_TO_LOW
-                    R.id.sort_mileage_low -> SearchFilters.SortOption.MILEAGE_LOW_TO_HIGH
-                    R.id.sort_mileage_high -> SearchFilters.SortOption.MILEAGE_HIGH_TO_LOW
-                    else -> SearchFilters.SortOption.NEWEST
-                }
-            )
-        }
-
-        // Setup apply button
-        binding.applyFiltersButton.setOnClickListener {
-            viewModel.searchCars(currentFilters)
-            binding.filterDialog.visibility = View.GONE
-        }
-
-        // Setup clear button
-        binding.clearFiltersButton.setOnClickListener {
-            clearFilters()
-        }
-
-        // Setup close button
-        binding.closeFilterDialog.setOnClickListener {
-            binding.filterDialog.visibility = View.GONE
-        }
+        filterDialog?.show(childFragmentManager, "filter_dialog")
     }
 
-    private fun updatePriceText() {
-        val format = NumberFormat.getCurrencyInstance(Locale.US)
-        binding.priceRangeText.text = "${format.format(currentFilters.minPrice)} - ${format.format(currentFilters.maxPrice)}"
-    }
-
-    private fun updateYearText() {
-        binding.yearRangeText.text = "${currentFilters.minYear} - ${currentFilters.maxYear}"
-    }
-
-    private fun updateMileageText() {
-        binding.mileageRangeText.text = "${currentFilters.minMileage} - ${currentFilters.maxMileage} km"
-    }
-
-    private fun clearFilters() {
-        currentFilters = SearchFilters()
-        binding.priceRangeSlider.values = listOf(0f, 100000f)
-        binding.yearRangeSlider.values = listOf(1900f, 2024f)
-        binding.mileageRangeSlider.values = listOf(0f, 300000f)
-        binding.sortOptions.check(R.id.sort_newest)
-        binding.brandAutoComplete.text.clear()
-        binding.bodyTypeAutoComplete.text.clear()
-        binding.fuelTypeAutoComplete.text.clear()
-        binding.transmissionAutoComplete.text.clear()
-        updatePriceText()
-        updateYearText()
-        updateMileageText()
+    private fun filterCars(filter: FilterDialog.Filter): List<Car> {
+        return allCars.filter { car ->
+            (filter.state == FilterDialog.State.ALL ||
+                (filter.state == FilterDialog.State.NEW && car.condition.equals("new", true)) ||
+                (filter.state == FilterDialog.State.USED && car.condition.equals("used", true))) &&
+            (filter.brandModel.isNullOrBlank() || car.brand.contains(filter.brandModel, true) || car.model.contains(filter.brandModel, true)) &&
+            (filter.year == null || car.year == filter.year) &&
+            (filter.priceFrom == null || car.price >= filter.priceFrom) &&
+            (filter.priceTo == null || car.price <= filter.priceTo)
+            // Чекбоксы реализуйте по своим данным, если появятся соответствующие поля
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-}
+} 

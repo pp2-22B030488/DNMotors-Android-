@@ -1,7 +1,10 @@
 package com.example.dnmotors.view.fragments.profileFragment
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -21,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
+import java.util.Locale
 
 class ProfileFragment : Fragment() {
 
@@ -28,11 +32,7 @@ class ProfileFragment : Fragment() {
     private val binding get() = _binding!!
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
-    private val storageRef = FirebaseStorage.getInstance().reference
 
-
-    private val PICK_IMAGE_REQUEST = 1
-    private var imageUri: Uri? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,57 +52,36 @@ class ProfileFragment : Fragment() {
             val intent = Intent(requireActivity(), MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
-
-            true
         }
         binding.editProfile.setOnClickListener {
             findNavController().navigate(R.id.action_profileFragment_to_editProfileFragment)
         }
-        loadUserName()
+        val userId = auth.currentUser?.uid ?: return
+
+        // Слушатель переключателя уведомлений
+        binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+            saveUserNotificationSetting(userId, isChecked)
+            if (isChecked) {
+                Toast.makeText(requireContext(), "Уведомления включены", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Уведомления выключены", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         loadUserData()
 
-//        binding.avatarChange.setOnClickListener {
-//            openFileChooser()
-//        }
-    }
-    private fun openFileChooser() {
-        val intent = Intent()
-        intent.type = "image/*"
-        intent.action = Intent.ACTION_GET_CONTENT
-        startActivityForResult(intent, PICK_IMAGE_REQUEST)
-    }
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.data != null) {
-            imageUri = data.data
-            uploadImage()
+        val passwordLayout = view.findViewById<View>(R.id.password_layout) // укажи id LinearLayout
+        passwordLayout.setOnClickListener {
+            findNavController().navigate(R.id.action_profileFragment_to_changePasswordFragment)
         }
-    }
-    private fun uploadImage() {
-        val userId = auth.currentUser?.uid ?: return
-        val fileRef = storageRef.child("avatars/$userId.jpg")
+        binding.languageLayout.setOnClickListener {
+            showLanguageSelectionDialog() // или перейти в LanguageFragment
+        }
 
-        fileRef.putFile(imageUri!!)
-            .addOnSuccessListener {
-                fileRef.downloadUrl.addOnSuccessListener { uri ->
-                    saveImageUrlToFirestore(uri.toString())
-                }
-            }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Upload failed", Toast.LENGTH_SHORT).show()
-            }
+
+
     }
-    private fun saveImageUrlToFirestore(imageUrl: String) {
-        val userId = auth.currentUser?.uid ?: return
-        db.collection("users").document(userId)
-            .update("avatarUrl", imageUrl)
-            .addOnSuccessListener {
-                loadUserData()
-            }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to update avatar", Toast.LENGTH_SHORT).show()
-            }
-    }
+
     private fun loadUserData() {
         val userId = auth.currentUser?.uid ?: return
         db.collection("users").document(userId).get()
@@ -114,27 +93,73 @@ class ProfileFragment : Fragment() {
                     if (!avatarUrl.isNullOrEmpty()) {
                         Picasso.get().load(avatarUrl).into(binding.ivProfile)
                     }
+                    val backgroundUrl = document.getString("profileFon")
+                    if (!backgroundUrl.isNullOrEmpty()) {
+                        Picasso.get().load(backgroundUrl).into(binding.ivBackground)
+                    }
+                    val location = document.getString("location") ?: "No Location"
+                    binding.tvLocation.text = location
+                    val phoneNumber = document.getString("phoneNumber") ?: "No Phone Number"
+                    binding.tvPhone.text = phoneNumber
+
+                    val isEnabled = document.getBoolean("notificationsEnabled") ?: true
+                    binding.switchNotifications.isChecked = isEnabled
+
+                } else {
+                    binding.userName.text = "User not found"
                 }
             }
             .addOnFailureListener {
                 binding.userName.text = "Error loading name"
             }
     }
-    private fun loadUserName() {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
-            db.collection("users").document(userId).get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val name = document.getString("name") ?: "No Name"
-                        binding.userName.text = name
-                    }
-                }
-                .addOnFailureListener {
-                    binding.userName.text = "Error loading name"
-                }
-        }
+
+
+    // Сохраняем состояние уведомлений
+    private fun saveUserNotificationSetting(userId: String, isEnabled: Boolean) {
+        db.collection("users").document(userId)
+            .update("notificationsEnabled", isEnabled)
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Не удалось сохранить настройки уведомлений", Toast.LENGTH_SHORT).show()
+            }
     }
+
+    private fun showLanguageSelectionDialog() {
+        val languages = arrayOf("Қазақша", "Русский", "English")
+        val codes = arrayOf("kk", "ru", "en")
+        val currentLang = getSavedLanguageCode()
+        val selectedIndex = codes.indexOf(currentLang)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Language")
+            .setSingleChoiceItems(languages, selectedIndex) { dialog, which ->
+                saveLanguageCode(codes[which])
+                setLocale(codes[which])
+                dialog.dismiss()
+                requireActivity().recreate() // перезапуск для применения изменений
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    private fun setLocale(langCode: String) {
+        val locale = Locale(langCode)
+        Locale.setDefault(locale)
+        val config = Configuration()
+        config.setLocale(locale)
+        requireContext().resources.updateConfiguration(config, requireContext().resources.displayMetrics)
+    }
+
+    private fun saveLanguageCode(code: String) {
+        val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+        prefs.edit().putString("lang", code).apply()
+    }
+
+    private fun getSavedLanguageCode(): String {
+        val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+        return prefs.getString("lang", "en") ?: "en"
+    }
+
+
 
 
     override fun onDestroyView() {

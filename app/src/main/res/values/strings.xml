@@ -6,6 +6,11 @@
     <string name="type_message">Type message</string>
     <string name="dealer_avatar">Dealer avatar</string>
     <string name="car_image">Car image</string>
+    <string name="edit_profile">Edit profile</string>
+    <string name="notifications">Notifications</string>
+    <string name="passwords">Passwords</string>
+    <string name="language">Language</string>
+    <string name="logout">Logout</string>
 
 
 </resources>

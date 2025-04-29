@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -35,6 +36,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
+import java.util.Locale
 
 class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
@@ -49,6 +51,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         auth = Firebase.auth
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
         chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
@@ -60,7 +63,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             setupActionBar()
             fetchAndNavigateUserRole()
             handleDeepLink(intent?.data)
-            setupChatListeners()
 
         } else {
             navigateToLoginScreen()
@@ -84,7 +86,8 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     val navController = navHostFragment.navController
                     navController.navigate(R.id.carFragment)
                     binding.bottomNavigationView.visibility = View.VISIBLE
-                    handleNotificationIntent(intent)
+                    setupChatListeners()
+
                 }
 
             }
@@ -129,7 +132,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
 
         navController.navigate(R.id.messagesFragment, bundle)
     }
-
 
     private fun navigateToLoginScreen() {
         val navHostFragment = supportFragmentManager
@@ -230,6 +232,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                         }
 
                         override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {
+                            // Optional: Show placeholder while loading
                         }
                     })
             } else {
@@ -237,6 +240,17 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             }
         }
     }
+    override fun attachBaseContext(newBase: Context) {
+        val langCode = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .getString("lang", "en") ?: "en"
+        val locale = Locale(langCode)
+        Locale.setDefault(locale)
+        val config = Configuration()
+        config.setLocale(locale)
+        val context = newBase.createConfigurationContext(config)
+        super.attachBaseContext(context)
+    }
+
 
     private fun setDefaultActionBarIcon(ab: androidx.appcompat.app.ActionBar) {
         ab.setDisplayHomeAsUpEnabled(true)
@@ -249,5 +263,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         navController.navigate(R.id.action_signInFragment_to_mainFragment)
         binding.bottomNavigationView.visibility = View.VISIBLE
     }
+
 
 }

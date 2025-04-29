@@ -1,37 +1,43 @@
 package com.example.dnmotors.view.fragments.profileFragment
 
+import android.graphics.Bitmap
+import com.example.dnmotors.model.ImgurApiService
+import com.example.dnmotors.model.ImgurResponse
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.app.Activity
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.dnmotors.databinding.FragmentEditProfileBinding
-import com.example.dnmotors.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import java.util.UUID
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.*
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.*
 
 class EditProfileFragment : Fragment() {
 
     private var _binding: FragmentEditProfileBinding? = null
     private val binding get() = _binding!!
 
-    private val auth by lazy { FirebaseAuth.getInstance() }
-    private val firestore by lazy { FirebaseFirestore.getInstance() }
-    private val storage by lazy { FirebaseStorage.getInstance() }
+    private val PICK_IMAGE_AVATAR = 1
+    private val PICK_IMAGE_BACKGROUND = 2
 
-    private var avatarUri: Uri? = null
-    private var backgroundUri: Uri? = null
+    private var selectedAvatarUri: Uri? = null
+    private var selectedBackgroundUri: Uri? = null
 
-    private val PICK_AVATAR_REQUEST = 1
-    private val PICK_BACKGROUND_REQUEST = 2
+    private lateinit var imgurService: ImgurApiService
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,14 +45,14 @@ class EditProfileFragment : Fragment() {
     ): View {
         _binding = FragmentEditProfileBinding.inflate(inflater, container, false)
 
-        loadUserProfile()
+        setupRetrofit()
 
         binding.ivProfileEdit.setOnClickListener {
-            pickImage(PICK_AVATAR_REQUEST)
+            openGallery(PICK_IMAGE_AVATAR)
         }
 
         binding.ivBackgroundEdit.setOnClickListener {
-            pickImage(PICK_BACKGROUND_REQUEST)
+            openGallery(PICK_IMAGE_BACKGROUND)
         }
 
         binding.btnSave.setOnClickListener {
@@ -55,128 +61,178 @@ class EditProfileFragment : Fragment() {
 
         return binding.root
     }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-    private fun loadUserProfile() {
-        val userId = auth.currentUser?.uid ?: return
+        loadUserData()
+        binding.btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
 
-        firestore.collection("users").document(userId).get()
+    }
+
+    private fun loadUserData() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .get()
             .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val user = document.toObject(User::class.java)
-                    user?.let {
-                        binding.etName.setText(it.name)
-                        binding.etEmail.setText(it.email)
-                        binding.etLocation.setText(it.location)
-                        binding.etPhoneNumber.setText(it.phoneNumber)
+                if (document != null) {
+                    val avatarUrl = document.getString("avatarUrl")
+                    val backgroundUrl = document.getString("profileFon")
+                    val name = document.getString("name")
+                    val location = document.getString("location")
+                    val phone = document.getString("phoneNumber")
 
-                        Glide.with(this)
-                            .load(it.avatarUrl)
-                            .placeholder(com.example.dnmotors.R.drawable.profile_picture)
-                            .into(binding.ivProfileEdit)
-
-                        Glide.with(this)
-                            .load(it.profileFon)
-                            .placeholder(com.example.dnmotors.R.drawable.profile_fon)
-                            .into(binding.ivBackgroundEdit)
+                    if (!avatarUrl.isNullOrEmpty()) {
+                        Glide.with(this).load(avatarUrl).into(binding.ivProfileEdit)
                     }
+
+                    if (!backgroundUrl.isNullOrEmpty()) {
+                        Glide.with(this).load(backgroundUrl).into(binding.ivBackgroundEdit)
+                    }
+
+                    binding.etName.setText(name ?: "")
+                    binding.etLocation.setText(location ?: "")
+                    binding.etPhoneNumber.setText(phone ?: "")
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun pickImage(requestCode: Int) {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+
+    private fun setupRetrofit() {
+        val logging = HttpLoggingInterceptor()
+        logging.level = HttpLoggingInterceptor.Level.BODY
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://api.imgur.com/3/")
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        imgurService = retrofit.create(ImgurApiService::class.java)
+    }
+
+    private fun openGallery(requestCode: Int) {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
         startActivityForResult(intent, requestCode)
     }
 
-    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (resultCode == Activity.RESULT_OK && data != null && data.data != null) {
+            val selectedImageUri = data.data
+
             when (requestCode) {
-                PICK_AVATAR_REQUEST -> {
-                    avatarUri = data.data
-                    binding.ivProfileEdit.setImageURI(avatarUri)
+                PICK_IMAGE_AVATAR -> {
+                    selectedAvatarUri = selectedImageUri
+                    Glide.with(this).load(selectedAvatarUri).centerCrop().into(binding.ivProfileEdit)
                 }
-                PICK_BACKGROUND_REQUEST -> {
-                    backgroundUri = data.data
-                    binding.ivBackgroundEdit.setImageURI(backgroundUri)
+                PICK_IMAGE_BACKGROUND -> {
+                    selectedBackgroundUri = selectedImageUri
+                    Glide.with(this).load(selectedBackgroundUri).into(binding.ivBackgroundEdit)
                 }
             }
         }
     }
 
     private fun saveProfile() {
-        val userId = auth.currentUser?.uid ?: return
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        val updates = hashMapOf<String, Any>(
-            "name" to binding.etName.text.toString(),
-            "email" to binding.etEmail.text.toString(),
-            "location" to binding.etLocation.text.toString(),
-            "phoneNumber" to binding.etPhoneNumber.text.toString()
-        )
+        val name = binding.etName.text.toString().trim()
+        val location = binding.etLocation.text.toString().trim()
+        val phone = binding.etPhoneNumber.text.toString().trim()
 
-        // Сначала загружаем изображения, если выбраны
-        uploadImages { avatarUrl, backgroundUrl ->
-            avatarUrl?.let { updates["avatarUrl"] = it }
-            backgroundUrl?.let { updates["profileFon"] = it }
+        val updates = hashMapOf<String, Any>()
+        if (name.isNotEmpty()) updates["name"] = name
+        if (location.isNotEmpty()) updates["location"] = location
+        if (phone.isNotEmpty()) updates["phoneNumber"] = phone
 
-            firestore.collection("users").document(userId)
-                .update(updates)
-                .addOnSuccessListener {
-                    Toast.makeText(requireContext(), "Profile updated", Toast.LENGTH_SHORT).show()
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .update(updates)
+            .addOnSuccessListener {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Данные обновлены", Toast.LENGTH_SHORT).show()
                 }
-                .addOnFailureListener {
-                    Toast.makeText(requireContext(), "Failed to update profile", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Ошибка обновления данных", Toast.LENGTH_SHORT).show()
                 }
+            }
+
+        if (selectedAvatarUri != null) {
+            uploadImageToImgur(selectedAvatarUri!!, "avatarUrl")
+        }
+        if (selectedBackgroundUri != null) {
+            uploadImageToImgur(selectedBackgroundUri!!, "profileFon")
         }
     }
 
-    private fun uploadImages(onComplete: (avatarUrl: String?, backgroundUrl: String?) -> Unit) {
-        val uploadedUrls = mutableMapOf<String, String?>()
 
-        if (avatarUri != null) {
-            val avatarRef = storage.reference.child("avatars/${UUID.randomUUID()}")
-            avatarRef.putFile(avatarUri!!)
-                .continueWithTask { task ->
-                    if (!task.isSuccessful) task.exception?.let { throw it }
-                    avatarRef.downloadUrl
-                }.addOnSuccessListener { uri ->
-                    uploadedUrls["avatarUrl"] = uri.toString()
-                    checkUploadsComplete(uploadedUrls, onComplete)
-                }
-        } else {
-            uploadedUrls["avatarUrl"] = null
-            checkUploadsComplete(uploadedUrls, onComplete)
-        }
 
-        if (backgroundUri != null) {
-            val backgroundRef = storage.reference.child("backgrounds/${UUID.randomUUID()}")
-            backgroundRef.putFile(backgroundUri!!)
-                .continueWithTask { task ->
-                    if (!task.isSuccessful) task.exception?.let { throw it }
-                    backgroundRef.downloadUrl
-                }.addOnSuccessListener { uri ->
-                    uploadedUrls["profileFon"] = uri.toString()
-                    checkUploadsComplete(uploadedUrls, onComplete)
+    private fun uploadImageToImgur(uri: Uri, field: String) {
+        val inputStream = requireContext().contentResolver.openInputStream(uri)
+        val bitmap = BitmapFactory.decodeStream(inputStream)
+        val baos = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+        val imageBytes = baos.toByteArray()
+        val base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT)
+
+        val call = imgurService.uploadImage(base64Image)
+        call.enqueue(object : Callback<ImgurResponse> {
+            override fun onResponse(call: Call<ImgurResponse>, response: Response<ImgurResponse>) {
+                if (response.isSuccessful) {
+                    val imgurLink = response.body()?.data?.link
+                    saveLinkToFirestore(imgurLink, field)
+                } else {
+                    context?.let {
+                        Toast.makeText(it, "Ошибка загрузки изображения", Toast.LENGTH_SHORT).show()
+                    }
                 }
-        } else {
-            uploadedUrls["profileFon"] = null
-            checkUploadsComplete(uploadedUrls, onComplete)
-        }
+            }
+
+            override fun onFailure(call: Call<ImgurResponse>, t: Throwable) {
+                Toast.makeText(requireContext(), "Ошибка сети: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
-    private fun checkUploadsComplete(
-        uploadedUrls: Map<String, String?>,
-        onComplete: (avatarUrl: String?, backgroundUrl: String?) -> Unit
-    ) {
-        if (uploadedUrls.size == 2) {
-            onComplete(uploadedUrls["avatarUrl"], uploadedUrls["profileFon"])
+    private fun saveLinkToFirestore(link: String?, field: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        val updates = hashMapOf<String, Any>()
+        link?.let {
+            updates[field] = it
         }
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .update(updates)
+            .addOnSuccessListener {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Профиль обновлен!", Toast.LENGTH_SHORT).show()
+                    findNavController().popBackStack()
+                }
+            }
+            .addOnFailureListener {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Ошибка загрузки изображения", Toast.LENGTH_SHORT).show()
+                }
+            }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

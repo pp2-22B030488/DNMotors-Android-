@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <!-- Состояние -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Состояние"
+            android:textColor="@color/secondary_text"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <Button
+                android:id="@+id/state_all"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Все"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/white"
+                android:textColor="@color/black"
+                android:textSize="15sp"/>
+            <Button
+                android:id="@+id/state_new"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Новые"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/white"
+                android:textColor="@color/black"
+                android:textSize="15sp"/>
+            <Button
+                android:id="@+id/state_used"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Б/у"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/white"
+                android:textColor="@color/black"
+                android:textSize="15sp"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="#E0E0E0" />
+
+        <!-- Марка/модель -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/secondary_text"
+            android:text="Марка/модель"
+            android:textSize="15sp"
+            android:layout_marginTop="16dp" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="BMW"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            <AutoCompleteTextView
+                android:id="@+id/brandModelAutoComplete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="#E0E0E0" />
+
+        <!-- Год выпуска -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Год выпуска"
+            android:textColor="@color/secondary_text"
+            android:textSize="15sp"
+            android:layout_marginTop="16dp" />
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbars="none">
+            <LinearLayout
+                android:id="@+id/yearButtonsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical" />
+        </HorizontalScrollView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="#E0E0E0" />
+
+        <!-- Цена -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Цена"
+            android:textColor="@color/secondary_text"
+            android:textSize="15sp"
+            android:layout_marginTop="16dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="От">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/priceFrom"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/secondary_text"
+                    android:textColor="@color/black"
+                    android:inputType="number"
+                    android:drawableStart="@drawable/edittext_bg_carcredit" />
+            </com.google.android.material.textfield.TextInputLayout>
+            <Space android:layout_width="8dp" android:layout_height="0dp"/>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="До">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/priceTo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/secondary_text"
+                    android:textColor="@color/black"
+                    android:inputType="number"
+                    android:drawableStart="@drawable/edittext_bg_carcredit" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- Чекбоксы -->
+        <CheckBox
+            android:id="@+id/checkboxInitialPayment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Первоначальный взнос"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:textSize="15sp" />
+        <CheckBox
+            android:id="@+id/checkboxWithPhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:text="С фото"
+            android:textSize="15sp" />
+        <CheckBox
+            android:id="@+id/checkboxCustomsCleared"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:text="Растаможен в РК"
+            android:textSize="15sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="#E0E0E0" />
+
+        <!-- Кнопка -->
+        <Button
+            android:id="@+id/showResultsButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Показать 8323 возможных вариантов"
+            android:backgroundTint="@color/primary_red"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="24dp"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium" />
+
+    </LinearLayout>
+</ScrollView> 

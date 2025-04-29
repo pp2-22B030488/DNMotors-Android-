@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DNMotors</string>
+    <string name="default_web_client_id">your-client-id.apps.googleusercontent.com</string>
+    <string name="hello_blank_fragment">Сәлем, бос фрагмент</string>
+    <string name="type_message">Хабарлама енгізіңіз</string>
+    <string name="dealer_avatar">Дилердің аватары</string>
+    <string name="car_image">Көлік бейнесі</string>
+    <string name="edit_profile">Профильді өңдеу</string>
+    <string name="notifications">Хабарламалар</string>
+    <string name="passwords">Құпиясөздер</string>
+    <string name="language">Тіл</string>
+    <string name="logout">Шығу</string>
+</resources>
