@@ -5,6 +5,5 @@ data class ChatItem(
     val name: String,
     val dealerId: String,
     val userId: String,
-    val lastMessage: String = "",
     val timestamp: Long = 0L
 )

@@ -1,31 +1,21 @@
 package com.example.dnmotors.viewmodel
 
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.util.Base64
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dnmotors.App
-import com.example.dnmotors.R
 import com.example.domain.util.MediaUtils
 import com.example.dnmotors.utils.MessageNotificationUtil
-import com.example.dnmotors.view.activity.MainActivity
-import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -57,17 +47,19 @@ class ChatViewModel : ViewModel() {
                     val carId = doc.getString("carId")
                     val userId = doc.getString("userId")
                     val name = doc.getString("name")
-                    val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
+                    val timestamp = doc.getLong("timestamp")
 
                     if (carId != null && userId != null) {
                         if (name != null) {
-                            ChatItem(
-                                carId = carId,
-                                userId = userId,
-                                dealerId = dealerId,
-                                timestamp = timestamp,
-                                name = name
-                            )
+                            if (timestamp != null) {
+                                ChatItem(
+                                    carId = carId,
+                                    userId = userId,
+                                    dealerId = dealerId,
+                                    timestamp = timestamp,
+                                    name = name
+                                )
+                            } else null
                         } else {
                             null
                         }
@@ -81,6 +73,43 @@ class ChatViewModel : ViewModel() {
             }
     }
 
+    fun loadChatListForUsers() {
+        val dealerId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("chats")
+            .whereEqualTo("userId", dealerId)
+            .get()
+            .addOnSuccessListener { result ->
+                val chatItems = result.documents.mapNotNull { doc ->
+                    val carId = doc.getString("carId")
+                    val userId = doc.getString("userId")
+                    val name = doc.getString("name")
+                    val timestamp = doc.getLong("timestamp")
+
+                    if (carId != null && userId != null) {
+                        if (name != null) {
+                            if (timestamp != null) {
+                                ChatItem(
+                                    carId = carId,
+                                    userId = userId,
+                                    dealerId = dealerId,
+                                    timestamp = timestamp,
+                                    name = name
+                                )
+                            } else null
+                        } else {
+                            null
+                        }
+                    } else null
+                }
+                _chatItems.postValue(chatItems)
+            }
+            .addOnFailureListener { error ->
+                println("Error loading dealer chat list: ${error.message}")
+                _chatItems.postValue(emptyList())
+            }
+    }
 
     fun loadMessages(chatId: String) {
         val messagesRef = FirebaseFirestore.getInstance()
@@ -161,16 +190,6 @@ class ChatViewModel : ViewModel() {
         }
     }
 
-    private fun markAsNotifiedIfNeeded(message: Message, ref: DocumentReference) {
-        if (!message.notificationSent) {
-            ref.update("notificationSent", true)
-                .addOnFailureListener { e ->
-                    Log.e("Notification", "Failed to update notification status", e)
-                }
-        }
-    }
-
-
     fun sendMessage(
         chatId: String,
         messageText: String,
@@ -207,12 +226,12 @@ class ChatViewModel : ViewModel() {
             .set(message)
             .addOnSuccessListener {
                 val chatMetadata = mapOf(
+                    "chatId" to chatId,
                     "userId" to userId,
                     "dealerId" to senderId,
                     "name" to senderName,
                     "carId" to carId,
-                    "lastMessage" to messageText,
-                    "timestamp" to FieldValue.serverTimestamp(),
+                    "timestamp" to System.currentTimeMillis(),
                 )
 
                 firestore.collection("chats")
@@ -222,16 +241,6 @@ class ChatViewModel : ViewModel() {
             .addOnFailureListener {
                 Log.e("ChatViewModel", "Failed to send message", it)
             }
-    }
-
-
-    private fun removeMessagesListener() {
-        dealerMessagesListener?.remove()
-        messagesListener?.let { listener ->
-            messagesListenerRef?.removeEventListener(listener)
-        }
-        messagesListener = null
-        messagesListenerRef = null
     }
 
     fun sendMediaMessage(
@@ -292,46 +301,53 @@ class ChatViewModel : ViewModel() {
                 val message = doc.toObject(Message::class.java) ?: continue
 
                 if (message.senderId != currentUserId && !message.notificationSent) {
-                    createNotification(context, message)
+                    MessageNotificationUtil.createNotification(context, message)
 
                     doc.reference.update("notificationSent", true)
                 }
             }
         }
-
         // Store the listener for future removal
         dealerMessagesListener?.remove()
         dealerMessagesListener = listener
     }
-    val CHANNEL_ID = "dealer_messages_channel"
 
-    fun createNotification(context: Context, message: Message) {
-        val intent = Intent(context, DealerActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("userId", message.senderId)
-            putExtra("carId", message.carId)
+    fun observeMessagesForUser(chatId: String, context: Context) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        val messagesRef = FirebaseFirestore.getInstance()
+            .collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(1)
+
+        val listener = messagesRef.addSnapshotListener { snapshot, error ->
+            if (error != null || snapshot == null) return@addSnapshotListener
+
+            for (doc in snapshot.documents) {
+                val message = doc.toObject(Message::class.java) ?: continue
+
+                if (message.senderId != currentUserId && !message.notificationSent) {
+                    MessageNotificationUtil.createNotificationForMain(context, message)
+
+                    doc.reference.update("notificationSent", true)
+                }
+            }
         }
-
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle("New message from ${message.name}")
-            .setContentText(message.text)
-            .setSmallIcon(R.drawable.logo)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(1, notification)
+        // Store the listener for future removal
+        dealerMessagesListener?.remove()
+        dealerMessagesListener = listener
     }
 
+    private fun removeMessagesListener() {
+        dealerMessagesListener?.remove()
+        messagesListener?.let { listener ->
+            messagesListenerRef?.removeEventListener(listener)
+        }
+        messagesListener = null
+        messagesListenerRef = null
+    }
 
     override fun onCleared() {
         super.onCleared()

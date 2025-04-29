@@ -1,6 +1,8 @@
 package com.example.dnmotors
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -27,22 +29,27 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        if (FirebaseAuth.getInstance().currentUser != null) {
-            val serviceIntent = Intent(this, MessageService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
-        }
-        if (FirebaseAuth.getInstance().currentUser != null) {
-            MessageWorkScheduler.scheduleWorker(this)
-        }
+        createNotificationChannel(channelId = "messages_channel")
         startKoin {
             androidLogger(Level.DEBUG)
             androidContext(this@App)
             modules(appModules)
             modules(listOf(viewModelModule))
+        }
+    }
+
+    private fun createNotificationChannel(channelId: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "messages_channel",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "New message alerts"
+            }
+
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }

@@ -11,18 +11,18 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentMessagesBinding
 import com.example.domain.util.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
+import com.example.dnmotors.viewmodel.ChatViewModel
 import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.example.domain.repository.MediaRepository
 import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 
 class MessagesFragment : Fragment() {
@@ -34,13 +34,13 @@ class MessagesFragment : Fragment() {
     private lateinit var messagesRef: CollectionReference
     private lateinit var mediaRepository: MediaRepository
     private var snapshotListener: ListenerRegistration? = null
-
+    private lateinit var chatViewModel: ChatViewModel
     private lateinit var carId: String
     private lateinit var dealerId: String
 
     override fun onStart() {
         super.onStart()
-        observeMessages()
+        loadMessagesFragment()
     }
 
     override fun onCreateView(
@@ -49,6 +49,7 @@ class MessagesFragment : Fragment() {
     ): View {
         binding = FragmentMessagesBinding.inflate(inflater, container, false)
         mediaRepository = MediaRepository(requireContext())
+        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
         val args = MessagesFragmentArgs.fromBundle(requireArguments())
         carId = args.carId
@@ -62,8 +63,11 @@ class MessagesFragment : Fragment() {
         }
 
         firestore = FirebaseFirestore.getInstance()
-        val chatId = "${dealerId}_$userId"
-        messagesRef = firestore.collection("chats")
+
+        val currentUserId = auth.currentUser?.uid
+        val chatId = "${dealerId}_${currentUserId}"
+
+        messagesRef = FirebaseFirestore.getInstance().collection("chats")
             .document(chatId)
             .collection("messages")
 
@@ -73,7 +77,18 @@ class MessagesFragment : Fragment() {
         }
         binding.recyclerView.adapter = adapter
 
-        binding.sendButton.setOnClickListener { sendMessage() }
+        binding.sendButton.setOnClickListener {
+            if (currentUserId != null) {
+                chatViewModel.sendMessage(
+                    chatId = chatId,
+                    carId = carId,
+                    messageText = binding.messageInput.text.toString().trim(),
+                    senderName = auth.currentUser?.displayName ?: "Unknown User",
+                    senderId = currentUserId,
+                    userId = dealerId,
+                    notificationSent = false)
+            }
+        }
         setupAudioRecordButton()
         return binding.root
     }
@@ -88,6 +103,10 @@ class MessagesFragment : Fragment() {
         }
 
     private fun setupAudioRecordButton() {
+
+        val currentUserId = auth.currentUser?.uid
+        val chatId = "${dealerId}_${currentUserId}"
+
         binding.audioRecordButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -115,10 +134,18 @@ class MessagesFragment : Fragment() {
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     if (mediaRepository.isRecording()) {
                         mediaRepository.stopRecording(
-                            onSuccess = { file -> // <- file not path
+                            onSuccess = { file ->
                                 val base64 = FileUtils.fileToBase64(file)
                                 if (base64.isNotEmpty()) {
-                                    sendBase64Media(base64, "audio")
+                                    if (currentUserId != null) {
+                                        chatViewModel.sendMediaMessage(
+                                            chatId = chatId,
+                                            carId = carId,
+                                            senderName = auth.currentUser?.displayName ?: "Unknown User",
+                                            senderId = currentUserId,
+                                            base64Media = base64,
+                                            type = "audio")
+                                    }
                                 }
                             },
                             onFailure = {
@@ -135,7 +162,6 @@ class MessagesFragment : Fragment() {
         }
     }
 
-
     private fun startRecordingSafely() {
         mediaRepository.startRecording(
             onStart = {
@@ -147,102 +173,19 @@ class MessagesFragment : Fragment() {
         )
     }
 
-    private fun sendMessage() {
-        val messageText = binding.messageInput.text.toString().trim()
-        if (messageText.isEmpty()) return
+    private fun loadMessagesFragment() {
+        val currentUserId = auth.currentUser?.uid
+        val chatId = "${dealerId}_${currentUserId}"
 
-        val encodedMessage = FileUtils.encodeToBase64(messageText)
-        val senderId = auth.currentUser?.uid ?: return
-        val senderName = auth.currentUser?.displayName ?: "Unknown User"
-        val timestamp = System.currentTimeMillis()
-        val chatId = "${dealerId}_$senderId"
+        chatViewModel.loadMessages(chatId)
 
-        val message = Message(
-            id = timestamp.toString(),
-            senderId = senderId,
-            name = senderName,
-            text = messageText,
-            mediaData = encodedMessage,
-            messageType = "text",
-            timestamp = timestamp,
-            carId = carId,
-            notificationSent = false
-        )
+        chatViewModel.messages.observe(viewLifecycleOwner) { messages ->
+            if (messages.isNullOrEmpty()) return@observe
 
-        messagesRef.add(message)
-            .addOnSuccessListener {
-                binding.messageInput.text.clear()
-                val chatMetadata = mapOf(
-                    "chatId" to chatId,
-                    "userId" to senderId,
-                    "dealerId" to dealerId,
-                    "carId" to carId,
-                    "name" to senderName,
-                    "timestamp" to FieldValue.serverTimestamp()
-                )
-                firestore.collection("chats").document(chatId)
-                    .set(chatMetadata, SetOptions.merge())
-                    .addOnFailureListener {
-                        Toast.makeText(context, "Failed to create chat metadata", Toast.LENGTH_SHORT).show()
-                    }
+            adapter.submitList(messages) {
+                binding.recyclerView.scrollToPosition(messages.size - 1)
             }
-            .addOnFailureListener {
-                Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun sendBase64Media(base64: String, mediaType: String) {
-        if (base64.isEmpty()) {
-            Toast.makeText(context, "Failed to process media", Toast.LENGTH_SHORT).show()
-            return
         }
-
-        val message = Message(
-            id = System.currentTimeMillis().toString(),
-            senderId = auth.currentUser?.uid,
-            name = auth.currentUser?.displayName ?: "Unknown User",
-            mediaData = base64,
-            messageType = mediaType,
-            timestamp = System.currentTimeMillis(),
-            carId = carId,
-            notificationSent = false
-        )
-
-        messagesRef.add(message)
-            .addOnFailureListener {
-                Toast.makeText(context, "Failed to send media", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun observeMessages() {
-        val currentUserId = auth.currentUser?.uid ?: return
-        val chatId = "${dealerId}_$currentUserId"
-
-        firestore.collection("chats")
-            .document(chatId)
-            .collection("messages")
-            .orderBy("timestamp", Query.Direction.ASCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || snapshot.isEmpty) {
-                    Toast.makeText(context, "Failed to load messages", Toast.LENGTH_LONG).show()
-                    return@addSnapshotListener
-                }
-
-                val messages = snapshot.documents.mapNotNull { doc ->
-                    val message = doc.toObject(Message::class.java)
-                    if (message != null && message.senderId != currentUserId && !message.notificationSent) {
-                        // Mark as notified
-                        doc.reference.update("notificationSent", true)
-                    }
-                    message
-                }
-
-                adapter.submitList(messages) {
-                    if (messages.isNotEmpty()) {
-                        binding.recyclerView.scrollToPosition(messages.size - 1)
-                    }
-                }
-            }
     }
 
     override fun onStop() {

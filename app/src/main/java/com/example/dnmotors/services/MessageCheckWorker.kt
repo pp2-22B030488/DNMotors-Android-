@@ -38,24 +38,29 @@ class MessageWorker(
         val currentUserId = auth.currentUser?.uid ?: return Result.success()
 
         return try {
-            val chats = firestore.collection("chats")
+            val chatSnapshots = firestore.collection("chats")
                 .whereEqualTo("userId", currentUserId)
-                .get().await()
+                .get()
+                .await()
 
-            chats.documents.forEach { chatDoc ->
+            for (chatDoc in chatSnapshots.documents) {
                 val chatId = chatDoc.id
-                val messagesRef = chatDoc.reference.collection("messages")
-
-                val snapshot = messagesRef
-                    .whereEqualTo("notificationSent", false)
-                    .whereNotEqualTo("senderId", currentUserId)
+                val messagesRef = firestore.collection("chats")
+                    .document(chatId)
+                    .collection("messages")
                     .orderBy("timestamp", Query.Direction.DESCENDING)
                     .limit(1)
-                    .get().await()
 
-                for (doc in snapshot.documents) {
+                val messageSnapshots = messagesRef
+                    .whereEqualTo("notificationSent", false)
+                    .whereNotEqualTo("senderId", currentUserId)
+                    .limit(1)
+                    .get()
+                    .await()
+
+                for (doc in messageSnapshots.documents) {
                     val message = doc.toObject(Message::class.java) ?: continue
-                    MessageNotificationUtil.sendNotification(applicationContext, message)
+                    MessageNotificationUtil.createNotification(applicationContext, message)
                     doc.reference.update("notificationSent", true).await()
                 }
             }
@@ -66,6 +71,7 @@ class MessageWorker(
             Result.retry()
         }
     }
+
 }
 
 object MessageWorkScheduler {

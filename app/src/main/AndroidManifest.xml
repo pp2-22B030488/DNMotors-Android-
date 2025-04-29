@@ -61,13 +61,6 @@
             android:name=".services.MessageService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
-        <receiver android:name=".utils.MessageBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.example.app.NEW_MESSAGE"/>
-            </intent-filter>
-        </receiver>
 
     </application>
 

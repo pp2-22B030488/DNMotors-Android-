@@ -1,5 +1,7 @@
 package com.example.dnmotors.view.activity
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
@@ -18,7 +20,6 @@ import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
 import com.example.dnmotors.services.MessageWorkScheduler
-import com.example.dnmotors.utils.MessageBroadcastReceiver
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
@@ -42,14 +43,12 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var chatViewModel: ChatViewModel
     private val TAG = "MainActivity"
     private var messageListener: ListenerRegistration? = null
-    private lateinit var receiver: MessageBroadcastReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         auth = Firebase.auth
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
         chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
@@ -61,18 +60,10 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             setupActionBar()
             fetchAndNavigateUserRole()
             handleDeepLink(intent?.data)
+            setupChatListeners()
 
         } else {
             navigateToLoginScreen()
-        }
-        startService(Intent(this, MessageService::class.java))
-
-        // Register receiver
-        receiver = MessageBroadcastReceiver()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(receiver, IntentFilter("com.example.app.NEW_MESSAGE"), RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(receiver, IntentFilter("com.example.app.NEW_MESSAGE"))
         }
     }
     private fun fetchAndNavigateUserRole() {
@@ -93,10 +84,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     val navController = navHostFragment.navController
                     navController.navigate(R.id.carFragment)
                     binding.bottomNavigationView.visibility = View.VISIBLE
-                    setupChatListeners()
-                    startMessageService()
                     handleNotificationIntent(intent)
-
                 }
 
             }
@@ -104,43 +92,18 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     }
 
     private fun setupChatListeners() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        chatViewModel.loadChatListForUsers()
 
-        chatViewModel.chatItems.observe(this) { chats ->
+        chatViewModel.chatItems.observeForever { chats ->
             chats.forEach { chat ->
-                chatViewModel.observeMessages("${chat.dealerId}_${chat.userId}", this)
+                chatViewModel.observeMessagesForUser(chatId = "${chat.dealerId}_${chat.userId}", this)
             }
         }
 
-        messageListener = FirebaseFirestore.getInstance()
-            .collection("chats")
-            .whereEqualTo("dealerId", userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) {
-                    Log.e(TAG, "Message listener error", error)
-                    return@addSnapshotListener
-                }
-
-                for (doc in snapshot.documents) {
-                    val message = doc.toObject(Message::class.java) ?: continue
-                    val messageChatId = doc.reference.parent.parent?.id ?: continue
-
-                    if (message.senderId == userId || message.notificationSent) {
-                        doc.reference.update("notificationSent", true)
-                            .addOnFailureListener { e ->
-                                Log.e(TAG, "Failed to update notification status", e)
-                            }
-                    }
-
-                    MessageNotificationUtil.sendNotification(this, message)
-
-                    doc.reference.update("notificationSent", true)
-                        .addOnFailureListener { e ->
-                            Log.e(TAG, "Failed to update notification status", e)
-                        }
-                }
-            }
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            MessageWorkScheduler.scheduleWorker(this)
+            MessageWorkScheduler.triggerNow(this)
+        }
     }
 
     private fun handleNotificationIntent(intent: Intent?) {
@@ -285,13 +248,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         val navController = navHostFragment.navController
         navController.navigate(R.id.action_signInFragment_to_mainFragment)
         binding.bottomNavigationView.visibility = View.VISIBLE
-    }
-    private fun startMessageService() {
-        val intent = Intent(this, MessageService::class.java)
-        startService(intent)
-        if (FirebaseAuth.getInstance().currentUser != null) {
-            MessageWorkScheduler.scheduleWorker(this)
-        }
     }
 
 }

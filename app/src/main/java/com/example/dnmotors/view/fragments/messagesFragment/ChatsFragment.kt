@@ -8,10 +8,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentChatsBinding
 import com.example.dnmotors.view.adapter.ChatListAdapter
+import com.example.dnmotors.viewmodel.ChatViewModel
 import com.example.domain.model.ChatItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,6 +24,7 @@ class ChatsFragment : Fragment() {
     private lateinit var firestore: FirebaseFirestore
     private val _chatItems = MutableLiveData<List<ChatItem>>()
     private val chatItems: LiveData<List<ChatItem>> get() = _chatItems
+    private lateinit var chatViewModel: ChatViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -30,6 +33,7 @@ class ChatsFragment : Fragment() {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
+        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
         val userId = auth.currentUser?.uid ?: return binding.root
 
@@ -40,6 +44,7 @@ class ChatsFragment : Fragment() {
         })
         return binding.root
     }
+
     private fun loadChatListForUser() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -51,17 +56,20 @@ class ChatsFragment : Fragment() {
                 val chatItems = result.documents.mapNotNull { doc ->
                     val carId = doc.getString("carId")
                     val dealerId = doc.getString("dealerId")
-                    val timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L
+                    val timestamp = doc.getLong("timestamp")
                     val name = doc.getString("name")
                     if (carId != null && dealerId != null) {
                         if (name != null) {
-                            ChatItem(
-                                carId = carId,
-                                userId = userId,
-                                dealerId = dealerId,
-                                timestamp = timestamp,
-                                name = name
-                            )
+                            if (timestamp != null) {
+                                ChatItem(
+                                    carId = carId,
+                                    userId = userId,
+                                    dealerId = dealerId,
+                                    timestamp = timestamp,
+                                    name = name
+                                )
+                            } else null
+
                         }
                         else null
                     } else null
