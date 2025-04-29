@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.dnmotors.R
@@ -34,6 +35,7 @@ class ChangePasswordFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         auth = FirebaseAuth.getInstance()
+        val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
 
         binding.btnSave.setOnClickListener {
             clearErrors()
@@ -92,6 +94,9 @@ class ChangePasswordFragment : Fragment() {
                     binding.etCurrentPassword.error = "Неверный текущий пароль"
                     shakeView(binding.etCurrentPassword)
                 }
+        }
+        toolbar.setNavigationOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
     }
 

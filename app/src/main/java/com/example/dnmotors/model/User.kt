@@ -13,6 +13,7 @@ data class User(
     val location: String = "",
     val phoneNumber: String = "",
     val avatarUrl: String = "",
-    val profileFon: String = ""
+    val profileFon: String = "",
+    val notificationsEnabled: Boolean = false
 
 ) : Parcelable

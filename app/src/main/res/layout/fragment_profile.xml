@@ -15,7 +15,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Шапка с фоном и аватаркой -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="300dp">
@@ -181,7 +180,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Edit profile"
+                                android:text="@string/edit_profile"
                                 android:textSize="16sp"
                                 android:textColor="#212121"
                                 android:paddingStart="16dp"/>
@@ -215,7 +214,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Notifications"
+                                android:text="@string/notifications"
                                 android:textSize="16sp"
                                 android:textColor="#212121"
                                 android:paddingStart="16dp"/>
@@ -255,7 +254,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Passwords"
+                                android:text="@string/passwords"
                                 android:textSize="16sp"
                                 android:textColor="#212121"
                                 android:paddingStart="16dp"/>
@@ -274,6 +273,7 @@
 
                         <!-- Language -->
                         <LinearLayout
+                            android:id="@+id/language_layout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
@@ -283,6 +283,7 @@
                             <ImageView
                                 android:layout_width="24dp"
                                 android:layout_height="24dp"
+                                android:contentDescription="TODO"
                                 android:src="@drawable/ic_language"
                                 app:tint="#757575" />
 
@@ -290,7 +291,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Language"
+                                android:text="@string/language"
                                 android:textSize="16sp"
                                 android:textColor="#212121"
                                 android:paddingStart="16dp"/>
@@ -324,7 +325,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Logout"
+                                android:text="@string/logout"
                                 android:textSize="16sp"
                                 android:textColor="#212121"
                                 android:paddingStart="16dp"/>

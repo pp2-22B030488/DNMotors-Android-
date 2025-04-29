@@ -15,10 +15,12 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+
             <!-- Шапка с фоном и аватаркой -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="300dp">
+
 
                 <ImageView
                     android:id="@+id/ivBackgroundEdit"
@@ -26,6 +28,17 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
                     android:src="@drawable/profile_fon" />
+                <ImageButton
+                    android:id="@+id/btnBack"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="start|top"
+                    android:layout_margin="16dp"
+                    android:background="@android:color/transparent"
+                    android:padding="8dp"
+                    android:contentDescription="Назад"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="@android:color/white" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

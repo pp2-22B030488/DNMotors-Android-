@@ -1,7 +1,10 @@
 package com.example.dnmotors.view.fragments.profileFragment
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -21,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
+import java.util.Locale
 
 class ProfileFragment : Fragment() {
 
@@ -70,6 +74,10 @@ class ProfileFragment : Fragment() {
         passwordLayout.setOnClickListener {
             findNavController().navigate(R.id.action_profileFragment_to_changePasswordFragment)
         }
+        binding.languageLayout.setOnClickListener {
+            showLanguageSelectionDialog() // или перейти в LanguageFragment
+        }
+
 
 
     }
@@ -115,6 +123,43 @@ class ProfileFragment : Fragment() {
                 Toast.makeText(requireContext(), "Не удалось сохранить настройки уведомлений", Toast.LENGTH_SHORT).show()
             }
     }
+
+    private fun showLanguageSelectionDialog() {
+        val languages = arrayOf("Қазақша", "Русский", "English")
+        val codes = arrayOf("kk", "ru", "en")
+        val currentLang = getSavedLanguageCode()
+        val selectedIndex = codes.indexOf(currentLang)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Language")
+            .setSingleChoiceItems(languages, selectedIndex) { dialog, which ->
+                saveLanguageCode(codes[which])
+                setLocale(codes[which])
+                dialog.dismiss()
+                requireActivity().recreate() // перезапуск для применения изменений
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    private fun setLocale(langCode: String) {
+        val locale = Locale(langCode)
+        Locale.setDefault(locale)
+        val config = Configuration()
+        config.setLocale(locale)
+        requireContext().resources.updateConfiguration(config, requireContext().resources.displayMetrics)
+    }
+
+    private fun saveLanguageCode(code: String) {
+        val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+        prefs.edit().putString("lang", code).apply()
+    }
+
+    private fun getSavedLanguageCode(): String {
+        val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+        return prefs.getString("lang", "en") ?: "en"
+    }
+
+
 
 
     override fun onDestroyView() {

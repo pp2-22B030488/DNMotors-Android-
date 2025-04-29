@@ -15,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.dnmotors.databinding.FragmentEditProfileBinding
 import com.google.firebase.auth.FirebaseAuth
@@ -64,6 +65,10 @@ class EditProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         loadUserData()
+        binding.btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+
     }
 
     private fun loadUserData() {
@@ -140,14 +145,41 @@ class EditProfileFragment : Fragment() {
     }
 
     private fun saveProfile() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        val name = binding.etName.text.toString().trim()
+        val location = binding.etLocation.text.toString().trim()
+        val phone = binding.etPhoneNumber.text.toString().trim()
+
+        val updates = hashMapOf<String, Any>()
+        if (name.isNotEmpty()) updates["name"] = name
+        if (location.isNotEmpty()) updates["location"] = location
+        if (phone.isNotEmpty()) updates["phoneNumber"] = phone
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .update(updates)
+            .addOnSuccessListener {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Данные обновлены", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Ошибка обновления данных", Toast.LENGTH_SHORT).show()
+                }
+            }
+
         if (selectedAvatarUri != null) {
             uploadImageToImgur(selectedAvatarUri!!, "avatarUrl")
         }
         if (selectedBackgroundUri != null) {
             uploadImageToImgur(selectedBackgroundUri!!, "profileFon")
         }
-
     }
+
+
 
     private fun uploadImageToImgur(uri: Uri, field: String) {
         val inputStream = requireContext().contentResolver.openInputStream(uri)
@@ -189,16 +221,18 @@ class EditProfileFragment : Fragment() {
             .document(userId)
             .update(updates)
             .addOnSuccessListener {
-                context?.let {
-                    Toast.makeText(it, "Профиль обновлен!", Toast.LENGTH_SHORT).show()
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Профиль обновлен!", Toast.LENGTH_SHORT).show()
+                    findNavController().popBackStack()
                 }
             }
             .addOnFailureListener {
-                context?.let {
-                    Toast.makeText(it, "Ошибка загрузки изображения", Toast.LENGTH_SHORT).show()
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Ошибка загрузки изображения", Toast.LENGTH_SHORT).show()
                 }
             }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

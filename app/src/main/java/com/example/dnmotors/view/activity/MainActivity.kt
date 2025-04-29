@@ -2,6 +2,7 @@ package com.example.dnmotors.view.activity
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -34,6 +35,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
+import java.util.Locale
 
 class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
@@ -237,6 +239,17 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             }
         }
     }
+    override fun attachBaseContext(newBase: Context) {
+        val langCode = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .getString("lang", "en") ?: "en"
+        val locale = Locale(langCode)
+        Locale.setDefault(locale)
+        val config = Configuration()
+        config.setLocale(locale)
+        val context = newBase.createConfigurationContext(config)
+        super.attachBaseContext(context)
+    }
+
 
     private fun setDefaultActionBarIcon(ab: androidx.appcompat.app.ActionBar) {
         ab.setDisplayHomeAsUpEnabled(true)
