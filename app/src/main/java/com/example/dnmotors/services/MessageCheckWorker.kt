@@ -39,7 +39,7 @@ class MessageWorker(
 
         return try {
             val chats = firestore.collection("chats")
-                .whereArrayContains("participants", currentUserId)
+                .whereEqualTo("userId", currentUserId)
                 .get().await()
 
             chats.documents.forEach { chatDoc ->

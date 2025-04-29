@@ -7,6 +7,7 @@ import android.os.Build
 import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.di.appModules
 import com.example.dnmotors.di.viewModelModule
+import com.example.dnmotors.services.MessageWorkScheduler
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -33,6 +34,9 @@ class App : Application() {
             } else {
                 startService(serviceIntent)
             }
+        }
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            MessageWorkScheduler.scheduleWorker(this)
         }
         startKoin {
             androidLogger(Level.DEBUG)

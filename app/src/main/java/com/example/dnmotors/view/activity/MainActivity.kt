@@ -17,6 +17,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
+import com.example.dnmotors.services.MessageWorkScheduler
 import com.example.dnmotors.utils.MessageBroadcastReceiver
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
@@ -40,7 +41,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var authViewModel: AuthViewModel
     private lateinit var chatViewModel: ChatViewModel
     private val TAG = "MainActivity"
-    private var currentChatId: String? = null
     private var messageListener: ListenerRegistration? = null
     private lateinit var receiver: MessageBroadcastReceiver
 
@@ -65,7 +65,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         } else {
             navigateToLoginScreen()
         }
-        // Start message listening service
         startService(Intent(this, MessageService::class.java))
 
         // Register receiver
@@ -290,6 +289,9 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private fun startMessageService() {
         val intent = Intent(this, MessageService::class.java)
         startService(intent)
+        if (FirebaseAuth.getInstance().currentUser != null) {
+            MessageWorkScheduler.scheduleWorker(this)
+        }
     }
 
 }
