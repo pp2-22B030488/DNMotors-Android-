@@ -72,44 +72,66 @@ object MessageNotificationUtil {
     }
 
     fun sendNotification(context: Context, message: Message) {
-        if (message.notificationSent) {
-            return
-        }
+        if (message.notificationSent) return
 
-        val channelId = "messages_channel"
-        val notificationManager = NotificationManagerCompat.from(context)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            return
-        }
+        getNotificationSettingFromFirestore(userId) { isEnabled ->
+            if (!isEnabled) return@getNotificationSettingFromFirestore
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId, "Messages", NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifications for new chat messages"
+            val channelId = "messages_channel"
+            val notificationManager = NotificationManagerCompat.from(context)
+
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                return@getNotificationSettingFromFirestore
             }
-            notificationManager.createNotificationChannel(channel)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    channelId, "Messages", NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Notifications for new chat messages"
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+
+            val pendingIntent = PendingIntent.getActivity(
+                context, 0, intent, PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val notification = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.ic_settings)
+                .setContentTitle("New message from ${message.name}")
+                .setContentText(message.text ?: "You have a new message")
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .build()
+
+            notificationManager.notify(System.currentTimeMillis().toInt(), notification)
         }
-
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent, PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_settings)
-            .setContentTitle("New message from ${message.name}")
-            .setContentText(message.text ?: "You have a new message")
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .build()
-
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
+
+    private fun getNotificationSettingFromFirestore(
+        userId: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                val isEnabled = document.getBoolean("notificationsEnabled") ?: false
+                onResult(isEnabled)
+            }
+            .addOnFailureListener {
+                onResult(false) // по умолчанию выключены при ошибке
+            }
+    }
+
 
 }

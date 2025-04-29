@@ -26,6 +26,10 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
                     android:src="@drawable/profile_fon" />
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#80000000" /> <!-- Прозрачный чёрный -->
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -36,8 +40,9 @@
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/ivProfile"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:scaleType="centerCrop"
                         app:shapeAppearanceOverlay="@style/CircleImageView"
                         android:src="@drawable/profile_picture"
                         android:layout_gravity="center"
@@ -215,11 +220,15 @@
                                 android:textColor="#212121"
                                 android:paddingStart="16dp"/>
 
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_arrow_right"
-                                app:tint="#BDBDBD" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/switchNotifications"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="false"
+                                app:thumbTint="@color/switch_thumb"
+                                app:trackTint="@color/switch_track"
+                                />
+
                         </LinearLayout>
 
                         <View
@@ -229,6 +238,7 @@
 
                         <!-- Passwords -->
                         <LinearLayout
+                            android:id="@+id/password_layout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
