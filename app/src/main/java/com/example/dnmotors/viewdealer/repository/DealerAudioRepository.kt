@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.example.dnmotors.viewmodel.ChatViewModel
+import com.example.domain.model.Message
 import com.example.domain.repository.MediaRepository
 import com.example.domain.util.FileUtils
 import kotlinx.coroutines.CoroutineScope
@@ -53,17 +54,19 @@ internal object DealerAudioRepository {
                         val base64 = withContext(Dispatchers.IO) {
                             FileUtils.fileToBase64(file)
                         }
-
-                        viewModel.sendMediaMessage(
-                            chatId = chatId,
-                            base64Media = base64,
-                            type = "audio",
+                        val message = Message(
+                            id = System.currentTimeMillis().toString(),
                             senderId = dealerId,
-                            senderName = dealerName,
-                            carId = carId,
+                            userId = userId,
                             dealerId = dealerId,
-                            userId = userId
+                            name = dealerName,
+                            mediaData = base64,
+                            messageType = "audio",
+                            timestamp = System.currentTimeMillis(),
+                            carId = carId,
+                            notificationSent = false
                         )
+                        viewModel.sendMediaMessage(message, chatId)
 
                         onRecordingStateChanged(false)
                         Toast.makeText(context, "Audio message sent", Toast.LENGTH_SHORT).show()

@@ -17,12 +17,13 @@ import com.example.dnmotors.viewmodel.ChatViewModel
 import com.example.domain.model.ChatItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ChatsFragment : Fragment() {
     private lateinit var binding: FragmentChatsBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
-    private lateinit var chatViewModel: ChatViewModel
+    private val chatViewModel: ChatViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -31,7 +32,6 @@ class ChatsFragment : Fragment() {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
-        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
         val userId = auth.currentUser?.uid ?: return binding.root
         chatViewModel.loadChatList(false)

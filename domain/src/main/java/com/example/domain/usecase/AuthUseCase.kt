@@ -2,32 +2,35 @@ package com.example.domain.usecase
 
 import com.example.domain.repository.AuthRepository
 
-class SignInWithGoogleUseCase(private val authRepository: AuthRepository) {
-    suspend operator fun invoke(idToken: String): Result<Unit> {
-        return authRepository.signInWithGoogle(idToken)
-    }
-}
-class RegisterWithGoogleUseCase(private val authRepository: AuthRepository) {
-    suspend operator fun invoke(idToken: String): Result<Unit> {
-        return authRepository.registerWithGoogle(idToken)
-    }
-}
-class CheckUserSignedInUseCase(private val authRepository: AuthRepository) {
-    operator fun invoke(): Boolean {
-        return authRepository.isUserSignedIn()
-    }
-}
-class RegisterWithEmailUseCase(private val authRepository: AuthRepository) {
-    suspend operator fun invoke(email: String, password: String, name: String): Result<Unit> {
-        if (name.isBlank()) {
-            return Result.failure(IllegalArgumentException("Name cannot be blank"))
-        }
-        return authRepository.registerWithEmail(email, password, name)
-    }
-}
+class AuthUseCase(private val repository: AuthRepository) {
 
-class SignInWithEmailUseCase(private val authRepository: AuthRepository) {
-    suspend operator fun invoke(email: String, password: String): Result<Unit> {
-        return authRepository.signInWithEmail(email, password)
+    suspend fun signInWithEmail(email: String, password: String): Result<Unit> {
+        return repository.signInWithEmail(email, password)
+    }
+
+    suspend fun signInWithGoogle(idToken: String): Result<Unit> {
+        return repository.signInWithGoogle(idToken)
+    }
+
+    suspend fun registerWithEmail(
+        email: String,
+        password: String,
+        name: String,
+        location: String,
+        phoneNumber: String
+    ): Result<Unit> {
+        return repository.registerWithEmail(email, password, name, location, phoneNumber)
+    }
+
+    suspend fun registerWithGoogle(idToken: String): Result<Unit> {
+        return repository.registerWithGoogle(idToken)
+    }
+
+    suspend fun fetchUserRole(uid: String): Result<String> {
+        return repository.fetchUserRole(uid)
+    }
+
+    fun isUserSignedIn(): Boolean {
+        return repository.isUserSignedIn()
     }
 }

@@ -24,7 +24,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = viewModel(),
+    viewModel: ChatViewModel,
     onChatClick: (ChatItem) -> Unit
 ) {
     val chatItems by viewModel.chatItems.observeAsState(emptyList())

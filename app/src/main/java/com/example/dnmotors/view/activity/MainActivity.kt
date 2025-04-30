@@ -1,49 +1,41 @@
 package com.example.dnmotors.view.activity
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
 import com.example.dnmotors.services.MessageWorkScheduler
-import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
-import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.Locale
 
 class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
-    private lateinit var authViewModel: AuthViewModel
-    private lateinit var chatViewModel: ChatViewModel
+    private val authViewModel: AuthViewModel by viewModel()
+    private val chatViewModel: ChatViewModel by viewModel()
     private val TAG = "MainActivity"
     private var messageListener: ListenerRegistration? = null
 
@@ -54,8 +46,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         setContentView(binding.root)
 
         auth = Firebase.auth
-        authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
-        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
         val currentUser = auth.currentUser
         if (currentUser != null) {
@@ -101,7 +91,10 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
 
         chatViewModel.chatItems.observeForever { chats ->
             chats.forEach { chat ->
-                chatViewModel.observeMessagesForUser(chatId = "${chat.dealerId}_${chat.userId}", this)
+                chatViewModel.observeNewMessages(
+                    chatId = "${chat.dealerId}_${chat.userId}",
+                    this,
+                    activityClass = MainActivity::class.java)
             }
         }
 

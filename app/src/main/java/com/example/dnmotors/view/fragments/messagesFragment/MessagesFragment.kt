@@ -3,6 +3,7 @@ package com.example.dnmotors.view.fragments.messagesFragment
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -17,12 +18,15 @@ import com.example.dnmotors.databinding.FragmentMessagesBinding
 import com.example.domain.util.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
 import com.example.dnmotors.viewmodel.ChatViewModel
+import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.example.domain.repository.MediaRepository
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
+import java.util.UUID
 
 class MessagesFragment : Fragment() {
 
@@ -33,7 +37,7 @@ class MessagesFragment : Fragment() {
     private lateinit var messagesRef: CollectionReference
     private lateinit var mediaRepository: MediaRepository
     private var snapshotListener: ListenerRegistration? = null
-    private lateinit var chatViewModel: ChatViewModel
+    private val chatViewModel: ChatViewModel by viewModel()
     private lateinit var carId: String
     private lateinit var dealerId: String
 
@@ -64,7 +68,6 @@ class MessagesFragment : Fragment() {
 
     private fun setupDependencies() {
         mediaRepository = MediaRepository(requireContext())
-        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
         val args = MessagesFragmentArgs.fromBundle(requireArguments())
         carId = args.carId
@@ -107,18 +110,26 @@ class MessagesFragment : Fragment() {
         val messageText = binding.messageInput.text.toString().trim()
 
         if (messageText.isNotEmpty()) {
-            chatViewModel.sendMessage(
-                chatId = chatId,
-                carId = carId,
-                messageText = messageText,
-                senderName = auth.currentUser?.displayName ?: "Unknown User",
+            val encodedText = Base64.encodeToString(messageText.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
+
+            val message = Message(
+                id = UUID.randomUUID().toString(),
                 senderId = currentUserId,
-                userId = currentUserId,
                 dealerId = dealerId,
+                userId = currentUserId,
+                name = auth.currentUser?.displayName ?: "Unknown User",
+                text = messageText,
+                mediaData = encodedText,
+                messageType = "text",
+                timestamp = System.currentTimeMillis(),
+                carId = carId,
                 notificationSent = false
             )
+
+            chatViewModel.sendMessage(message, chatId)
             binding.messageInput.text.clear()
         }
+
     }
 
     private fun setupAudioRecordingButton() {
@@ -179,18 +190,23 @@ class MessagesFragment : Fragment() {
         val base64 = FileUtils.fileToBase64(file)
 
         if (base64.isNotEmpty()) {
-            chatViewModel.sendMediaMessage(
-                chatId = chatId,
-                carId = carId,
-                senderName = auth.currentUser?.displayName ?: "Unknown User",
+            val message = Message(
+                id = System.currentTimeMillis().toString(),
                 senderId = currentUserId,
-                base64Media = base64,
-                type = "audio",
                 userId = currentUserId,
-                dealerId = dealerId
+                dealerId = dealerId,
+                name = auth.currentUser?.displayName ?: "Unknown User",
+                mediaData = base64,
+                messageType = "audio",
+                timestamp = System.currentTimeMillis(),
+                carId = carId,
+                notificationSent = false
             )
+
+            chatViewModel.sendMessage(message, chatId)
         }
     }
+
 
     private fun loadMessages() {
         val currentUserId = auth.currentUser?.uid ?: return
