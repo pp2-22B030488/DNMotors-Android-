@@ -60,7 +60,9 @@ internal object DealerAudioRepository {
                             type = "audio",
                             senderId = dealerId,
                             senderName = dealerName,
-                            carId = carId
+                            carId = carId,
+                            dealerId = dealerId,
+                            userId = userId
                         )
 
                         onRecordingStateChanged(false)

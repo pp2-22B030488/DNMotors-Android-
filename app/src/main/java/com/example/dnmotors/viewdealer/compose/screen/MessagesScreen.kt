@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.provider.MediaStore
 import android.util.Base64
 import android.widget.Toast
@@ -47,8 +46,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -76,15 +73,12 @@ fun MessagesScreen(
     val scope = rememberCoroutineScope()
     val activity = LocalContext.current as? Activity
 
-    // Variables to hold the latest file references
     var imageFile by remember { mutableStateOf<File?>(null) }
     var videoFile by remember { mutableStateOf<File?>(null) }
 
 
-    // Constants for permission request code
     val REQUEST_CAMERA_PERMISSION = 1001
 
-    // Function to check and request permissions
     fun checkAndRequestPermissions(context: Context): Boolean {
         val cameraPermission = ContextCompat.checkSelfPermission(
             context, Manifest.permission.CAMERA
@@ -105,7 +99,6 @@ fun MessagesScreen(
         }
 
         return if (permissionsNeeded.isNotEmpty()) {
-            // Request permissions if not granted
             ActivityCompat.requestPermissions(
                 context as Activity, permissionsNeeded.toTypedArray(), REQUEST_CAMERA_PERMISSION
             )
@@ -114,7 +107,7 @@ fun MessagesScreen(
             true
         }
     }
-// Add this ActivityResult launcher
+
     val cameraResultLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -129,7 +122,9 @@ fun MessagesScreen(
                         type = "image",
                         senderId = dealerId,
                         senderName = dealerName,
-                        carId = carId
+                        carId = carId,
+                        userId = userId,
+                        dealerId = dealerId
                     )
                     Toast.makeText(context, "Image sent successfully", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
@@ -158,7 +153,9 @@ fun MessagesScreen(
                         type = "video",
                         senderId = dealerId,
                         senderName = dealerName,
-                        carId = carId
+                        carId = carId,
+                        userId = userId,
+                        dealerId = dealerId
                     )
                     Toast.makeText(context, "Video sent successfully", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
@@ -184,7 +181,7 @@ fun MessagesScreen(
                 putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            cameraResultLauncher.launch(intent)  // Use the launcher here
+            cameraResultLauncher.launch(intent)
         } ?: run {
             Toast.makeText(context, "Failed to create image file", Toast.LENGTH_SHORT).show()
         }
@@ -395,6 +392,7 @@ fun MessagesScreen(
                             senderName = dealerName,
                             userId = userId,
                             carId = carId,
+                            dealerId = dealerId,
                             notificationSent = false
                         )
                         input = ""

@@ -44,7 +44,7 @@ object MessageNotificationUtil {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("carId", message.carId)
-            putExtra("senderId", message.senderId)
+            putExtra("dealerId", message.senderId)
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(

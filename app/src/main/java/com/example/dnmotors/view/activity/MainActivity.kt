@@ -243,7 +243,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                         }
 
                         override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {
-                            // Optional: Show placeholder while loading
                         }
                     })
             } else {
@@ -271,14 +270,17 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     override fun onLoginSuccess() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
-        navController.navigate(R.id.action_signInFragment_to_mainFragment)
-        binding.bottomNavigationView.visibility = View.VISIBLE
-    }
 
-//    override fun onNewIntent(intent: Intent?) {
-//        super.onNewIntent(intent)
-//        handleDeepLink(intent?.data)
-//        handleNotificationIntent(intent)
-//        setIntent(intent)
-//    }
+        if (navController.currentDestination?.id == R.id.messagesFragment) {
+            Log.d(TAG, "Already on messagesFragment. No need to navigate again from onLoginSuccess.")
+            binding.bottomNavigationView.visibility = View.VISIBLE
+        } else if (navController.currentDestination?.id != R.id.carFragment) {
+            Log.d(TAG, "Navigating from ${navController.currentDestination?.label} to carFragment after login.")
+            navController.navigate(R.id.action_signInFragment_to_carFragment)
+            binding.bottomNavigationView.visibility = View.VISIBLE
+        } else {
+            Log.d(TAG, "Already on carFragment. Skipping navigation from onLoginSuccess.")
+            binding.bottomNavigationView.visibility = View.VISIBLE
+        }
+    }
 }

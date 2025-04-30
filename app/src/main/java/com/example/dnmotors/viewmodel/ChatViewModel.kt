@@ -142,7 +142,7 @@ class ChatViewModel : ViewModel() {
 
     private fun handleImageMessage(message: Message): Message {
         return if (!message.mediaData.isNullOrEmpty()) {
-            message // Return as-is for lazy loading
+            message
         } else {
             Log.w("MessageDecode", "Empty mediaData for image")
             message.copy(mediaData = "")
@@ -156,6 +156,7 @@ class ChatViewModel : ViewModel() {
         senderName: String,
         userId: String,
         carId: String,
+        dealerId: String,
         notificationSent: Boolean
     ) {
         if (messageText.isBlank()) return
@@ -168,6 +169,8 @@ class ChatViewModel : ViewModel() {
         val message = Message(
             id = messageId,
             senderId = senderId,
+            dealerId = dealerId,
+            userId = userId,
             name = senderName,
             text = messageText,
             mediaData = encodedMessage,
@@ -187,7 +190,7 @@ class ChatViewModel : ViewModel() {
                 val chatMetadata = mapOf(
                     "chatId" to chatId,
                     "userId" to userId,
-                    "dealerId" to senderId,
+                    "dealerId" to dealerId,
                     "name" to senderName,
                     "carId" to carId,
                     "timestamp" to System.currentTimeMillis(),
@@ -207,6 +210,8 @@ class ChatViewModel : ViewModel() {
         base64Media: String,
         type: String,
         senderId: String,
+        dealerId: String,
+        userId: String,
         senderName: String,
         carId: String,
     ) {
@@ -214,6 +219,8 @@ class ChatViewModel : ViewModel() {
             mediaData = base64Media,
             messageType = type,
             senderId = senderId,
+            userId = userId,
+            dealerId = dealerId,
             name = senderName,
             timestamp = System.currentTimeMillis(),
             id = System.currentTimeMillis().toString(),
@@ -266,7 +273,6 @@ class ChatViewModel : ViewModel() {
                 }
             }
         }
-        // Store the listener for future removal
         dealerMessagesListener?.remove()
         dealerMessagesListener = listener
     }
@@ -294,7 +300,6 @@ class ChatViewModel : ViewModel() {
                 }
             }
         }
-        // Store the listener for future removal
         dealerMessagesListener?.remove()
         dealerMessagesListener = listener
     }

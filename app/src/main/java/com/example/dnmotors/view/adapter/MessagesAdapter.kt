@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemComparator()) {
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
@@ -33,7 +34,11 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
         return VIEW_TYPE_SENDER
     }
 
+    private var onMediaClick: ((Message) -> Unit)? = null
 
+    fun setOnMediaClickListener(listener: (Message) -> Unit) {
+        this.onMediaClick = listener
+    }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
         val binding = UserListBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ItemHolder(binding)
@@ -59,39 +64,34 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
             when (val messageType = message.messageType) {
                 "text" -> {
                     tvMessage.visibility = View.VISIBLE
-                    tvMessage.text = if (!message.text.isNullOrEmpty()) {
-                        try {
-                            MediaUtils.decodeTextFromBase64(message.mediaData)
-                        } catch (e: IllegalArgumentException) {
-                            Log.e("MessagesAdapter", "Failed to decode Base64 text: ${message.mediaData}", e)
-                            "[Invalid Text Message]"
-                        }
-                    } else {
-                        ""
-                    }
+                    tvMessage.text = message.text ?: "[Empty Message]"
                 }
+
                 "audio", "video" -> {
                     tvMessage.visibility = View.VISIBLE
                     btnPlay.visibility = View.VISIBLE
                     tvMessage.text = "[${messageType.replaceFirstChar { it.uppercase() }} Message]"
                     btnPlay.text = "Play ${messageType.replaceFirstChar { it.uppercase() }}"
                     btnPlay.setOnClickListener {
-                        val currentBase64 = message.mediaData
-                        if (currentBase64.isNullOrEmpty()) {
-                            Toast.makeText(itemView.context, "Media data is missing", Toast.LENGTH_SHORT).show()
-                            Log.w("MessagesAdapter", "Play clicked but Base64 data is null or empty for message ID: ${message.id}")
+                        if (message.mediaData.isNullOrEmpty()) {
+                            Toast.makeText(itemView.context, "Media file path is missing", Toast.LENGTH_SHORT).show()
+                            Log.w("MessagesAdapter", "Play clicked but media file path is null or empty for message ID: ${message.id}")
                             return@setOnClickListener
                         }
-                        val file = MediaUtils.decodeBase64ToFile(currentBase64, messageType, itemView.context)
-                        if (file != null) {
-                            Log.d("MessagesAdapter", "Playing $messageType from temp file: ${file.absolutePath}")
-                            MediaUtils.playFile(file, messageType, itemView.context)
-                        } else {
-                            Toast.makeText(itemView.context, "Failed to load media", Toast.LENGTH_SHORT).show()
-                            Log.e("MessagesAdapter", "Failed to decode Base64 to file for message ID: ${message.id}")
+
+                        val file = File(message.mediaData)
+                        if (!file.exists()) {
+                            Toast.makeText(itemView.context, "Media file not found", Toast.LENGTH_SHORT).show()
+                            Log.e("MessagesAdapter", "File does not exist at path: ${file.absolutePath}")
+                            return@setOnClickListener
                         }
+
+                        MediaUtils.playFile(file, messageType, itemView.context)
                     }
+
+
                 }
+
                 "image" -> {
                     ivMediaPreview.visibility = View.VISIBLE
                     ivMediaPreview.setImageResource(R.drawable.ic_settings)

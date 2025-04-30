@@ -17,13 +17,12 @@ import com.example.dnmotors.databinding.FragmentMessagesBinding
 import com.example.domain.util.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
 import com.example.dnmotors.viewmodel.ChatViewModel
-import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.example.domain.repository.MediaRepository
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.SetOptions
+import java.io.File
 
 class MessagesFragment : Fragment() {
 
@@ -38,9 +37,18 @@ class MessagesFragment : Fragment() {
     private lateinit var carId: String
     private lateinit var dealerId: String
 
+    private val requestAudioPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                startAudioRecording()
+            } else {
+                showToast("Audio permission denied")
+            }
+        }
+
     override fun onStart() {
         super.onStart()
-        loadMessagesFragment()
+        loadMessages()
     }
 
     override fun onCreateView(
@@ -48,6 +56,13 @@ class MessagesFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentMessagesBinding.inflate(inflater, container, false)
+        setupDependencies()
+        setupRecyclerView()
+        setupClickListeners()
+        return binding.root
+    }
+
+    private fun setupDependencies() {
         mediaRepository = MediaRepository(requireContext())
         chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
@@ -56,105 +71,65 @@ class MessagesFragment : Fragment() {
         dealerId = args.dealerId
 
         auth = FirebaseAuth.getInstance()
-        val userId = auth.currentUser?.uid
-        if (userId == null) {
-            Toast.makeText(context, "User not logged in", Toast.LENGTH_LONG).show()
-            return binding.root
-        }
-
         firestore = FirebaseFirestore.getInstance()
 
-        val currentUserId = auth.currentUser?.uid
-        val chatId = "${dealerId}_${currentUserId}"
+        val currentUserId = auth.currentUser?.uid ?: run {
+            showToast("User not logged in")
+            return
+        }
 
-        messagesRef = FirebaseFirestore.getInstance().collection("chats")
+        val chatId = "${dealerId}_${currentUserId}"
+        messagesRef = firestore.collection("chats")
             .document(chatId)
             .collection("messages")
-
-        adapter = MessagesAdapter()
-        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext()).apply {
-            stackFromEnd = true
-        }
-        binding.recyclerView.adapter = adapter
-
-        binding.sendButton.setOnClickListener {
-            if (currentUserId != null) {
-                chatViewModel.sendMessage(
-                    chatId = chatId,
-                    carId = carId,
-                    messageText = binding.messageInput.text.toString().trim(),
-                    senderName = auth.currentUser?.displayName ?: "Unknown User",
-                    senderId = currentUserId,
-                    userId = dealerId,
-                    notificationSent = false)
-            }
-        }
-        setupAudioRecordButton()
-        return binding.root
     }
 
-    private val requestAudioPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                setupAudioRecordButton()
-            } else {
-                Toast.makeText(context, "Audio permission denied", Toast.LENGTH_SHORT).show()
+    private fun setupRecyclerView() {
+        adapter = MessagesAdapter()
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext()).apply {
+                stackFromEnd = true
             }
+            adapter = this@MessagesFragment.adapter
         }
+    }
 
-    private fun setupAudioRecordButton() {
+    private fun setupClickListeners() {
+        binding.sendButton.setOnClickListener {
+            sendTextMessage()
+        }
+        setupAudioRecordingButton()
+    }
 
-        val currentUserId = auth.currentUser?.uid
+    private fun sendTextMessage() {
+        val currentUserId = auth.currentUser?.uid ?: return
         val chatId = "${dealerId}_${currentUserId}"
+        val messageText = binding.messageInput.text.toString().trim()
 
+        if (messageText.isNotEmpty()) {
+            chatViewModel.sendMessage(
+                chatId = chatId,
+                carId = carId,
+                messageText = messageText,
+                senderName = auth.currentUser?.displayName ?: "Unknown User",
+                senderId = currentUserId,
+                userId = currentUserId,
+                dealerId = dealerId,
+                notificationSent = false
+            )
+            binding.messageInput.text.clear()
+        }
+    }
+
+    private fun setupAudioRecordingButton() {
         binding.audioRecordButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    if (mediaRepository.isRecording()) return@setOnTouchListener true
-
-                    if (ContextCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.RECORD_AUDIO
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        startRecordingSafely()
-                    } else {
-                        mediaRepository.requestAudioPermission(
-                            requireActivity(),
-                            requestAudioPermissionLauncher,
-                            onPermissionGranted = { startRecordingSafely() },
-                            onPermissionDenied = {
-                                Toast.makeText(context, "Audio permission denied", Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    }
+                    checkAudioPermissionAndStartRecording()
                     true
                 }
-
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (mediaRepository.isRecording()) {
-                        mediaRepository.stopRecording(
-                            onSuccess = { file ->
-                                val base64 = FileUtils.fileToBase64(file)
-                                if (base64.isNotEmpty()) {
-                                    if (currentUserId != null) {
-                                        chatViewModel.sendMediaMessage(
-                                            chatId = chatId,
-                                            carId = carId,
-                                            senderName = auth.currentUser?.displayName ?: "Unknown User",
-                                            senderId = currentUserId,
-                                            base64Media = base64,
-                                            type = "audio")
-                                    }
-                                }
-                            },
-                            onFailure = {
-                                mediaRepository.cleanupRecorder()
-                            }
-                        )
-                    } else {
-                        mediaRepository.cleanupRecorder()
-                    }
+                    stopAudioRecording()
                     true
                 }
                 else -> false
@@ -162,19 +137,63 @@ class MessagesFragment : Fragment() {
         }
     }
 
-    private fun startRecordingSafely() {
+    private fun checkAudioPermissionAndStartRecording() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            startAudioRecording()
+        } else {
+            requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun startAudioRecording() {
         mediaRepository.startRecording(
-            onStart = {
-                Toast.makeText(context, "Recording started", Toast.LENGTH_SHORT).show()
+            onStart = { showToast("Recording started") },
+            onFailure = { error -> showToast(error) }
+        )
+    }
+
+    private fun stopAudioRecording() {
+        if (!mediaRepository.isRecording()) {
+            mediaRepository.cleanupRecorder()
+            return
+        }
+
+        mediaRepository.stopRecording(
+            onSuccess = { file ->
+                handleRecordedAudio(file)
             },
-            onFailure = { err ->
-                Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
+            onFailure = {
+                showToast("Recording failed")
+                mediaRepository.cleanupRecorder()
             }
         )
     }
 
-    private fun loadMessagesFragment() {
-        val currentUserId = auth.currentUser?.uid
+    private fun handleRecordedAudio(file: File) {
+        val currentUserId = auth.currentUser?.uid ?: return
+        val chatId = "${dealerId}_${currentUserId}"
+        val base64 = FileUtils.fileToBase64(file)
+
+        if (base64.isNotEmpty()) {
+            chatViewModel.sendMediaMessage(
+                chatId = chatId,
+                carId = carId,
+                senderName = auth.currentUser?.displayName ?: "Unknown User",
+                senderId = currentUserId,
+                base64Media = base64,
+                type = "audio",
+                userId = currentUserId,
+                dealerId = dealerId
+            )
+        }
+    }
+
+    private fun loadMessages() {
+        val currentUserId = auth.currentUser?.uid ?: return
         val chatId = "${dealerId}_${currentUserId}"
 
         chatViewModel.loadMessages(chatId)
@@ -188,8 +207,18 @@ class MessagesFragment : Fragment() {
         }
     }
 
+    private fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
     override fun onStop() {
         super.onStop()
         snapshotListener?.remove()
+        if (mediaRepository.isRecording()) {
+            mediaRepository.stopRecording(
+                onSuccess = { file -> file.delete() },
+                onFailure = { mediaRepository.cleanupRecorder() }
+            )
+        }
     }
 }

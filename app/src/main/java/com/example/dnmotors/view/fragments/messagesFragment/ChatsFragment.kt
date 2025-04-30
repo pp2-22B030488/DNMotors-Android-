@@ -33,6 +33,7 @@ class ChatsFragment : Fragment() {
         firestore = FirebaseFirestore.getInstance()
         chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
+        val userId = auth.currentUser?.uid ?: return binding.root
         chatViewModel.loadChatList(false)
 
         chatViewModel.chatItems.observe(viewLifecycleOwner, Observer { items ->
@@ -45,9 +46,8 @@ class ChatsFragment : Fragment() {
         val adapter = ChatListAdapter(items) { clickedItem ->
             val action = ChatsFragmentDirections
                 .actionChatsFragmentToMessagesFragment(
-                    dealerId = clickedItem.dealerId,
-                    carId = clickedItem.carId
-
+                    carId = clickedItem.carId,
+                    dealerId = clickedItem.dealerId
                 )
             findNavController().navigate(action)
         }
