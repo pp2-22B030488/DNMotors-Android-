@@ -109,7 +109,6 @@ dependencies {
     // compose
     implementation(platform("androidx.compose:compose-bom:2025.04.00"))
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material3:material3")
     implementation(libs.androidx.activity.compose)
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("io.coil-kt:coil-compose:2.4.0")
@@ -124,6 +123,10 @@ dependencies {
 
 
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    implementation("androidx.compose.material3:material3:1.3.2")
 
 
 
