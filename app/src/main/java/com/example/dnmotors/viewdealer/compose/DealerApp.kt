@@ -24,7 +24,7 @@ fun DealerApp(messageData: Pair<String?, String?>?) {
                 chatViewModel.observeMessages(chatId = "${chat.dealerId}_${chat.userId}", context)
             }
         }
-        chatViewModel.loadChatListForDealer()
+        chatViewModel.loadChatList(true)
 
     }
     LaunchedEffect(messageData) {

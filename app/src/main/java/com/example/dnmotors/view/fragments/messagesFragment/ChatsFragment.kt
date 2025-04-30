@@ -22,8 +22,6 @@ class ChatsFragment : Fragment() {
     private lateinit var binding: FragmentChatsBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
-    private val _chatItems = MutableLiveData<List<ChatItem>>()
-    private val chatItems: LiveData<List<ChatItem>> get() = _chatItems
     private lateinit var chatViewModel: ChatViewModel
 
     override fun onCreateView(
@@ -35,60 +33,21 @@ class ChatsFragment : Fragment() {
         firestore = FirebaseFirestore.getInstance()
         chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
-        val userId = auth.currentUser?.uid ?: return binding.root
+        chatViewModel.loadChatList(false)
 
-        loadChatListForUser()
-        // Observe the chat items to update the RecyclerView
-        chatItems.observe(viewLifecycleOwner, Observer { items ->
+        chatViewModel.chatItems.observe(viewLifecycleOwner, Observer { items ->
             setupRecyclerView(items)
         })
         return binding.root
-    }
-
-    private fun loadChatListForUser() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        FirebaseFirestore.getInstance()
-            .collection("chats")
-            .whereEqualTo("userId", userId)
-            .get()
-            .addOnSuccessListener { result ->
-                val chatItems = result.documents.mapNotNull { doc ->
-                    val carId = doc.getString("carId")
-                    val dealerId = doc.getString("dealerId")
-                    val timestamp = doc.getLong("timestamp")
-                    val name = doc.getString("name")
-                    if (carId != null && dealerId != null) {
-                        if (name != null) {
-                            if (timestamp != null) {
-                                ChatItem(
-                                    carId = carId,
-                                    userId = userId,
-                                    dealerId = dealerId,
-                                    timestamp = timestamp,
-                                    name = name
-                                )
-                            } else null
-
-                        }
-                        else null
-                    } else null
-                }
-
-                _chatItems.postValue(chatItems)
-            }
-            .addOnFailureListener { error ->
-                println("Error loading user chat list: ${error.message}")
-                _chatItems.postValue(emptyList())
-            }
     }
 
     private fun setupRecyclerView(items: List<ChatItem>) {
         val adapter = ChatListAdapter(items) { clickedItem ->
             val action = ChatsFragmentDirections
                 .actionChatsFragmentToMessagesFragment(
-                    carId = clickedItem.carId,
-                    dealerId = clickedItem.dealerId
+                    dealerId = clickedItem.dealerId,
+                    carId = clickedItem.carId
+
                 )
             findNavController().navigate(action)
         }

@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             setupActionBar()
             fetchAndNavigateUserRole()
             handleDeepLink(intent?.data)
+            handleNotificationIntent(intent)
 
         } else {
             navigateToLoginScreen()
@@ -96,7 +97,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     }
 
     private fun setupChatListeners() {
-        chatViewModel.loadChatListForUsers()
+        chatViewModel.loadChatList(false)
 
         chatViewModel.chatItems.observeForever { chats ->
             chats.forEach { chat ->
@@ -112,26 +113,35 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
 
     private fun handleNotificationIntent(intent: Intent?) {
         val carId = intent?.getStringExtra("carId")
-        val senderId = intent?.getStringExtra("senderId")
-        if (!carId.isNullOrEmpty()) {
-            navigateToChatFragment(carId, senderId)
+        val dealerId = intent?.getStringExtra("dealerId")
+
+        if (!carId.isNullOrEmpty() && !dealerId.isNullOrEmpty()) {
+            navigateToChatFragment(carId, dealerId)
+        } else {
+            Log.w(TAG, "Notification intent missing required carId or dealerId.")
         }
     }
 
-    private fun navigateToChatFragment(carId: String, senderId: String?) {
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-        val bundle = Bundle().apply {
-            putString("carId", carId)
-            senderId?.let {
-                putString("senderId", it)
+    private fun navigateToChatFragment(carId: String, dealerId: String) {
+        try {
+            val navHostFragment = supportFragmentManager
+                .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            val navController = navHostFragment.navController
+            val bundle = Bundle().apply {
+                putString("carId", carId)
+                putString("dealerId", dealerId)
             }
+
+            Log.d(TAG, "Navigating to messagesFragment with carId: $carId, dealerId: $dealerId")
+            if (navController.currentDestination?.id != R.id.messagesFragment) {
+                navController.navigate(R.id.messagesFragment, bundle)
+            } else {
+                Log.d(TAG, "Already on messagesFragment. Bundle: $bundle")
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error navigating to messagesFragment", e)
         }
-
-        Log.d("MainActivity", "Navigating to chat with carId: $carId, senderId: $senderId")
-
-        navController.navigate(R.id.messagesFragment, bundle)
     }
 
     private fun navigateToLoginScreen() {
@@ -265,5 +275,10 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         binding.bottomNavigationView.visibility = View.VISIBLE
     }
 
-
+//    override fun onNewIntent(intent: Intent?) {
+//        super.onNewIntent(intent)
+//        handleDeepLink(intent?.data)
+//        handleNotificationIntent(intent)
+//        setIntent(intent)
+//    }
 }

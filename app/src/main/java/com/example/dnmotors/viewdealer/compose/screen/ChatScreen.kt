@@ -32,7 +32,7 @@ fun ChatScreen(
 
     LaunchedEffect(dealerId) {
         if (dealerId != null) {
-            viewModel.loadChatListForDealer()
+            viewModel.loadChatList(true)
         }
     }
 

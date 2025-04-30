@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ChatViewModel : ViewModel() {
-    private val _chatItems = MutableLiveData<List<ChatItem>>()
+    val _chatItems = MutableLiveData<List<ChatItem>>()
     val chatItems: LiveData<List<ChatItem>> = _chatItems
     private val appContext = App.context
 
@@ -35,81 +35,40 @@ class ChatViewModel : ViewModel() {
     private var messagesListenerRef: DatabaseReference? = null
 
 
-    fun loadChatListForDealer() {
-        val dealerId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    fun loadChatList(isDealer: Boolean) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val queryField = if (isDealer) "dealerId" else "userId"
 
         FirebaseFirestore.getInstance()
             .collection("chats")
-            .whereEqualTo("dealerId", dealerId)
+            .whereEqualTo(queryField, currentUserId)
             .get()
             .addOnSuccessListener { result ->
                 val chatItems = result.documents.mapNotNull { doc ->
                     val carId = doc.getString("carId")
-                    val userId = doc.getString("userId")
+                    val fetcheduserId = doc.getString("userId")
+                    val fetchedDealerId = doc.getString("dealerId")
                     val name = doc.getString("name")
                     val timestamp = doc.getLong("timestamp")
 
-                    if (carId != null && userId != null) {
-                        if (name != null) {
-                            if (timestamp != null) {
-                                ChatItem(
-                                    carId = carId,
-                                    userId = userId,
-                                    dealerId = dealerId,
-                                    timestamp = timestamp,
-                                    name = name
-                                )
-                            } else null
-                        } else {
-                            null
-                        }
+                    if (carId != null && fetcheduserId != null && name != null && timestamp != null && fetchedDealerId !=null) {
+                        ChatItem(
+                            carId = carId,
+                            userId = fetcheduserId,
+                            dealerId = fetchedDealerId,
+                            timestamp = timestamp,
+                            name = name
+                        )
                     } else null
                 }
                 _chatItems.postValue(chatItems)
             }
             .addOnFailureListener { error ->
-                println("Error loading dealer chat list: ${error.message}")
+                println("Error loading chat list: ${error.message}")
                 _chatItems.postValue(emptyList())
             }
     }
 
-    fun loadChatListForUsers() {
-        val dealerId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        FirebaseFirestore.getInstance()
-            .collection("chats")
-            .whereEqualTo("userId", dealerId)
-            .get()
-            .addOnSuccessListener { result ->
-                val chatItems = result.documents.mapNotNull { doc ->
-                    val carId = doc.getString("carId")
-                    val userId = doc.getString("userId")
-                    val name = doc.getString("name")
-                    val timestamp = doc.getLong("timestamp")
-
-                    if (carId != null && userId != null) {
-                        if (name != null) {
-                            if (timestamp != null) {
-                                ChatItem(
-                                    carId = carId,
-                                    userId = userId,
-                                    dealerId = dealerId,
-                                    timestamp = timestamp,
-                                    name = name
-                                )
-                            } else null
-                        } else {
-                            null
-                        }
-                    } else null
-                }
-                _chatItems.postValue(chatItems)
-            }
-            .addOnFailureListener { error ->
-                println("Error loading dealer chat list: ${error.message}")
-                _chatItems.postValue(emptyList())
-            }
-    }
 
     fun loadMessages(chatId: String) {
         val messagesRef = FirebaseFirestore.getInstance()
