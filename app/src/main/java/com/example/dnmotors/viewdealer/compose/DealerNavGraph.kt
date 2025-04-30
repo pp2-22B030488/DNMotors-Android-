@@ -55,7 +55,16 @@ fun DealerNavGraph(
         }
 
         composable(DealerNavItem.Profile.route) {
-            DealerProfileScreen()
+            DealerProfileScreen(navController = navController)
         }
+
+        composable("edit_profile_screen") {
+            EditProfileScreen(navController = navController)
+            }
+        composable("change_password") {
+            ChangePasswordScreen(navController = navController)
+        }
+
     }
-}
+
+    }
