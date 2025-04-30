@@ -42,14 +42,14 @@ object MessageNotificationUtil {
 
     fun createNotificationForMain(context: Context, message: Message) {
         val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("carId", message.carId)
-            putExtra("dealerId", message.senderId)
+            putExtra("dealerId", message.dealerId)
         }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            System.currentTimeMillis().toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

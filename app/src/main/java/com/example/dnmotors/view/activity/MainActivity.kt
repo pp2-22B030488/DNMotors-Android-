@@ -60,11 +60,8 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         val currentUser = auth.currentUser
         if (currentUser != null) {
             setupFirestorePersistence()
-            setupNavigation()
-            setupActionBar()
+
             fetchAndNavigateUserRole()
-            handleDeepLink(intent?.data)
-            handleNotificationIntent(intent)
 
         } else {
             navigateToLoginScreen()
@@ -89,6 +86,9 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     navController.navigate(R.id.carFragment)
                     binding.bottomNavigationView.visibility = View.VISIBLE
                     setupChatListeners()
+                    setupNavigation()
+                    setupActionBar()
+                    handleDeepLinkAndNotification(intent)
 
                 }
 
@@ -111,14 +111,19 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         }
     }
 
-    private fun handleNotificationIntent(intent: Intent?) {
-        val carId = intent?.getStringExtra("carId")
-        val dealerId = intent?.getStringExtra("dealerId")
+    private fun handleDeepLinkAndNotification(intent: Intent) {
+        handleDeepLink(intent.data)
+        handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(intent: Intent) {
+        val carId = intent.getStringExtra("carId")
+        val dealerId = intent.getStringExtra("dealerId")
 
         if (!carId.isNullOrEmpty() && !dealerId.isNullOrEmpty()) {
             navigateToChatFragment(carId, dealerId)
-        } else {
-            Log.w(TAG, "Notification intent missing required carId or dealerId.")
+            intent.removeExtra("carId")
+            intent.removeExtra("dealerId")
         }
     }
 
@@ -282,5 +287,11 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             Log.d(TAG, "Already on carFragment. Skipping navigation from onLoginSuccess.")
             binding.bottomNavigationView.visibility = View.VISIBLE
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLinkAndNotification(intent)
     }
 }
