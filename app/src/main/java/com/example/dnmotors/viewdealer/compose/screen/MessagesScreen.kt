@@ -7,6 +7,8 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,8 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -41,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.Color
 import com.example.dnmotors.viewdealer.repository.DealerAudioRepository
 import com.example.domain.model.Message
 import com.example.domain.repository.MediaRepository
@@ -100,45 +105,62 @@ fun MessagesScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .background(Color.LightGray)
         ) {
             items(messages) { msg ->
-                when (msg.messageType) {
-                    "text" -> Text("${msg.name}: ${msg.text}")
-                    "image" -> {
-                        msg.mediaData?.let {
-                            val decodedBitmap = runCatching {
-                                val bytes = Base64.decode(it, Base64.NO_WRAP)
-                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                            }.getOrNull()
+                val isCurrentUser = msg.senderId == dealerId
+                val alignment = if (isCurrentUser) Alignment.End else Alignment.Start
+                val bubbleColor = if (isCurrentUser) Color(0xFFA5D6A7) else Color(0xFF90CAF9)
+                val bubbleShape = RoundedCornerShape(12.dp)
 
-                            decodedBitmap?.let { bitmap ->
-                                Image(
-                                    bitmap = bitmap.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                        .padding(vertical = 8.dp)
-                                )
-                            } ?: Text("${msg.name}: [Image not available]")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .background(bubbleColor, bubbleShape)
+                            .padding(8.dp)
+                            .widthIn(max = 280.dp)
+                    ) {
+                        when (msg.messageType) {
+                            "text" -> Text("${msg.name}: ${msg.text}")
+                            "image" -> {
+                                msg.mediaData?.let {
+                                    val decodedBitmap = runCatching {
+                                        val bytes = Base64.decode(it, Base64.NO_WRAP)
+                                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                    }.getOrNull()
+
+                                    decodedBitmap?.let { bitmap ->
+                                        Image(
+                                            bitmap = bitmap.asImageBitmap(),
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(200.dp)
+                                                .padding(vertical = 4.dp)
+                                        )
+                                    } ?: Text("[Image not available]")
+                                }
+                            }
+                            "audio" -> {
+                                Text("${msg.name}:")
+                                msg.mediaData?.let { AudioPlayer(it) } ?: Text("[Audio not available]")
+                            }
+                            "video" -> {
+                                Text("${msg.name}:")
+                                msg.mediaData?.let { VideoPlayer(it) } ?: Text("[Video not available]")
+                            }
+                            else -> Text("[Unsupported message type]")
                         }
                     }
-                    "audio" -> {
-                        msg.mediaData?.let {
-                            Text("${msg.name}:")
-                            AudioPlayer(it)
-                        } ?: Text("${msg.name}: [Audio not available]")
-                    }
-                    "video" -> {
-                        msg.mediaData?.let {
-                            Text("${msg.name}:")
-                            VideoPlayer(it)
-                        } ?: Text("${msg.name}: [Video not available]")
-                    }
-                    else -> Text("${msg.name}: [Unsupported message type]")
                 }
             }
         }
+
 
         Divider(modifier = Modifier.padding(vertical = 4.dp))
 

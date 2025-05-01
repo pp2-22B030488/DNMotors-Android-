@@ -14,7 +14,6 @@
         android:layout_height="wrap_content"
         android:padding="12dp"
         android:orientation="vertical">
-        <!-- Время отправки -->
 
         <TextView
             android:id="@+id/tvUser"
@@ -25,7 +24,6 @@
             android:textColor="@android:color/black"
             android:layout_marginTop="4dp"/>
 
-        <!-- Текст сообщения -->
         <TextView
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
