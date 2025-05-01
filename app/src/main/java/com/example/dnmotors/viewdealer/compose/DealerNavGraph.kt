@@ -26,7 +26,7 @@ fun DealerNavGraph(
                 DealerCarDetailsScreen(carId = it)
             }
         }
-        composable("add_car") { AddCarScreen() }
+        composable("add_car") { AddCarScreen(navController = navController) }
 
         composable(DealerNavItem.Chat.route) {
             ChatScreen { chatItem ->

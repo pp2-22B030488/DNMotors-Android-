@@ -12,7 +12,6 @@ data class Car(
     val year: Int = 0,
     val generation: String = "",
     val price: Int = 0,
-    val mileageKm: Int = 0,
     val transmission: String = "",
     val driveType: String = "",
     val fuelType: String = "",
@@ -20,9 +19,11 @@ data class Car(
     val description: String = "",
     val previewUrl: String = "",
     val imageUrl: List<String> = emptyList(),
-    val condition: String = "",
     val phoneNumber: Long = 0L,
-    var isLiked: Boolean = false
-
+    val bodyType: String = "",
+    val engineCapacity: String = "",
+    var isLiked: Boolean = false,
+    val mileageKm: Int = 0,
+    val condition: String = "",
 ) : Parcelable
 
