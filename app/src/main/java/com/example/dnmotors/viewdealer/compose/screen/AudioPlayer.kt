@@ -2,6 +2,7 @@ package com.example.dnmotors.viewdealer.compose.screen
 
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
@@ -32,9 +33,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
-fun AudioPlayer(audioFilePath: String) {
+fun AudioPlayer(audioFilePathOrBase64: String) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -42,16 +44,18 @@ fun AudioPlayer(audioFilePath: String) {
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var tempFilePath by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer?.apply {
-                if (isPlaying) {
-                    stop()
-                }
+                if (isPlaying) stop()
                 release()
             }
             mediaPlayer = null
+            tempFilePath?.let {
+                File(it).delete()
+            }
         }
     }
 
@@ -67,7 +71,6 @@ fun AudioPlayer(audioFilePath: String) {
 
                 scope.launch {
                     if (isPlaying && mediaPlayer != null) {
-                        // Stop playback
                         mediaPlayer?.apply {
                             stop()
                             reset()
@@ -78,43 +81,45 @@ fun AudioPlayer(audioFilePath: String) {
                         error = null
 
                         try {
-                            withContext(Dispatchers.IO) {
-                                try {
-                                    mediaPlayer?.release()
-
-                                    mediaPlayer = MediaPlayer().apply {
-                                        setDataSource(audioFilePath)
-                                        setAudioAttributes(
-                                            AudioAttributes.Builder()
-                                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                                .setUsage(AudioAttributes.USAGE_MEDIA)
-                                                .build()
-                                        )
-                                        setOnPreparedListener {
-                                            it.start()
-                                            isPlaying = true
-                                            isLoading = false
-                                        }
-                                        setOnCompletionListener {
-                                            isPlaying = false
-                                        }
-                                        setOnErrorListener { _, what, extra ->
-                                            val errorMsg = "MediaPlayer error: what=$what, extra=$extra"
-                                            Log.e("AudioPlayer", errorMsg)
-                                            error = errorMsg
-                                            isPlaying = false
-                                            isLoading = false
-                                            true
-                                        }
-                                        prepareAsync()
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("AudioPlayer", "MediaPlayer error", e)
-                                    withContext(Dispatchers.Main) {
-                                        error = "Error playing audio: ${e.message}"
-                                        isLoading = false
-                                    }
+                            val actualPath = withContext(Dispatchers.IO) {
+                                if (audioFilePathOrBase64.startsWith("/") || audioFilePathOrBase64.startsWith("file:/")) {
+                                    audioFilePathOrBase64
+                                } else {
+                                    val decodedBytes = Base64.decode(audioFilePathOrBase64, Base64.DEFAULT)
+                                    val tempFile = File.createTempFile("audio_${System.currentTimeMillis()}", ".mp3", context.cacheDir)
+                                    tempFile.writeBytes(decodedBytes)
+                                    tempFilePath = tempFile.absolutePath
+                                    tempFile.absolutePath
                                 }
+                            }
+
+                            mediaPlayer?.release()
+
+                            mediaPlayer = MediaPlayer().apply {
+                                setDataSource(actualPath)
+                                setAudioAttributes(
+                                    AudioAttributes.Builder()
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                                        .build()
+                                )
+                                setOnPreparedListener {
+                                    it.start()
+                                    isPlaying = true
+                                    isLoading = false
+                                }
+                                setOnCompletionListener {
+                                    isPlaying = false
+                                }
+                                setOnErrorListener { _, what, extra ->
+                                    val errorMsg = "MediaPlayer error: what=$what, extra=$extra"
+                                    Log.e("AudioPlayer", errorMsg)
+                                    error = errorMsg
+                                    isPlaying = false
+                                    isLoading = false
+                                    true
+                                }
+                                prepareAsync()
                             }
                         } catch (e: Exception) {
                             Log.e("AudioPlayer", "Failed to play audio", e)
@@ -126,9 +131,10 @@ fun AudioPlayer(audioFilePath: String) {
             },
             enabled = !isLoading
         ) {
-            when {
-                isPlaying -> Icon(Icons.Default.Stop, contentDescription = "Stop Audio")
-                else -> Icon(Icons.Default.PlayArrow, contentDescription = "Play Audio")
+            if (isPlaying) {
+                Icon(Icons.Default.Stop, contentDescription = "Stop Audio")
+            } else {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Play Audio")
             }
         }
 

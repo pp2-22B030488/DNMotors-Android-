@@ -79,14 +79,10 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                             return@setOnClickListener
                         }
 
-                        val file = File(message.mediaData)
-                        if (!file.exists()) {
-                            Toast.makeText(itemView.context, "Media file not found", Toast.LENGTH_SHORT).show()
-                            Log.e("MessagesAdapter", "File does not exist at path: ${file.absolutePath}")
-                            return@setOnClickListener
+                        val file = message.mediaData
+                        if (file != null) {
+                            MediaUtils.playFile(file, messageType, itemView.context)
                         }
-
-                        MediaUtils.playFile(file, messageType, itemView.context)
                     }
 
 
