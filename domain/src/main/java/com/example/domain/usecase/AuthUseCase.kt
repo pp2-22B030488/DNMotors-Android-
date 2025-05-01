@@ -1,5 +1,6 @@
 package com.example.domain.usecase
 
+import com.example.domain.model.AuthUser
 import com.example.domain.repository.AuthRepository
 
 class AuthUseCase(private val repository: AuthRepository) {
@@ -32,5 +33,17 @@ class AuthUseCase(private val repository: AuthRepository) {
 
     fun isUserSignedIn(): Boolean {
         return repository.isUserSignedIn()
+    }
+
+    suspend fun clearChatListeners() {
+        return repository.clearChatListeners()
+    }
+
+    suspend fun setupFirestorePersistence(){
+        return repository.setupFirestorePersistence()
+    }
+
+    suspend fun returnAuth(): AuthUser {
+        return repository.returnAuth()
     }
 }

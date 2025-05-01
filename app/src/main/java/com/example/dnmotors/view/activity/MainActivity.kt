@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.dnmotors.R
@@ -20,24 +21,19 @@ import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreSettings
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.ktx.Firebase
+import com.example.domain.model.AuthUser
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.Locale
 
 class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var auth: FirebaseAuth
+    private lateinit var auth: AuthUser
     private val authViewModel: AuthViewModel by viewModel()
     private val chatViewModel: ChatViewModel by viewModel()
     private val TAG = "MainActivity"
-    private var messageListener: ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,10 +41,15 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        auth = Firebase.auth
+        lifecycleScope.launch {
+            auth = authViewModel.returnAuth()
+        }
+        authViewModel.fetchAuthInfo { authUser ->
+            setupActionBar(authUser)
+        }
         handleDeepLinkAndNotification(intent)
 
-        val currentUser = auth.currentUser
+        val currentUser = auth.uid
         if (currentUser != null) {
             setupFirestorePersistence()
 
@@ -81,8 +82,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     setupChatListeners()
                     setupNavigation()
                     setupActionBar()
-//                    handleDeepLinkAndNotification(intent)
-
                 }
 
             }
@@ -104,7 +103,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         }
 
 
-        if (FirebaseAuth.getInstance().currentUser != null) {
+        if (auth.uid != null) {
             MessageWorkScheduler.scheduleWorker(this)
             MessageWorkScheduler.triggerNow(this)
         }
@@ -203,10 +202,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
 
     private fun setupFirestorePersistence() {
         try {
-            val firestore = FirebaseFirestore.getInstance()
-            firestore.firestoreSettings = FirebaseFirestoreSettings.Builder()
-                .setPersistenceEnabled(true)
-                .build()
+            authViewModel.setupFirestorePersistence()
             Log.i(TAG, "Firestore persistence enabled.")
         } catch (e: Exception) {
             Log.e(TAG, "Error enabling Firestore persistence.", e)
@@ -233,9 +229,9 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         }
     }
 
-    private fun setupActionBar() {
+    private fun setupActionBar(authUser: AuthUser? = null) {
         supportActionBar?.let { ab ->
-            val currentUser = auth.currentUser
+            val currentUser = authUser ?: return@let
             val photoUrl = currentUser?.photoUrl
             val displayName = currentUser?.displayName ?: "User"
 
@@ -314,8 +310,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     }
     private fun clearChatListeners() {
         chatViewModel.chatItems.removeObservers(this)
-        messageListener?.remove()
-        messageListener = null
+        authViewModel.clearChatListeners()
     }
 
     override fun onNewIntent(intent: Intent) {

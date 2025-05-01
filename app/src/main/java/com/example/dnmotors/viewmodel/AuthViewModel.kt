@@ -4,8 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.domain.model.AuthUser
 import com.example.domain.usecase.AuthUseCase
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
@@ -65,13 +65,36 @@ class AuthViewModel(
 
     fun fetchUserRole(callback: (String) -> Unit) {
         viewModelScope.launch {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid
-            if (userId != null) {
-                val result = authRepository.fetchUserRole(userId)
+            val userId = authRepository.returnAuth()
+            if (userId.uid != null) {
+                val result = authRepository.fetchUserRole(userId.uid!!)
                 callback(result.getOrDefault("user"))
             } else {
                 callback("user")
             }
+        }
+    }
+
+    fun clearChatListeners() {
+        viewModelScope.launch {
+            return@launch authRepository.clearChatListeners()
+        }
+    }
+
+    fun setupFirestorePersistence(){
+        viewModelScope.launch {
+            return@launch authRepository.setupFirestorePersistence()
+        }
+    }
+
+    suspend fun returnAuth(): AuthUser {
+        return authRepository.returnAuth()
+    }
+
+    fun fetchAuthInfo(callback: (AuthUser) -> Unit) {
+        viewModelScope.launch {
+            val authUser = authRepository.returnAuth()
+            callback(authUser)
         }
     }
 }

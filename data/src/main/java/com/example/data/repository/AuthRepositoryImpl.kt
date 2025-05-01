@@ -1,15 +1,20 @@
 package com.example.data.repository
 
 import android.util.Log
+import com.example.domain.model.AuthUser
 import com.example.domain.repository.AuthRepository
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
 
 class AuthRepositoryImpl(
-    private val firebaseAuth: FirebaseAuth,
+    private var firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) : AuthRepository {
 
@@ -79,4 +84,32 @@ class AuthRepositoryImpl(
             docRef.set(userMap).await()
         }
     }
+    private var messageListener: ListenerRegistration? = null
+
+    override suspend fun clearChatListeners() {
+        messageListener?.remove()
+        messageListener = null
+    }
+
+    override suspend fun setupFirestorePersistence() {
+        try {
+            val firestore = FirebaseFirestore.getInstance()
+            firestore.firestoreSettings = FirebaseFirestoreSettings.Builder()
+                .setPersistenceEnabled(true)
+                .build()
+        } catch (e: Exception) {
+            Log.e("Persistence", "Error enabling Firestore persistence.", e)
+        }
+    }
+
+    override suspend fun returnAuth(): AuthUser {
+        val user = Firebase.auth.currentUser
+        return AuthUser(
+            uid = user?.uid,
+            email = user?.email,
+            photoUrl = user?.photoUrl?.toString(),
+            displayName = user?.displayName
+        )
+    }
+
 }
