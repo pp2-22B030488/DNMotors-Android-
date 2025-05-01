@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         setContentView(binding.root)
 
         auth = Firebase.auth
+        handleDeepLinkAndNotification(intent)
 
         val currentUser = auth.currentUser
         if (currentUser != null) {
@@ -73,12 +74,14 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     Log.i(TAG, "Navigating to main fragment for non-dealer user.")
                     val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
                     val navController = navHostFragment.navController
-                    navController.navigate(R.id.carFragment)
+                    if (navController.currentDestination == null || navController.currentDestination?.id == R.id.signInFragment) {
+                        navController.navigate(R.id.carFragment)
+                    }
                     binding.bottomNavigationView.visibility = View.VISIBLE
                     setupChatListeners()
                     setupNavigation()
                     setupActionBar()
-                    handleDeepLinkAndNotification(intent)
+//                    handleDeepLinkAndNotification(intent)
 
                 }
 
@@ -90,13 +93,16 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         chatViewModel.loadChatList(false)
 
         chatViewModel.chatItems.observeForever { chats ->
-            chats.forEach { chat ->
+            val safeChats = chats.toList()
+            safeChats.forEach { chat ->
                 chatViewModel.observeNewMessages(
                     chatId = "${chat.dealerId}_${chat.userId}",
                     this,
-                    activityClass = MainActivity::class.java)
+                    activityClass = MainActivity::class.java
+                )
             }
         }
+
 
         if (FirebaseAuth.getInstance().currentUser != null) {
             MessageWorkScheduler.scheduleWorker(this)
@@ -105,8 +111,17 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     }
 
     private fun handleDeepLinkAndNotification(intent: Intent) {
-        handleDeepLink(intent.data)
-        handleNotificationIntent(intent)
+        if (intent.data != null || intent.extras != null) {
+            Log.d(TAG, "Attempting to handle intent: ${intent.action}, data: ${intent.data}, extras: ${intent.extras}")
+            handleDeepLink(intent.data)
+            if (intent.data == null || intent.data?.pathSegments?.size ?: 0 < 3 || intent.data?.pathSegments?.getOrNull(intent.data?.pathSegments?.size!! - 2) != "car") {
+                handleNotificationIntent(intent)
+            } else {
+                Log.d(TAG, "Deep link handled, skipping notification intent check.")
+            }
+        } else {
+            Log.d(TAG, "Intent has no data or extras. Not a deep link or notification intent.")
+        }
     }
 
     private fun handleNotificationIntent(intent: Intent) {
@@ -114,11 +129,47 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         val dealerId = intent.getStringExtra("dealerId")
 
         if (!carId.isNullOrEmpty() && !dealerId.isNullOrEmpty()) {
+            Log.d(TAG, "Notification intent received with carId: $carId, dealerId: $dealerId")
             navigateToChatFragment(carId, dealerId)
             intent.removeExtra("carId")
             intent.removeExtra("dealerId")
+        } else {
+            Log.d(TAG, "No valid notification extras found in intent.")
         }
     }
+    private fun handleDeepLink(uri: Uri?) {
+        if (uri == null) {
+            Log.d(TAG, "handleDeepLink called with null URI.")
+            return
+        }
+
+        Log.d(TAG, "Deep link URI received: $uri")
+
+        clearChatListeners()
+
+        val pathSegments = uri.pathSegments
+        if (pathSegments.size >= 2 && pathSegments[0] == "car") {
+            val vin = pathSegments[1]
+            Log.d(TAG, "Extracted VIN: $vin")
+
+            val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
+
+            val bundle = Bundle().apply {
+                putString("vin", vin)
+            }
+
+            navController.navigate(R.id.carFragment)
+
+            navController.navigate(R.id.carDetailsFragment, bundle)
+
+            Log.d(TAG, "Manual navigation to carDetailsFragment with VIN: $vin")
+        } else {
+            Log.d(TAG, "Unexpected deep link format or missing VIN.")
+        }
+    }
+
+
+
 
     private fun navigateToChatFragment(carId: String, dealerId: String) {
         try {
@@ -148,26 +199,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         val navController = navHostFragment.navController
         navController.navigate(R.id.signInFragment)
         binding.bottomNavigationView.visibility = View.GONE
-    }
-
-
-    private fun handleDeepLink(uri: Uri?) {
-        uri?.let {
-            if (it.pathSegments.firstOrNull() == "car") {
-                val vin = it.lastPathSegment
-                vin?.let {
-                    val bundle = Bundle().apply {
-                        putString("vin", vin)
-                    }
-
-                    val navHostFragment = supportFragmentManager
-                        .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-                    val navController = navHostFragment.navController
-
-                    navController.navigate(R.id.carDetailsFragment, bundle)
-                }
-            }
-        }
     }
 
     private fun setupFirestorePersistence() {
@@ -280,6 +311,11 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             Log.d(TAG, "Already on carFragment. Skipping navigation from onLoginSuccess.")
             binding.bottomNavigationView.visibility = View.VISIBLE
         }
+    }
+    private fun clearChatListeners() {
+        chatViewModel.chatItems.removeObservers(this)
+        messageListener?.remove()
+        messageListener = null
     }
 
     override fun onNewIntent(intent: Intent) {

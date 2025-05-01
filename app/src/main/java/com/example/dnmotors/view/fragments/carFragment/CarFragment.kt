@@ -74,10 +74,11 @@ class CarFragment : Fragment() {
 
     private fun showCarDetails(car: Car) {
         val bundle = Bundle().apply {
-            putParcelable("car", car)
+            putString("vin", car.vin)
         }
         findNavController().navigate(R.id.action_carFragment_to_carDetailsFragment, bundle)
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
