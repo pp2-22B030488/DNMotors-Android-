@@ -1,13 +1,7 @@
 package com.example.dnmotors.viewdealer.compose.screen
 
-import android.Manifest
 import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
-import android.net.Uri
-import android.provider.MediaStore
 import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -45,18 +39,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import com.example.dnmotors.viewdealer.repository.DealerAudioRepository
-import com.example.domain.repository.CameraRepository
+import com.example.domain.model.Message
 import com.example.domain.repository.MediaRepository
-import java.io.File
+import java.util.UUID
 
 @Composable
 fun MessagesScreen(
@@ -65,7 +53,7 @@ fun MessagesScreen(
     userId: String,
     dealerId: String,
     dealerName: String,
-    viewModel: ChatViewModel = viewModel(),
+    viewModel: ChatViewModel,
     onToggleBottomBar: (Boolean) -> Unit
 ) {
     val messages by viewModel.messages.observeAsState(emptyList())
@@ -75,158 +63,6 @@ fun MessagesScreen(
     var isRecording by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val activity = LocalContext.current as? Activity
-
-    // Variables to hold the latest file references
-    var imageFile by remember { mutableStateOf<File?>(null) }
-    var videoFile by remember { mutableStateOf<File?>(null) }
-
-
-    // Constants for permission request code
-    val REQUEST_CAMERA_PERMISSION = 1001
-
-    // Function to check and request permissions
-    fun checkAndRequestPermissions(context: Context): Boolean {
-        val cameraPermission = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val storagePermission = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val permissionsNeeded = mutableListOf<String>()
-
-        if (!cameraPermission) {
-            permissionsNeeded.add(Manifest.permission.CAMERA)
-        }
-
-        if (!storagePermission) {
-            permissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        }
-
-        return if (permissionsNeeded.isNotEmpty()) {
-            // Request permissions if not granted
-            ActivityCompat.requestPermissions(
-                context as Activity, permissionsNeeded.toTypedArray(), REQUEST_CAMERA_PERMISSION
-            )
-            false
-        } else {
-            true
-        }
-    }
-// Add this ActivityResult launcher
-    val cameraResultLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            imageFile?.let { file ->
-                try {
-                    val bytes = file.readBytes()
-                    val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                    viewModel.sendMediaMessage(
-                        chatId = chatId,
-                        base64Media = base64,
-                        type = "image",
-                        senderId = dealerId,
-                        senderName = dealerName,
-                        carId = carId
-                    )
-                    Toast.makeText(context, "Image sent successfully", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(context, "Failed to process image", Toast.LENGTH_SHORT).show()
-                    e.printStackTrace()
-                }
-            } ?: run {
-                Toast.makeText(context, "No image file found", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "Image capture cancelled", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val videoResultLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            videoFile?.let { file ->
-                try {
-                    val bytes = file.readBytes()
-                    val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                    viewModel.sendMediaMessage(
-                        chatId = chatId,
-                        base64Media = base64,
-                        type = "video",
-                        senderId = dealerId,
-                        senderName = dealerName,
-                        carId = carId
-                    )
-                    Toast.makeText(context, "Video sent successfully", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(context, "Failed to process video", Toast.LENGTH_SHORT).show()
-                    e.printStackTrace()
-                }
-            } ?: run {
-                Toast.makeText(context, "No video file found", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "Video recording cancelled", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun takePhoto(context: Context) {
-        val file = CameraRepository.createImageFile(context)
-        imageFile = file
-        file?.let {
-            val photoUri = FileProvider.getUriForFile(
-                context, "${context.packageName}.provider", it
-            )
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            cameraResultLauncher.launch(intent)  // Use the launcher here
-        } ?: run {
-            Toast.makeText(context, "Failed to create image file", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun recordVideo(context: Context) {
-        val file = CameraRepository.createVideoFile(context)
-        videoFile = file
-        file?.let {
-            val videoUri = FileProvider.getUriForFile(
-                context, "${context.packageName}.provider", it
-            )
-            val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE).apply {
-                putExtra(MediaStore.EXTRA_OUTPUT, videoUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            videoResultLauncher.launch(intent)  // Use the launcher here
-        } ?: run {
-            Toast.makeText(context, "Failed to create video file", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            takePhoto(context)
-        } else {
-            Toast.makeText(context, "Camera permission required", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val videoPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            recordVideo(context)
-        } else {
-            Toast.makeText(context, "Camera and storage permissions required", Toast.LENGTH_SHORT).show()
-        }
-    }
-
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -312,40 +148,7 @@ fun MessagesScreen(
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-//            IconButton(onClick = {
-//                when {
-//                    ContextCompat.checkSelfPermission(
-//                        context,
-//                        Manifest.permission.CAMERA
-//                    ) == PackageManager.PERMISSION_GRANTED -> {
-//                        takePhoto(context)
-//                    }
-//                    else -> {
-//                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-//                    }
-//                }
-//            }) {
-//                Icon(Icons.Default.PhotoCamera, contentDescription = "Take Picture")
-//            }
-//
-//            IconButton(onClick = {
-//                val permissions = arrayOf(
-//                    Manifest.permission.CAMERA,
-//                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                )
-//
-//                if (permissions.all {
-//                        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-//                    }) {
-//                    recordVideo(context)
-//                } else {
-//                    videoPermissionLauncher.launch(Manifest.permission.CAMERA)
-//                    // Note: For multiple permissions, you'd need a different approach
-//                }
-//            }) {
-//                Icon(Icons.Default.Videocam, contentDescription = "Record Video")
-//            }
-            // Audio record button
+
             IconButton(
                 onClick = {
                     activity?.let {
@@ -388,15 +191,21 @@ fun MessagesScreen(
             Button(
                 onClick = {
                     if (input.isNotBlank()) {
-                        viewModel.sendMessage(
-                            chatId = chatId,
-                            messageText = input.trim(),
+
+                        val message = Message(
+                            id = UUID.randomUUID().toString(),
                             senderId = dealerId,
-                            senderName = dealerName,
+                            dealerId = dealerId,
                             userId = userId,
+                            name = dealerName,
+                            text = input.trim(),
+                            messageType = "text",
+                            timestamp = System.currentTimeMillis(),
                             carId = carId,
                             notificationSent = false
                         )
+                        viewModel.sendMessage(message, chatId)
+
                         input = ""
                     }
                 }

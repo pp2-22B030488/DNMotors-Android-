@@ -1,49 +1,41 @@
 package com.example.dnmotors.view.activity
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ActivityMainBinding
 import com.example.dnmotors.services.MessageWorkScheduler
-import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.fragments.authFragment.SignInFragment
 import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
-import com.example.domain.model.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 import com.google.firebase.ktx.Firebase
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.Locale
 
 class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
-    private lateinit var authViewModel: AuthViewModel
-    private lateinit var chatViewModel: ChatViewModel
+    private val authViewModel: AuthViewModel by viewModel()
+    private val chatViewModel: ChatViewModel by viewModel()
     private val TAG = "MainActivity"
     private var messageListener: ListenerRegistration? = null
 
@@ -54,17 +46,12 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         setContentView(binding.root)
 
         auth = Firebase.auth
-        authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
-        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
         val currentUser = auth.currentUser
         if (currentUser != null) {
             setupFirestorePersistence()
-            setupNavigation()
-            setupActionBar()
+
             fetchAndNavigateUserRole()
-            handleDeepLink(intent?.data)
-            handleNotificationIntent(intent)
 
         } else {
             navigateToLoginScreen()
@@ -89,6 +76,9 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                     navController.navigate(R.id.carFragment)
                     binding.bottomNavigationView.visibility = View.VISIBLE
                     setupChatListeners()
+                    setupNavigation()
+                    setupActionBar()
+                    handleDeepLinkAndNotification(intent)
 
                 }
 
@@ -101,7 +91,10 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
 
         chatViewModel.chatItems.observeForever { chats ->
             chats.forEach { chat ->
-                chatViewModel.observeMessagesForUser(chatId = "${chat.dealerId}_${chat.userId}", this)
+                chatViewModel.observeNewMessages(
+                    chatId = "${chat.dealerId}_${chat.userId}",
+                    this,
+                    activityClass = MainActivity::class.java)
             }
         }
 
@@ -111,14 +104,19 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         }
     }
 
-    private fun handleNotificationIntent(intent: Intent?) {
-        val carId = intent?.getStringExtra("carId")
-        val dealerId = intent?.getStringExtra("dealerId")
+    private fun handleDeepLinkAndNotification(intent: Intent) {
+        handleDeepLink(intent.data)
+        handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(intent: Intent) {
+        val carId = intent.getStringExtra("carId")
+        val dealerId = intent.getStringExtra("dealerId")
 
         if (!carId.isNullOrEmpty() && !dealerId.isNullOrEmpty()) {
             navigateToChatFragment(carId, dealerId)
-        } else {
-            Log.w(TAG, "Notification intent missing required carId or dealerId.")
+            intent.removeExtra("carId")
+            intent.removeExtra("dealerId")
         }
     }
 
@@ -243,7 +241,6 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
                         }
 
                         override fun onPrepareLoad(placeHolderDrawable: android.graphics.drawable.Drawable?) {
-                            // Optional: Show placeholder while loading
                         }
                     })
             } else {
@@ -271,14 +268,23 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
     override fun onLoginSuccess() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
-        navController.navigate(R.id.action_signInFragment_to_mainFragment)
-        binding.bottomNavigationView.visibility = View.VISIBLE
+
+        if (navController.currentDestination?.id == R.id.messagesFragment) {
+            Log.d(TAG, "Already on messagesFragment. No need to navigate again from onLoginSuccess.")
+            binding.bottomNavigationView.visibility = View.VISIBLE
+        } else if (navController.currentDestination?.id != R.id.carFragment) {
+            Log.d(TAG, "Navigating from ${navController.currentDestination?.label} to carFragment after login.")
+            navController.navigate(R.id.action_signInFragment_to_carFragment)
+            binding.bottomNavigationView.visibility = View.VISIBLE
+        } else {
+            Log.d(TAG, "Already on carFragment. Skipping navigation from onLoginSuccess.")
+            binding.bottomNavigationView.visibility = View.VISIBLE
+        }
     }
 
-//    override fun onNewIntent(intent: Intent?) {
-//        super.onNewIntent(intent)
-//        handleDeepLink(intent?.data)
-//        handleNotificationIntent(intent)
-//        setIntent(intent)
-//    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLinkAndNotification(intent)
+    }
 }

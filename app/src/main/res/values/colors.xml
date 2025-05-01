@@ -9,5 +9,8 @@
     <color name="dealer_message">#FFFFFF</color>
     <color name="primary_text">#212121</color>
     <color name="secondary_text">#757575</color>
-
+    <color name="blue_light">#E3F2FD</color>
+    <color name="gray_light">#F5F5F5</color>
+    <color name="gray_medium">#9E9E9E</color>
+    <color name="red_error">#F44336</color>
 </resources>

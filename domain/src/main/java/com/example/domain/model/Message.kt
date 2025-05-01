@@ -8,6 +8,8 @@ data class Message(
     val id: String? = null,
     val name: String? = null,
     var senderId: String? = null,
+    var userId: String? = null,
+    var dealerId: String? = null,
     val carId: String? = null,
     val text: String? = null,
     val mediaData: String? = null,

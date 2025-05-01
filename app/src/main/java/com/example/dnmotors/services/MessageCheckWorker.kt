@@ -1,13 +1,6 @@
 package com.example.dnmotors.services
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -16,7 +9,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.example.dnmotors.R
 import com.example.dnmotors.utils.MessageNotificationUtil
 import com.example.dnmotors.view.activity.MainActivity
 import com.example.domain.model.Message
@@ -60,7 +52,14 @@ class MessageWorker(
 
                 for (doc in messageSnapshots.documents) {
                     val message = doc.toObject(Message::class.java) ?: continue
-                    MessageNotificationUtil.createNotification(applicationContext, message)
+                    MessageNotificationUtil.createNotification(
+                        applicationContext,
+                        message,
+                        targetActivity = MainActivity::class.java){
+
+                        putExtra("userId", message.senderId)
+                        putExtra("carId", message.carId)
+                    }
                     doc.reference.update("notificationSent", true).await()
                 }
             }

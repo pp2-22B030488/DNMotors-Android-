@@ -15,39 +15,6 @@ object MediaUtils {
 
     private const val TAG = "MediaUtils"
 
-    fun decodeBase64ToFile(base64: String?, mediaType: String, context: Context): File? {
-        if (base64.isNullOrEmpty()) {
-            Log.e(TAG, "Input Base64 string is null or empty.")
-            return null
-        }
-
-        return try {
-            val bytes = Base64.decode(base64, Base64.NO_WRAP)
-            val extension = when (mediaType.lowercase()) {
-                "audio" -> ".mp3"
-                "video" -> ".mp4"
-                else -> ".tmp"
-            }
-            val file = File.createTempFile("media_${System.currentTimeMillis()}", extension, context.cacheDir)
-
-            FileOutputStream(file).use { outputStream ->
-                outputStream.write(bytes)
-            }
-            Log.d(TAG, "Successfully decoded Base64 to file: ${file.absolutePath}")
-            file
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to decode Base64 string. It might be corrupted.", e)
-            null
-        } catch (e: IOException) {
-            Log.e(TAG, "Failed to create or write to temporary media file.", e)
-            null
-        } catch (e: OutOfMemoryError) {
-            Log.e(TAG, "OutOfMemoryError while decoding Base64 string.", e)
-            Toast.makeText(context, "Media file is too large to process", Toast.LENGTH_SHORT).show()
-            null
-        }
-    }
-
     fun playFile(file: File, mediaType: String, context: Context) {
         val authority = "${context.packageName}.provider"
         val uri = try {
@@ -79,16 +46,6 @@ object MediaUtils {
         } catch (e: SecurityException) {
             Log.e(TAG, "SecurityException trying to play media. Check URI permissions.", e)
             Toast.makeText(context, "Permission denied while trying to play media", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun decodeTextFromBase64(base64: String?): String {
-        if (base64.isNullOrEmpty()) return ""
-        return try {
-            String(Base64.decode(base64, Base64.NO_WRAP), Charsets.UTF_8)
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to decode Base64 string to text.", e)
-            ""
         }
     }
 

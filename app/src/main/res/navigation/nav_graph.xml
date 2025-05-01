@@ -18,6 +18,12 @@
             app:destination="@id/carFragment"
             app:popUpTo="@id/signInFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_signInFragment_to_carFragment"
+            app:destination="@id/carFragment" />
+        <action
+            android:id="@+id/action_signInFragment_to_messagesFragment"
+            app:destination="@id/messagesFragment" />
 <!--        <action-->
 <!--            android:id="@+id/action_signInFragment_to_dealerFragment"-->
 <!--            app:destination="@id/dealerFragment"-->
