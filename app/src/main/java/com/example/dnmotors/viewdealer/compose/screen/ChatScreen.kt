@@ -13,26 +13,29 @@ import androidx.compose.material3.ListItem
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.dnmotors.view.fragments.messagesFragment.ChatsFragment
+import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.domain.model.ChatItem
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel,
+    chatViewModel: ChatViewModel,
+    authViewModel: AuthViewModel,
     onChatClick: (ChatItem) -> Unit
 ) {
-    val chatItems by viewModel.chatItems.observeAsState(emptyList())
-    val dealerId = FirebaseAuth.getInstance().currentUser?.uid
+    val chatItems by chatViewModel.chatItems.observeAsState(emptyList())
+    var dealerId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(dealerId) {
+        val auth = authViewModel.returnAuth()
+        dealerId = auth.uid
         if (dealerId != null) {
-            viewModel.loadChatList(true)
+            chatViewModel.loadChatList(true)
         }
     }
 

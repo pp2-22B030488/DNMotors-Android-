@@ -4,16 +4,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.data.repository.ChatRepositoryImpl
 import com.example.dnmotors.viewdealer.activity.DealerActivity
+import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
-import com.example.dnmotors.viewmodel.factory.ChatViewModelFactory
-import com.example.domain.usecase.ChatUseCases
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DealerApp(messageData: Pair<String?, String?>?) {
@@ -21,10 +18,8 @@ fun DealerApp(messageData: Pair<String?, String?>?) {
     val showBottomBar = rememberSaveable { mutableStateOf(true) }
     val context = LocalContext.current
 
-    val chatRepository = remember { ChatRepositoryImpl() }
-    val chatUseCase = remember { ChatUseCases(chatRepository) }
-    val factory = remember { ChatViewModelFactory(chatUseCase) }
-    val chatViewModel: ChatViewModel = viewModel(factory = factory)
+    val chatViewModel: ChatViewModel = koinViewModel()
+    val authViewModel: AuthViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
 
@@ -62,7 +57,8 @@ fun DealerApp(messageData: Pair<String?, String?>?) {
             navController = navController,
             padding = padding,
             onToggleBottomBar = { showBottomBar.value = it },
-            chatViewModel = chatViewModel
+            chatViewModel = chatViewModel,
+            authViewModel = authViewModel
         )
     }
 

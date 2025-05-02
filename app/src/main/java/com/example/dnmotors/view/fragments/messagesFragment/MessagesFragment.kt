@@ -12,18 +12,20 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentMessagesBinding
 import com.example.domain.util.FileUtils
 import com.example.dnmotors.view.adapter.MessagesAdapter
+import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
+import com.example.domain.model.AuthUser
 import com.example.domain.model.Message
-import com.google.firebase.auth.FirebaseAuth
 import com.example.domain.repository.MediaRepository
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.util.UUID
@@ -32,12 +34,14 @@ class MessagesFragment : Fragment() {
 
     private lateinit var binding: FragmentMessagesBinding
     private lateinit var adapter: MessagesAdapter
-    private lateinit var auth: FirebaseAuth
+    private lateinit var auth: AuthUser
     private lateinit var firestore: FirebaseFirestore
     private lateinit var messagesRef: CollectionReference
     private lateinit var mediaRepository: MediaRepository
     private var snapshotListener: ListenerRegistration? = null
     private val chatViewModel: ChatViewModel by viewModel()
+    private val authViewModel: AuthViewModel by viewModel()
+
     private lateinit var carId: String
     private lateinit var dealerId: String
 
@@ -73,10 +77,12 @@ class MessagesFragment : Fragment() {
         carId = args.carId
         dealerId = args.dealerId
 
-        auth = FirebaseAuth.getInstance()
+        lifecycleScope.launch {
+            auth = authViewModel.returnAuth()
+        }
         firestore = FirebaseFirestore.getInstance()
 
-        val currentUserId = auth.currentUser?.uid ?: run {
+        val currentUserId = auth.uid ?: run {
             showToast("User not logged in")
             return
         }
@@ -105,7 +111,7 @@ class MessagesFragment : Fragment() {
     }
 
     private fun sendTextMessage() {
-        val currentUserId = auth.currentUser?.uid ?: return
+        val currentUserId = auth.uid ?: return
         val chatId = "${dealerId}_${currentUserId}"
         val messageText = binding.messageInput.text.toString().trim()
 
@@ -117,7 +123,7 @@ class MessagesFragment : Fragment() {
                 senderId = currentUserId,
                 dealerId = dealerId,
                 userId = currentUserId,
-                name = auth.currentUser?.displayName ?: "Unknown User",
+                name = auth.displayName ?: "Unknown User",
                 text = messageText,
                 mediaData = encodedText,
                 messageType = "text",
@@ -185,7 +191,7 @@ class MessagesFragment : Fragment() {
     }
 
     private fun handleRecordedAudio(file: File) {
-        val currentUserId = auth.currentUser?.uid ?: return
+        val currentUserId = auth.uid ?: return
         val chatId = "${dealerId}_${currentUserId}"
         val base64 = FileUtils.fileToBase64(file)
 
@@ -195,7 +201,7 @@ class MessagesFragment : Fragment() {
                 senderId = currentUserId,
                 userId = currentUserId,
                 dealerId = dealerId,
-                name = auth.currentUser?.displayName ?: "Unknown User",
+                name = auth.displayName ?: "Unknown User",
                 mediaData = base64,
                 messageType = "audio",
                 timestamp = System.currentTimeMillis(),
@@ -209,7 +215,7 @@ class MessagesFragment : Fragment() {
 
 
     private fun loadMessages() {
-        val currentUserId = auth.currentUser?.uid ?: return
+        val currentUserId = auth.uid ?: return
         val chatId = "${dealerId}_${currentUserId}"
 
         chatViewModel.loadMessages(chatId)

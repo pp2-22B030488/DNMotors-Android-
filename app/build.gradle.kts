@@ -105,6 +105,7 @@ dependencies {
     implementation(libs.koin.android)
     implementation(project(":domain"))
     implementation(project(":data"))
+    implementation("io.insert-koin:koin-androidx-compose:3.5.0")
 
     // compose
     implementation(platform("androidx.compose:compose-bom:2025.04.00"))

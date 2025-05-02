@@ -7,7 +7,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.dnmotors.viewdealer.compose.screen.*
+import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
+import com.example.domain.model.AuthUser
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -15,7 +17,8 @@ fun DealerNavGraph(
     navController: NavHostController,
     padding: PaddingValues,
     onToggleBottomBar: (Boolean) -> Unit,
-    chatViewModel: ChatViewModel
+    chatViewModel: ChatViewModel,
+    authViewModel: AuthViewModel,
 ) {
 
     NavHost(navController, startDestination = DealerNavItem.Cars.route) {
@@ -31,7 +34,7 @@ fun DealerNavGraph(
         composable("add_car") { AddCarScreen(navController = navController) }
 
         composable(DealerNavItem.Chat.route) {
-            ChatScreen(chatViewModel) { chatItem ->
+            ChatScreen(chatViewModel, authViewModel) { chatItem ->
                 navController.navigate("messages/${chatItem.userId}/${chatItem.carId}")
             }
         }
