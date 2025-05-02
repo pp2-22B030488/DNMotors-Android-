@@ -215,15 +215,14 @@ fun AddCarScreen(viewModel: AddCarViewModel = viewModel(), navController: NavCon
                     }
                 }
             }
-            // Если carFromJson содержит imageUrl, показываем их тоже
-            if (carFromJson?.imageUrl?.isNotEmpty() == true) {
+            carFromJson?.imageUrl?.takeIf { it.isNotEmpty() }?.let { images ->
                 Text(
                     text = "Images from JSON:",
                     modifier = Modifier.padding(start = 16.dp, top = 8.dp),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 LazyRow(modifier = Modifier.fillMaxWidth()) {
-                    items(carFromJson!!.imageUrl) { imageUrl ->
+                    items(images) { imageUrl ->
                         Image(
                             painter = rememberAsyncImagePainter(imageUrl),
                             contentDescription = null,
