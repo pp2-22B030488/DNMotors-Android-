@@ -36,8 +36,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.dnmotors.R
 import com.example.dnmotors.model.ImgurApiService
-import com.example.dnmotors.model.ImgurResponse
-import com.example.dnmotors.model.User
+import com.example.domain.model.ImgurResponse
+import com.example.domain.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import retrofit2.Call

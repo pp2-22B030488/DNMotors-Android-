@@ -11,10 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dnmotors.App.Companion.context
-import com.example.dnmotors.model.Car
+import com.example.domain.model.Car
 import com.example.dnmotors.model.ImgurApiService
-import com.example.dnmotors.model.ImgurResponse
+import com.example.domain.model.ImgurResponse
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -24,7 +23,6 @@ import kotlinx.coroutines.withContext
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
-import java.util.UUID
 
 class AddCarViewModel : ViewModel() {
 

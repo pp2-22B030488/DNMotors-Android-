@@ -1,6 +1,5 @@
 package com.example.dnmotors.viewdealer.compose.screen
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -35,12 +34,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.dnmotors.R
-import com.example.dnmotors.model.User
+import com.example.domain.model.User
 import com.example.dnmotors.view.activity.MainActivity
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.ktx.Firebase
 import java.util.Locale
 
 @Composable

@@ -20,8 +20,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
-import com.example.dnmotors.model.Car
-import com.example.dnmotors.model.User
+import com.example.domain.model.Car
+import com.example.domain.model.User
 import com.example.dnmotors.viewdealer.repository.CarRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch

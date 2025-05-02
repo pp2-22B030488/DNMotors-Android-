@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.BottomSheetCarSelectionBinding
-import com.example.dnmotors.model.Car
+import com.example.domain.model.Car
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.firebase.firestore.FirebaseFirestore
 

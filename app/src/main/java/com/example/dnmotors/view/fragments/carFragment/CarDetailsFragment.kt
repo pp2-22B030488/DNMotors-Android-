@@ -9,10 +9,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
-import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentCarDetailsBinding
-import com.example.dnmotors.model.Car
+import com.example.domain.model.Car
 import com.example.dnmotors.view.adapter.CarImageAdapter
 import com.google.firebase.firestore.FirebaseFirestore
 

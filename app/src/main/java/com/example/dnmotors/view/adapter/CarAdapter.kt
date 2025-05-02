@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.dnmotors.R
-import com.example.dnmotors.model.Car
+import com.example.domain.model.Car
 import com.example.dnmotors.view.fragments.favouritesFragment.FavouritesManager
 
 class CarAdapter(

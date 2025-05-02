@@ -1,5 +1,6 @@
 package com.example.dnmotors.model
 
+import com.example.domain.model.ImgurResponse
 import retrofit2.Call
 import retrofit2.http.*
 
