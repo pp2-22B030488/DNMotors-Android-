@@ -89,13 +89,24 @@ class SearchFragment : Fragment() {
     private fun filterCars(filter: FilterDialog.Filter): List<Car> {
         return carList.filter { car ->
             (filter.state == FilterDialog.State.ALL ||
-                (filter.state == FilterDialog.State.NEW && car.condition.equals("new", true)) ||
-                (filter.state == FilterDialog.State.USED && car.condition.equals("used", true))) &&
-            (filter.brandModel.isNullOrBlank() || car.brand.contains(filter.brandModel, true) || car.model.contains(filter.brandModel, true)) &&
-            (filter.year == null || car.year == filter.year) &&
-            (filter.priceFrom == null || car.price >= filter.priceFrom) &&
-            (filter.priceTo == null || car.price <= filter.priceTo)
-            // Чекбоксы реализуйте по своим данным, если появятся соответствующие поля
+                    (filter.state == FilterDialog.State.NEW && car.condition.equals("new", true)) ||
+                    (filter.state == FilterDialog.State.USED && car.condition.equals("used", true))) &&
+
+                    (filter.brandModel.isNullOrBlank() || car.brand.contains(filter.brandModel, true) || car.model.contains(filter.brandModel, true)) &&
+
+                    (filter.yearFrom == null || car.year >= filter.yearFrom) &&
+                    (filter.yearTo == null || car.year <= filter.yearTo) &&
+
+                    (filter.priceFrom == null || car.price >= filter.priceFrom) &&
+                    (filter.priceTo == null || car.price <= filter.priceTo) &&
+
+                    (filter.mileageFrom == null || car.mileageKm >= filter.mileageFrom) &&
+                    (filter.mileageTo == null || car.mileageKm <= filter.mileageTo) &&
+
+//                    ((filter.transmission == FilterDialog.Transmission.MANUAL.toString() && car.transmission.contains("manual", true)) ||
+//                            (filter.transmission == FilterDialog.Transmission.AUTOMATIC.toString() && car.transmission.contains("automatic", true))) &&
+
+                    (filter.location.isNullOrBlank() || car.location.contains(filter.location, true))
         }
     }
 

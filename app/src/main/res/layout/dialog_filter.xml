@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Фильтр"
+                android:text="Filter"
                 android:textColor="@color/black"
                 android:textSize="20sp"
                 android:textStyle="bold"/>
@@ -35,7 +35,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Состояние"
+            android:text="Condition"
             android:textColor="@color/black"
             android:textSize="16sp"
             android:layout_marginBottom="8dp"/>
@@ -96,6 +96,36 @@
             </com.google.android.material.button.MaterialButtonToggleGroup>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Location -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Choose location"
+            app:boxStrokeColor="#B6B6B6"
+            app:cursorColor="@color/black"
+            app:hintTextColor="@color/primary_red"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/locationAutoComplete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:height="42dp"
+                android:textColorHint="@color/secondary_text"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <!-- Марка/модель -->
         <TextView
             android:layout_width="match_parent"
@@ -126,6 +156,59 @@
                 android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Transmission -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Transmission"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            android:backgroundTint="@color/white"
+            app:strokeColor="#FFFFFF"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/transmissionToggleGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/transmissionAutomatic"
+                    android:layout_width="0dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Automatic"
+                    android:textAllCaps="false"
+                    app:strokeColor="#bdbdbd"
+                    android:textSize="14sp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:cornerRadius="6dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/transmissionManual"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_weight="1"
+                    android:text="Manual"
+                    android:textAllCaps="false"
+                    app:strokeColor="#bdbdbd"
+                    android:textSize="14sp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:cornerRadius="6dp"/>
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Год выпуска -->
         <TextView
             android:layout_width="match_parent"
@@ -135,29 +218,58 @@
             android:textSize="16sp"
             android:layout_marginBottom="8dp"/>
 
-        <HorizontalScrollView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
+            android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/yearChipGroup"
-                android:layout_width="wrap_content"
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:singleSelection="true"
-                app:selectionRequired="false">
+                android:layout_weight="1"
+                android:hint="От"
+                app:placeholderTextColor="@color/black"
+                app:cursorColor="@color/black"
+                app:hintTextColor="@color/primary_red"
+                app:boxStrokeColor="@color/secondary_text"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_2023"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/yearFrom"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:chipCornerRadius="6dp"
-                    android:text="2023"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"/>
+                    android:inputType="number"
+                    android:textColor="@color/black"
+                    android:textColorLink="@color/black"
+                    app:hintTextColor="@color/primary_red"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="wrap_content"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:boxStrokeColor="@color/secondary_text"
+                app:cursorColor="@color/black"
+                app:hintTextColor="@color/primary_red"
+                android:hint="До"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/yearTo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
 
         <!-- Цена -->
         <TextView
@@ -220,34 +332,66 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <!-- Чекбоксы -->
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/checkboxInitialPayment"
+        <!-- Mileage -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Первоначальный взнос"
+            android:text="Mileage"
             android:textColor="@color/black"
             android:textSize="16sp"
-            app:buttonTint="@color/primary_red"/>
+            android:layout_marginBottom="8dp"/>
 
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/checkboxWithPhoto"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="С фото"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            app:buttonTint="@color/primary_red"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
 
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/checkboxCustomsCleared"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Растаможен в РК"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            app:buttonTint="@color/primary_red"
-            android:layout_marginBottom="220dp"/>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="From"
+                app:placeholderTextColor="@color/black"
+                app:cursorColor="@color/black"
+                app:hintTextColor="@color/primary_red"
+                app:boxStrokeColor="@color/secondary_text"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/mileageFrom"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/black"
+                    android:textColorLink="@color/black"
+                    app:hintTextColor="@color/primary_red"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="wrap_content"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:boxStrokeColor="@color/secondary_text"
+                app:cursorColor="@color/black"
+                app:hintTextColor="@color/primary_red"
+                android:hint="To"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/mileageTo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
         <!-- Кнопка -->
         <com.google.android.material.button.MaterialButton
@@ -259,6 +403,7 @@
             android:textSize="14sp"
             app:cornerRadius="8dp"
             android:textColor="@color/white"
+            android:layout_marginTop="50dp"
             android:backgroundTint="@color/primary_red"/>
 
     </LinearLayout>
