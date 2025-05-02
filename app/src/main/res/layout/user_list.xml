@@ -22,7 +22,8 @@
             android:text="Nurs"
             android:textSize="20sp"
             android:textColor="@android:color/black"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp"
+            android:layout_gravity="center"/>
 
         <TextView
             android:id="@+id/tvMessage"
@@ -30,7 +31,9 @@
             android:layout_height="wrap_content"
             android:text="Привет!"
             android:textSize="16sp"
-            android:textColor="@android:color/black" />
+            android:textColor="@android:color/black"
+            android:layout_gravity="center"/>
+
 
         <Button
             android:id="@+id/btnPlay"
@@ -51,6 +54,13 @@
             tools:visibility="visible"
             android:contentDescription="image" />
 
+        <TextView
+            android:id="@+id/tvTimestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Timestamp"
+            android:textSize="10sp"
+            android:textColor="#666" />
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

@@ -49,6 +49,9 @@ import androidx.compose.ui.graphics.Color
 import com.example.dnmotors.viewdealer.repository.DealerAudioRepository
 import com.example.domain.model.Message
 import com.example.domain.repository.MediaRepository
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 @Composable
@@ -79,6 +82,11 @@ fun MessagesScreen(
         } else {
             Toast.makeText(context, "Microphone permission is required to record audio", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun formatTimestamp(timestamp: Long): String {
+        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+        return sdf.format(Date(timestamp))
     }
 
     LaunchedEffect(chatId) {
@@ -126,7 +134,14 @@ fun MessagesScreen(
                             .widthIn(max = 280.dp)
                     ) {
                         when (msg.messageType) {
-                            "text" -> Text("${msg.name}: ${msg.text}")
+                            "text" -> {
+                                Text("${msg.name}: ${msg.text}")
+                                Text(
+                                    formatTimestamp(msg.timestamp),
+                                    modifier = Modifier.align(Alignment.End),
+                                    color = Color.Gray
+                                )
+                            }
                             "image" -> {
                                 msg.mediaData?.let {
                                     val decodedBitmap = runCatching {
@@ -149,10 +164,20 @@ fun MessagesScreen(
                             "audio" -> {
                                 Text("${msg.name}:")
                                 msg.mediaData?.let { AudioPlayer(it) } ?: Text("[Audio not available]")
+                                Text(
+                                    formatTimestamp(msg.timestamp),
+                                    modifier = Modifier.align(Alignment.End),
+                                    color = Color.Gray
+                                )
                             }
                             "video" -> {
                                 Text("${msg.name}:")
                                 msg.mediaData?.let { VideoPlayer(it) } ?: Text("[Video not available]")
+                                Text(
+                                    formatTimestamp(msg.timestamp),
+                                    modifier = Modifier.align(Alignment.End),
+                                    color = Color.Gray
+                                )
                             }
                             else -> Text("[Unsupported message type]")
                         }

@@ -2,7 +2,9 @@ package com.example.dnmotors.view.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.example.dnmotors.R
 import com.example.dnmotors.databinding.ChatItemBinding
 import com.example.domain.model.ChatItem
 
@@ -15,6 +17,9 @@ class ChatListAdapter(
         fun bind(item: ChatItem) {
             binding.chatTitle.text = "Chat for ${item.name}"
             binding.root.setOnClickListener { onClick(item) }
+            binding.root.setBackgroundColor(ContextCompat.getColor(binding.root.context, R.color.lightGray))
+            binding.root.setBackgroundColor(ContextCompat.getColor(binding.root.context, R.color.lightGray))
+
         }
     }
 

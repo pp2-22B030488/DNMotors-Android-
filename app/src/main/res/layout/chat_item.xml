@@ -12,5 +12,7 @@
         android:layout_height="wrap_content"
         android:text="Chat Title"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginVertical="20dp"/>
 </androidx.cardview.widget.CardView>

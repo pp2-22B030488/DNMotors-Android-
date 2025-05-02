@@ -17,4 +17,6 @@
     <color name="senderMessageBg">#4CAF50</color>
     <color name="receiverMessageBg">#2196F3</color>
     <color name="chatBackground">#F0F0F0</color>
+    <color name="lightGray">#EEEEEE</color>
+
 </resources>
