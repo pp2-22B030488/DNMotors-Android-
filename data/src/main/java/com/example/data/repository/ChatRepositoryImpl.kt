@@ -4,18 +4,31 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.data.model.ChatItemDao
+import com.example.data.model.MessageDao
 import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
 import com.example.domain.repository.ChatRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class ChatRepositoryImpl : ChatRepository {
+class ChatRepositoryImpl
+//    (
+//    private val chatItemDao: ChatItemDao,
+//    private val messageDao: MessageDao,
+//    private val applicationScope: CoroutineScope
+//)
+    : ChatRepository {
     private val firestore = FirebaseFirestore.getInstance()
 
     override fun loadChatList(isDealer: Boolean): LiveData<List<ChatItem>> {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return MutableLiveData(emptyList())
+//        val roomLiveData = chatItemDao.getChatList(currentUserId)
 
         val queryField = if (isDealer) "dealerId" else "userId"
 
@@ -26,6 +39,7 @@ class ChatRepositoryImpl : ChatRepository {
             .get()
             .addOnSuccessListener { result ->
                 val chatItems = result.documents.mapNotNull { doc ->
+//                    val chatId = doc.id
                     val carId = doc.getString("carId")
                     val fetcheduserId = doc.getString("userId")
                     val fetchedDealerId = doc.getString("dealerId")
@@ -34,6 +48,7 @@ class ChatRepositoryImpl : ChatRepository {
 
                     if (carId != null && fetcheduserId != null && name != null && timestamp != null && fetchedDealerId !=null) {
                         ChatItem(
+//                            chatId = chatId,
                             carId = carId,
                             userId = fetcheduserId,
                             dealerId = fetchedDealerId,
@@ -43,16 +58,21 @@ class ChatRepositoryImpl : ChatRepository {
                     } else null
                 }
                 liveData.postValue(chatItems)
+
+//                chatItemDao.deleteAllChatItems()
+//                chatItemDao.insertChatItems(chatItems)
             }
             .addOnFailureListener { error ->
                 Log.e("ChatRepositoryImpl", "Error loading chat list: ${error.message}")
                 liveData.postValue(emptyList())
             }
-
         return liveData
+
+//        return roomLiveData
     }
 
     override fun loadMessages(chatId: String): LiveData<List<Message>> {
+//        val roomLiveData = messageDao.getMessagesForChat(chatId)
         val liveData = MutableLiveData<List<Message>>()
 
         firestore.collection("chats")
@@ -62,18 +82,36 @@ class ChatRepositoryImpl : ChatRepository {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e("ChatRepositoryImpl", "Error loading messages", error)
-                    liveData.postValue(emptyList())
                     return@addSnapshotListener
                 }
-
                 val messages = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(Message::class.java)
                 } ?: emptyList()
 
                 liveData.postValue(messages)
-            }
 
+//                if (snapshot == null) return@addSnapshotListener
+//
+//                applicationScope.launch(Dispatchers.IO) {
+//                    for (dc in snapshot.documentChanges) {
+//                        val message = dc.document.toObject(Message::class.java)
+//                            .copy(chatId = chatId)
+//
+//                        when (dc.type) {
+//                            DocumentChange.Type.ADDED, DocumentChange.Type.MODIFIED -> {
+//                                messageDao.insertMessage(message)
+//                            }
+//
+//                            DocumentChange.Type.REMOVED -> {
+//                                message.id?.let { messageDao.deleteMessageById(it) }
+//                            }
+//                        }
+//                    }
+//                }
+            }
         return liveData
+
+//        return roomLiveData
     }
 
     override fun sendMessage(message: Message, chatId: String) {
@@ -87,6 +125,22 @@ class ChatRepositoryImpl : ChatRepository {
             .addOnFailureListener {
                 Log.e("ChatRepositoryImpl", "Failed to send message", it)
             }
+//        val messageWithChatId = message.copy(chatId = chatId)
+//        applicationScope.launch(Dispatchers.IO) {
+//
+//            val newMessageRef = firestore.collection("chats").document(chatId).collection("messages").document()
+//            val messageToSave = messageWithChatId.copy(id = newMessageRef.id)
+//
+//            messageDao.insertMessage(messageToSave)
+//
+//            newMessageRef.set(messageToSave)
+//                .addOnSuccessListener {
+//                    Log.d("ChatRepositoryImpl", "Message sent successfully to Firestore")
+//                }
+//                .addOnFailureListener { e ->
+//                    Log.e("ChatRepositoryImpl", "Failed to send message to Firestore", e)
+//                }
+//        }
     }
 
     override fun sendMediaMessage(message: Message, chatId: String) {
@@ -97,6 +151,22 @@ class ChatRepositoryImpl : ChatRepository {
             .addOnFailureListener {
                 Log.e("ChatRepositoryImpl", "Failed to send media message", it)
             }
+//        val messageWithChatId = message.copy(chatId = chatId)
+//
+//        applicationScope.launch(Dispatchers.IO) {
+//            val newMessageRef = firestore.collection("chats").document(chatId).collection("messages").document()
+//            val messageToSave = messageWithChatId.copy(id = newMessageRef.id)
+//
+//            messageDao.insertMessage(messageToSave)
+//
+//            newMessageRef.set(messageToSave)
+//                .addOnSuccessListener {
+//                    Log.d("ChatRepositoryImpl", "Media message sent successfully to Firestore")
+//                }
+//                .addOnFailureListener { e ->
+//                    Log.e("ChatRepositoryImpl", "Failed to send media message to Firestore", e)
+//                }
+//        }
     }
 
     override fun observeMessages(chatId: String, context: Context) {
@@ -143,6 +213,5 @@ class ChatRepositoryImpl : ChatRepository {
 
         return result
     }
-
 }
 
