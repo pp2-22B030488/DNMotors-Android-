@@ -105,11 +105,11 @@ dependencies {
     implementation(libs.koin.android)
     implementation(project(":domain"))
     implementation(project(":data"))
+    implementation("io.insert-koin:koin-androidx-compose:3.5.0")
 
     // compose
     implementation(platform("androidx.compose:compose-bom:2025.04.00"))
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material3:material3")
     implementation(libs.androidx.activity.compose)
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("io.coil-kt:coil-compose:2.4.0")
@@ -125,6 +125,15 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.8.1")
 
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    implementation("androidx.compose.material3:material3:1.3.2")
+
+//tests
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
 
 
 }

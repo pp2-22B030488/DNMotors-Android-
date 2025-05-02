@@ -17,14 +17,4 @@ object FileUtils {
         }
     }
 
-
-    fun encodeToBase64(text: String): String {
-        return try {
-            Base64.encodeToString(text.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
-        } catch (e: Exception) {
-            Log.e(TAG, "Text to Base64 error: ${e.message}")
-            ""
-        }
-    }
-
 }

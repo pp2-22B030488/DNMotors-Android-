@@ -1,18 +1,14 @@
 package com.example.dnmotors.viewdealer.compose.screen
 
-import android.Manifest
 import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
-import android.net.Uri
-import android.provider.MediaStore
 import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,8 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -45,18 +43,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
+import androidx.compose.ui.graphics.Color
 import com.example.dnmotors.viewdealer.repository.DealerAudioRepository
-import com.example.domain.repository.CameraRepository
+import com.example.domain.model.Message
 import com.example.domain.repository.MediaRepository
-import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 
 @Composable
 fun MessagesScreen(
@@ -65,7 +61,7 @@ fun MessagesScreen(
     userId: String,
     dealerId: String,
     dealerName: String,
-    viewModel: ChatViewModel = viewModel(),
+    viewModel: ChatViewModel,
     onToggleBottomBar: (Boolean) -> Unit
 ) {
     val messages by viewModel.messages.observeAsState(emptyList())
@@ -75,158 +71,6 @@ fun MessagesScreen(
     var isRecording by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val activity = LocalContext.current as? Activity
-
-    // Variables to hold the latest file references
-    var imageFile by remember { mutableStateOf<File?>(null) }
-    var videoFile by remember { mutableStateOf<File?>(null) }
-
-
-    // Constants for permission request code
-    val REQUEST_CAMERA_PERMISSION = 1001
-
-    // Function to check and request permissions
-    fun checkAndRequestPermissions(context: Context): Boolean {
-        val cameraPermission = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val storagePermission = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val permissionsNeeded = mutableListOf<String>()
-
-        if (!cameraPermission) {
-            permissionsNeeded.add(Manifest.permission.CAMERA)
-        }
-
-        if (!storagePermission) {
-            permissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        }
-
-        return if (permissionsNeeded.isNotEmpty()) {
-            // Request permissions if not granted
-            ActivityCompat.requestPermissions(
-                context as Activity, permissionsNeeded.toTypedArray(), REQUEST_CAMERA_PERMISSION
-            )
-            false
-        } else {
-            true
-        }
-    }
-// Add this ActivityResult launcher
-    val cameraResultLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            imageFile?.let { file ->
-                try {
-                    val bytes = file.readBytes()
-                    val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                    viewModel.sendMediaMessage(
-                        chatId = chatId,
-                        base64Media = base64,
-                        type = "image",
-                        senderId = dealerId,
-                        senderName = dealerName,
-                        carId = carId
-                    )
-                    Toast.makeText(context, "Image sent successfully", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(context, "Failed to process image", Toast.LENGTH_SHORT).show()
-                    e.printStackTrace()
-                }
-            } ?: run {
-                Toast.makeText(context, "No image file found", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "Image capture cancelled", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val videoResultLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            videoFile?.let { file ->
-                try {
-                    val bytes = file.readBytes()
-                    val base64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-                    viewModel.sendMediaMessage(
-                        chatId = chatId,
-                        base64Media = base64,
-                        type = "video",
-                        senderId = dealerId,
-                        senderName = dealerName,
-                        carId = carId
-                    )
-                    Toast.makeText(context, "Video sent successfully", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Toast.makeText(context, "Failed to process video", Toast.LENGTH_SHORT).show()
-                    e.printStackTrace()
-                }
-            } ?: run {
-                Toast.makeText(context, "No video file found", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "Video recording cancelled", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun takePhoto(context: Context) {
-        val file = CameraRepository.createImageFile(context)
-        imageFile = file
-        file?.let {
-            val photoUri = FileProvider.getUriForFile(
-                context, "${context.packageName}.provider", it
-            )
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            cameraResultLauncher.launch(intent)  // Use the launcher here
-        } ?: run {
-            Toast.makeText(context, "Failed to create image file", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun recordVideo(context: Context) {
-        val file = CameraRepository.createVideoFile(context)
-        videoFile = file
-        file?.let {
-            val videoUri = FileProvider.getUriForFile(
-                context, "${context.packageName}.provider", it
-            )
-            val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE).apply {
-                putExtra(MediaStore.EXTRA_OUTPUT, videoUri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            videoResultLauncher.launch(intent)  // Use the launcher here
-        } ?: run {
-            Toast.makeText(context, "Failed to create video file", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            takePhoto(context)
-        } else {
-            Toast.makeText(context, "Camera permission required", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val videoPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            recordVideo(context)
-        } else {
-            Toast.makeText(context, "Camera and storage permissions required", Toast.LENGTH_SHORT).show()
-        }
-    }
-
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -238,6 +82,11 @@ fun MessagesScreen(
         } else {
             Toast.makeText(context, "Microphone permission is required to record audio", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun formatTimestamp(timestamp: Long): String {
+        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+        return sdf.format(Date(timestamp))
     }
 
     LaunchedEffect(chatId) {
@@ -264,45 +113,79 @@ fun MessagesScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .background(Color.LightGray)
         ) {
             items(messages) { msg ->
-                when (msg.messageType) {
-                    "text" -> Text("${msg.name}: ${msg.text}")
-                    "image" -> {
-                        msg.mediaData?.let {
-                            val decodedBitmap = runCatching {
-                                val bytes = Base64.decode(it, Base64.NO_WRAP)
-                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                            }.getOrNull()
+                val isCurrentUser = msg.senderId == dealerId
+                val alignment = if (isCurrentUser) Alignment.End else Alignment.Start
+                val bubbleColor = if (isCurrentUser) Color(0xFFA5D6A7) else Color(0xFF90CAF9)
+                val bubbleShape = RoundedCornerShape(12.dp)
 
-                            decodedBitmap?.let { bitmap ->
-                                Image(
-                                    bitmap = bitmap.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                        .padding(vertical = 8.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .background(bubbleColor, bubbleShape)
+                            .padding(8.dp)
+                            .widthIn(max = 280.dp)
+                    ) {
+                        when (msg.messageType) {
+                            "text" -> {
+                                Text("${msg.name}: ${msg.text}")
+                                Text(
+                                    formatTimestamp(msg.timestamp),
+                                    modifier = Modifier.align(Alignment.End),
+                                    color = Color.Gray
                                 )
-                            } ?: Text("${msg.name}: [Image not available]")
+                            }
+                            "image" -> {
+                                msg.mediaData?.let {
+                                    val decodedBitmap = runCatching {
+                                        val bytes = Base64.decode(it, Base64.NO_WRAP)
+                                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                    }.getOrNull()
+
+                                    decodedBitmap?.let { bitmap ->
+                                        Image(
+                                            bitmap = bitmap.asImageBitmap(),
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(200.dp)
+                                                .padding(vertical = 4.dp)
+                                        )
+                                    } ?: Text("[Image not available]")
+                                }
+                            }
+                            "audio" -> {
+                                Text("${msg.name}:")
+                                msg.mediaData?.let { AudioPlayer(it) } ?: Text("[Audio not available]")
+                                Text(
+                                    formatTimestamp(msg.timestamp),
+                                    modifier = Modifier.align(Alignment.End),
+                                    color = Color.Gray
+                                )
+                            }
+                            "video" -> {
+                                Text("${msg.name}:")
+                                msg.mediaData?.let { VideoPlayer(it) } ?: Text("[Video not available]")
+                                Text(
+                                    formatTimestamp(msg.timestamp),
+                                    modifier = Modifier.align(Alignment.End),
+                                    color = Color.Gray
+                                )
+                            }
+                            else -> Text("[Unsupported message type]")
                         }
                     }
-                    "audio" -> {
-                        msg.mediaData?.let {
-                            Text("${msg.name}:")
-                            AudioPlayer(it)
-                        } ?: Text("${msg.name}: [Audio not available]")
-                    }
-                    "video" -> {
-                        msg.mediaData?.let {
-                            Text("${msg.name}:")
-                            VideoPlayer(it)
-                        } ?: Text("${msg.name}: [Video not available]")
-                    }
-                    else -> Text("${msg.name}: [Unsupported message type]")
                 }
             }
         }
+
 
         Divider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -312,40 +195,7 @@ fun MessagesScreen(
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-//            IconButton(onClick = {
-//                when {
-//                    ContextCompat.checkSelfPermission(
-//                        context,
-//                        Manifest.permission.CAMERA
-//                    ) == PackageManager.PERMISSION_GRANTED -> {
-//                        takePhoto(context)
-//                    }
-//                    else -> {
-//                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-//                    }
-//                }
-//            }) {
-//                Icon(Icons.Default.PhotoCamera, contentDescription = "Take Picture")
-//            }
-//
-//            IconButton(onClick = {
-//                val permissions = arrayOf(
-//                    Manifest.permission.CAMERA,
-//                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                )
-//
-//                if (permissions.all {
-//                        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-//                    }) {
-//                    recordVideo(context)
-//                } else {
-//                    videoPermissionLauncher.launch(Manifest.permission.CAMERA)
-//                    // Note: For multiple permissions, you'd need a different approach
-//                }
-//            }) {
-//                Icon(Icons.Default.Videocam, contentDescription = "Record Video")
-//            }
-            // Audio record button
+
             IconButton(
                 onClick = {
                     activity?.let {
@@ -388,15 +238,21 @@ fun MessagesScreen(
             Button(
                 onClick = {
                     if (input.isNotBlank()) {
-                        viewModel.sendMessage(
-                            chatId = chatId,
-                            messageText = input.trim(),
+
+                        val message = Message(
+                            id = UUID.randomUUID().toString(),
                             senderId = dealerId,
-                            senderName = dealerName,
+                            dealerId = dealerId,
                             userId = userId,
+                            name = dealerName,
+                            text = input.trim(),
+                            messageType = "text",
+                            timestamp = System.currentTimeMillis(),
                             carId = carId,
                             notificationSent = false
                         )
+                        viewModel.sendMessage(message, chatId)
+
                         input = ""
                     }
                 }

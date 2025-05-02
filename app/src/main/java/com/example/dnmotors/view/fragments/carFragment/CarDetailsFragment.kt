@@ -9,10 +9,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
-import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentCarDetailsBinding
-import com.example.dnmotors.model.Car
+import com.example.domain.model.Car
 import com.example.dnmotors.view.adapter.CarImageAdapter
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -34,33 +32,63 @@ class CarDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         val vinFromArgs = arguments?.getString("vin")
         if (vinFromArgs != null) {
             loadCarByVin(vinFromArgs)
         } else {
-            car = arguments?.getParcelable("car")!!
-            displayCarInfo(car)
-        }
-        binding.buttonWrite.setOnClickListener {
-            car?.let {
-                val action = it.dealerId?.let { it1 ->
-                    CarDetailsFragmentDirections
-                        .actionCarDetailsFragmentToMessagesFragment(
-                            carId = it.vin,
-                            dealerId = it1
-                        )
-                }
-                if (action != null) {
-                    findNavController().navigate(action)
-                } else {
-                    Toast.makeText(context, "Invalid car or dealer data", Toast.LENGTH_SHORT).show()
-                }
+            val carFromArgs = arguments?.getParcelable<Car>("car")
+            if (carFromArgs != null) {
+                car = carFromArgs
+                displayCarInfo(car)
+            } else {
+                Toast.makeText(context, "Car data not found", Toast.LENGTH_SHORT).show()
             }
         }
 
+        if (vinFromArgs != null) {
+            loadCarByVin(vinFromArgs)
+        }
+
+    }
+
+
+    private fun loadCarByVin(vin: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("Cars")
+            .whereEqualTo("vin", vin)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val doc = documents.first()
+                    val loadedCar = doc.toObject(Car::class.java)
+                    car = loadedCar
+                    if (_binding != null) {
+                        displayCarInfo(car)
+                    }
+                } else {
+                    Toast.makeText(context, "Car not found", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Error loading car", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun displayCarInfo(car: Car) {
+
+        binding.buttonWrite.setOnClickListener {
+            car.dealerId?.let { dealerId ->
+                val action = CarDetailsFragmentDirections
+                    .actionCarDetailsFragmentToMessagesFragment(
+                        carId = car.vin,
+                        dealerId = dealerId
+                    )
+                findNavController().navigate(action)
+            } ?: Toast.makeText(context, "Invalid car or dealer data", Toast.LENGTH_SHORT).show()
+        }
+
         binding.imageViewShare.setOnClickListener {
-            val deepLinkUrl = "https://dnmotors.com/car/${car.vin}"
+            val deepLinkUrl = "darkhan-nursultan-alinur-653a63.gitlab.io/car/${car.vin}"
             val shareIntent = Intent().apply {
                 action = Intent.ACTION_SEND
                 putExtra(Intent.EXTRA_TEXT, "Check out this car: $deepLinkUrl")
@@ -69,36 +97,16 @@ class CarDetailsFragment : Fragment() {
             startActivity(Intent.createChooser(shareIntent, "Share via"))
         }
 
-
-
         binding.buttonCall.setOnClickListener {
-            val phoneNumber = car.phoneNumber
-            val intent = Intent(Intent.ACTION_DIAL).apply {
-                data = Uri.parse("tel:$phoneNumber")
-            }
-            startActivity(intent)
-        }
-    }
-
-    private fun loadCarByVin(vin: String) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("cars")
-            .whereEqualTo("vin", vin)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val doc = documents.first()
-                    car = doc.toObject(Car::class.java)
-                    displayCarInfo(car)
-                } else {
-                    // Handle car not found
+            car.phoneNumber?.let { phoneNumber ->
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    data = Uri.parse("tel:$phoneNumber")
                 }
+                startActivity(intent)
             }
-            .addOnFailureListener {
-                // Handle error
-            }
-    }
-    private fun displayCarInfo(car: Car) {
+        }
+
+
         val adapter = CarImageAdapter(car.imageUrl)
         binding.viewPagerCarImages.adapter = adapter
 

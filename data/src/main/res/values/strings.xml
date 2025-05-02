@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">DNMotors</string>
+    <string name="default_web_client_id">your-client-id.apps.googleusercontent.com</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="type_message">Type message</string>
+    <string name="dealer_avatar">Dealer avatar</string>
+    <string name="car_image">Car image</string>
+    <string name="edit_profile">Edit profile</string>
+    <string name="notifications">Notifications</string>
+    <string name="passwords">Passwords</string>
+    <string name="language">Language</string>
+    <string name="logout">Logout</string>
+
+
+</resources>

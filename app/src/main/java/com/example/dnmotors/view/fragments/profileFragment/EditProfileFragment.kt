@@ -2,7 +2,7 @@ package com.example.dnmotors.view.fragments.profileFragment
 
 import android.graphics.Bitmap
 import com.example.dnmotors.model.ImgurApiService
-import com.example.dnmotors.model.ImgurResponse
+import com.example.domain.model.ImgurResponse
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.io.output.ByteArrayOutputStream
 import android.app.Activity
 import android.content.Intent
@@ -24,7 +24,6 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.*
 
 class EditProfileFragment : Fragment() {
 

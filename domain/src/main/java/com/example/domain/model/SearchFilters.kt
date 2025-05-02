@@ -1,4 +1,4 @@
-package com.example.dnmotors.model
+package com.example.domain.model
 
 data class SearchFilters(
     val query: String = "",

@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.androidadvanceddnmotors.ui.dialogs.FilterDialog
 import com.example.dnmotors.R
 import com.example.dnmotors.databinding.FragmentSearchBinding
-import com.example.dnmotors.model.Car
+import com.example.domain.model.Car
 import com.example.dnmotors.view.adapter.CarAdapter
 import com.example.dnmotors.view.fragments.favouritesFragment.FavouritesManager
 import com.google.firebase.firestore.FirebaseFirestore

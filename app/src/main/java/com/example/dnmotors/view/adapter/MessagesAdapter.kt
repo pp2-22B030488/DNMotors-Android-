@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -20,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemComparator()) {
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
@@ -33,69 +35,75 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
         return VIEW_TYPE_SENDER
     }
 
+    private var onMediaClick: ((Message) -> Unit)? = null
 
+    fun setOnMediaClickListener(listener: (Message) -> Unit) {
+        this.onMediaClick = listener
+    }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
         val binding = UserListBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ItemHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ItemHolder, position: Int) {
-        holder.bind(getItem(position))
+        val message = getItem(position)
+        val isCurrentUser = message.senderId == currentUserId
+        holder.bind(message, isCurrentUser)
     }
+
 
     inner class ItemHolder(private val binding: UserListBinding) : RecyclerView.ViewHolder(binding.root) {
 
         private var imageLoadingJob: kotlinx.coroutines.Job? = null
 
-        fun bind(message: Message) = with(binding) {
+        fun bind(message: Message, isCurrentUser: Boolean) = with(binding) {
             imageLoadingJob?.cancel()
 
             tvUser.text = message.name ?: "Unknown User"
-
             tvMessage.visibility = View.GONE
             btnPlay.visibility = View.GONE
             ivMediaPreview.visibility = View.GONE
+            tvTimestamp.visibility = View.VISIBLE
+
+            val layoutParams = root.layoutParams as ViewGroup.MarginLayoutParams
+            val context = itemView.context
+
+            if (isCurrentUser) {
+                root.setBackgroundColor(ContextCompat.getColor(context, android.R.color.holo_green_light))
+                layoutParams.marginStart = 200
+                layoutParams.marginEnd = 10
+            } else {
+                root.setBackgroundColor(ContextCompat.getColor(context, android.R.color.holo_blue_light))
+                layoutParams.marginStart = 10
+                layoutParams.marginEnd = 200
+            }
+            root.layoutParams = layoutParams
+
+            val time = android.text.format.DateFormat.format("hh:mm a", message.timestamp)
+            tvTimestamp.text = time.toString()
 
             when (val messageType = message.messageType) {
                 "text" -> {
                     tvMessage.visibility = View.VISIBLE
-                    tvMessage.text = if (!message.text.isNullOrEmpty()) {
-                        try {
-                            MediaUtils.decodeTextFromBase64(message.mediaData)
-                        } catch (e: IllegalArgumentException) {
-                            Log.e("MessagesAdapter", "Failed to decode Base64 text: ${message.mediaData}", e)
-                            "[Invalid Text Message]"
-                        }
-                    } else {
-                        ""
-                    }
+                    tvMessage.text = message.text ?: "[Empty Message]"
                 }
+
                 "audio", "video" -> {
                     tvMessage.visibility = View.VISIBLE
                     btnPlay.visibility = View.VISIBLE
-                    tvMessage.text = "[${messageType.replaceFirstChar { it.uppercase() }} Message]"
                     btnPlay.text = "Play ${messageType.replaceFirstChar { it.uppercase() }}"
                     btnPlay.setOnClickListener {
-                        val currentBase64 = message.mediaData
-                        if (currentBase64.isNullOrEmpty()) {
-                            Toast.makeText(itemView.context, "Media data is missing", Toast.LENGTH_SHORT).show()
-                            Log.w("MessagesAdapter", "Play clicked but Base64 data is null or empty for message ID: ${message.id}")
+                        if (message.mediaData.isNullOrEmpty()) {
+                            Toast.makeText(itemView.context, "Media file path is missing", Toast.LENGTH_SHORT).show()
+                            Log.w("MessagesAdapter", "Play clicked but media file path is null or empty for message ID: ${message.id}")
                             return@setOnClickListener
                         }
-                        val file = MediaUtils.decodeBase64ToFile(currentBase64, messageType, itemView.context)
-                        if (file != null) {
-                            Log.d("MessagesAdapter", "Playing $messageType from temp file: ${file.absolutePath}")
-                            MediaUtils.playFile(file, messageType, itemView.context)
-                        } else {
-                            Toast.makeText(itemView.context, "Failed to load media", Toast.LENGTH_SHORT).show()
-                            Log.e("MessagesAdapter", "Failed to decode Base64 to file for message ID: ${message.id}")
-                        }
+                        MediaUtils.playFile(message.mediaData!!, messageType, itemView.context)
                     }
                 }
+
                 "image" -> {
                     ivMediaPreview.visibility = View.VISIBLE
-                    ivMediaPreview.setImageResource(R.drawable.ic_settings)
-
                     val currentBase64 = message.mediaData
                     if (currentBase64.isNullOrEmpty()) {
                         Log.w("MessagesAdapter", "Image message has empty Base64 data. ID: ${message.id}")
@@ -103,48 +111,41 @@ class MessagesAdapter : ListAdapter<Message, MessagesAdapter.ItemHolder>(ItemCom
                         return@with
                     }
 
-
                     imageLoadingJob = CoroutineScope(Dispatchers.Main).launch {
                         Log.d("MessagesAdapter", "Starting background decode for image ID: ${message.id}")
                         val bitmap = decodeBase64ToBitmapAsync(currentBase64)
-
-                        if (bitmap != null) {
-                            Log.d("MessagesAdapter", "Image decoded successfully for ID: ${message.id}")
-                            ivMediaPreview.setImageBitmap(bitmap)
-                        } else {
-                            Log.e("MessagesAdapter", "Failed to decode Base64 to Bitmap for image ID: ${message.id}")
-                            ivMediaPreview.setImageResource(R.drawable.ic_settings)
-                        }
+                        ivMediaPreview.setImageBitmap(bitmap ?: BitmapFactory.decodeResource(context.resources, R.drawable.ic_settings))
                     }
-
                 }
+
                 else -> {
                     tvMessage.visibility = View.VISIBLE
                     tvMessage.text = "[Unsupported Message Type: ${message.messageType ?: "null"}]"
                     Log.w("MessagesAdapter", "Unsupported message type encountered: ${message.messageType}")
                 }
             }
-
         }
 
-        private suspend fun decodeBase64ToBitmapAsync(base64String: String): Bitmap? {
-            return withContext(Dispatchers.IO) {
-                try {
-                    val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                    BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                } catch (e: IllegalArgumentException) {
-                    Log.e("MessagesAdapter", "Invalid Base64 string for image decoding", e)
-                    null
-                } catch (e: OutOfMemoryError) {
-                    Log.e("MessagesAdapter", "OutOfMemoryError decoding image", e)
-                    null
-                } catch (e: Exception) {
-                    Log.e("MessagesAdapter", "Error decoding Base64 to Bitmap", e)
-                    null
-                }
+    }
+
+    private suspend fun decodeBase64ToBitmapAsync(base64String: String): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            } catch (e: IllegalArgumentException) {
+                Log.e("MessagesAdapter", "Invalid Base64 string for image decoding", e)
+                null
+            } catch (e: OutOfMemoryError) {
+                Log.e("MessagesAdapter", "OutOfMemoryError decoding image", e)
+                null
+            } catch (e: Exception) {
+                Log.e("MessagesAdapter", "Error decoding Base64 to Bitmap", e)
+                null
             }
         }
     }
+
 
     class ItemComparator : DiffUtil.ItemCallback<Message>() {
         override fun areItemsTheSame(oldItem: Message, newItem: Message): Boolean {

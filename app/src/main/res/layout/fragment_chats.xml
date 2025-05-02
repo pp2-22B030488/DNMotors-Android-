@@ -5,8 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="8dp"
-    android:layout_marginTop="20dp"
-    android:background="@android:color/white">
+    android:background="@android:color/white"
+    android:fitsSystemWindows="true">
+
 
     <TextView
         android:id="@+id/chatsTitle"
@@ -17,6 +18,7 @@
         android:textStyle="bold"
         android:gravity="center"
         android:textColor="@color/black"
+        android:background="#EEEEEE"
         android:padding="8dp" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -24,5 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="8dp" />
+        android:paddingBottom="8dp"
+        android:background="#EEEEEE"
+        />
 </LinearLayout>

@@ -1,7 +1,7 @@
 package com.example.dnmotors.viewdealer.repository
 
-import com.example.dnmotors.model.Car
-import com.example.dnmotors.model.User
+import com.example.domain.model.Car
+import com.example.domain.model.User
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 

@@ -5,8 +5,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dnmotors.model.SearchFilters
-import com.example.dnmotors.model.Car
+import com.example.domain.model.SearchFilters
+import com.example.domain.model.Car
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.launch
@@ -97,29 +97,29 @@ class SearchViewModel : ViewModel() {
         if (filters.transmissionTypes.isNotEmpty()) {
             query = query.whereIn("transmission", filters.transmissionTypes)
         }
-        
+
         if (filters.minPrice != null) {
-            query = query.whereGreaterThanOrEqualTo("price", filters.minPrice)
+            query = query.whereGreaterThanOrEqualTo("price", filters.minPrice!!)
         }
         
         if (filters.maxPrice != null) {
-            query = query.whereLessThanOrEqualTo("price", filters.maxPrice)
+            query = query.whereLessThanOrEqualTo("price", filters.maxPrice!!)
         }
         
         if (filters.minYear != null) {
-            query = query.whereGreaterThanOrEqualTo("year", filters.minYear)
+            query = query.whereGreaterThanOrEqualTo("year", filters.minYear!!)
         }
         
         if (filters.maxYear != null) {
-            query = query.whereLessThanOrEqualTo("year", filters.maxYear)
+            query = query.whereLessThanOrEqualTo("year", filters.maxYear!!)
         }
         
         if (filters.minMileage != null) {
-            query = query.whereGreaterThanOrEqualTo("mileage", filters.minMileage)
+            query = query.whereGreaterThanOrEqualTo("mileage", filters.minMileage!!)
         }
         
         if (filters.maxMileage != null) {
-            query = query.whereLessThanOrEqualTo("mileage", filters.maxMileage)
+            query = query.whereLessThanOrEqualTo("mileage", filters.maxMileage!!)
         }
         
         // Apply sorting

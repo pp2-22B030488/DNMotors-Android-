@@ -41,12 +41,17 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter android:label="Deep Link">
+
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="dnmotors" />
+                <data
+                    android:scheme="https"
+                    android:host="darkhan-nursultan-alinur-653a63.gitlab.io"
+                    android:pathPrefix="/car/" />
             </intent-filter>
+
         </activity>
 
         <provider

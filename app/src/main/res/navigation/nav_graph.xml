@@ -18,6 +18,12 @@
             app:destination="@id/carFragment"
             app:popUpTo="@id/signInFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_signInFragment_to_carFragment"
+            app:destination="@id/carFragment" />
+        <action
+            android:id="@+id/action_signInFragment_to_messagesFragment"
+            app:destination="@id/messagesFragment" />
 <!--        <action-->
 <!--            android:id="@+id/action_signInFragment_to_dealerFragment"-->
 <!--            app:destination="@id/dealerFragment"-->
@@ -122,7 +128,19 @@
         <action
             android:id="@+id/action_carDetailsFragment_to_messagesFragment"
             app:destination="@id/messagesFragment" />
+
+        <argument
+            android:name="vin"
+            app:argType="string"
+            android:defaultValue="" />
+        <deepLink
+            app:uri="https://darkhan-nursultan-alinur-653a63.gitlab.io/car/{vin}"
+            app:action="android.intent.action.VIEW"
+            app:popUpTo="@id/carFragment"
+            app:popUpToInclusive="false" />
+
     </fragment>
+
     <fragment
         android:id="@+id/messagesFragment"
         android:name="com.example.dnmotors.view.fragments.messagesFragment.MessagesFragment"

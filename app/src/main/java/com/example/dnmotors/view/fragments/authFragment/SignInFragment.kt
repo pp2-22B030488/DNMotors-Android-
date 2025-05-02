@@ -17,6 +17,7 @@ import com.example.dnmotors.databinding.ActivitySignInBinding
 import com.example.dnmotors.viewdealer.activity.DealerActivity
 import com.example.dnmotors.viewmodel.AuthResult
 import com.example.dnmotors.viewmodel.AuthViewModel
+import com.example.dnmotors.viewmodel.GoogleViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -26,6 +27,7 @@ class SignInFragment : Fragment() {
     private var _binding: ActivitySignInBinding? = null
     private val binding get() = _binding!!
     private val authViewModel: AuthViewModel by viewModel()
+    private val googleViewModel: GoogleViewModel by viewModel()
     private lateinit var googleLauncher: ActivityResultLauncher<Intent>
     private val TAG = "SignInFragment"
     private var listener: LoginListener? = null
@@ -38,11 +40,9 @@ class SignInFragment : Fragment() {
         _binding = ActivitySignInBinding.inflate(inflater, container, false)
         return binding.root
     }
-
     interface LoginListener {
         fun onLoginSuccess()
     }
-
     override fun onAttach(context: Context) {
         super.onAttach(context)
         if (context is LoginListener) {
@@ -50,12 +50,11 @@ class SignInFragment : Fragment() {
         } else {
             throw RuntimeException("$context must implement LoginListener")
         }
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         if (authViewModel.isUserSignedIn()) {
             onLoginSuccess()
         }
@@ -68,26 +67,7 @@ class SignInFragment : Fragment() {
     private fun setupGoogleSignInLauncher() {
         googleLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == android.app.Activity.RESULT_OK) {
-                try {
-                    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                    val account = task.getResult(ApiException::class.java)
-
-                    if (account?.idToken != null) {
-                        Log.d(TAG, "Google Sign-In successful, obtained ID token.")
-                        authViewModel.signInWithGoogle(account.idToken!!)
-                    } else {
-                        Log.e(TAG, "Google Sign-In failed: Account or ID Token is null.")
-                        showError("Google Sign-In failed: Could not get token.")
-                    }
-                } catch (e: ApiException) {
-                    Log.e(TAG, "Google Sign-In failed with ApiException: ${e.statusCode}", e)
-                    showError("Google Sign-In error: ${e.localizedMessage} (Code: ${e.statusCode})")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Google Sign-In failed with unexpected exception.", e)
-                    showError("An unexpected error occurred during Google Sign-In.")
-                }
-            } else {
-                Log.w(TAG, "Google Sign-In flow cancelled or failed. Result code: ${result.resultCode}")
+                googleViewModel.handleGoogleSignInResult(result.data)
             }
         }
     }
@@ -133,6 +113,24 @@ class SignInFragment : Fragment() {
     }
 
     private fun observeViewModel() {
+        googleViewModel.googleSignInState.observe(viewLifecycleOwner) { result ->
+            setLoading(result is AuthResult.Loading)
+
+            when (result) {
+                is AuthResult.Success -> {
+                    Log.i(TAG, "Google Sign-In successful, navigating to Main.")
+                    navigateToMain()
+                }
+                is AuthResult.Error -> {
+                    Log.e(TAG, "Google Sign-In failed: ${result.message}")
+                    showError(result.message)
+                }
+                is AuthResult.Loading -> {
+                    Log.d(TAG, "Google Sign-In loading...")
+                }
+            }
+        }
+
         authViewModel.authState.observe(viewLifecycleOwner) { result ->
             setLoading(result is AuthResult.Loading)
 
@@ -177,12 +175,12 @@ class SignInFragment : Fragment() {
         binding.btnGoogle.isEnabled = !isLoading
     }
 
+    private fun onLoginSuccess() {
+        listener?.onLoginSuccess()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-
-    private fun onLoginSuccess() {
-        listener?.onLoginSuccess()
-    }
-} 
+}

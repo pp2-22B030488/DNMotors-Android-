@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dnmotors.databinding.ItemCarBinding
-import com.example.dnmotors.model.Car
+import com.example.domain.model.Car
 
 class CarSelectAdapter(
     private val onClick: (Car) -> Unit

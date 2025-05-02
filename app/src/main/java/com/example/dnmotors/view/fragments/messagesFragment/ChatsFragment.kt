@@ -5,82 +5,44 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentChatsBinding
 import com.example.dnmotors.view.adapter.ChatListAdapter
+import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
+import com.example.domain.model.AuthUser
 import com.example.domain.model.ChatItem
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ChatsFragment : Fragment() {
+    private val authViewModel: AuthViewModel by viewModel()
     private lateinit var binding: FragmentChatsBinding
-    private lateinit var auth: FirebaseAuth
+    private lateinit var auth: AuthUser
     private lateinit var firestore: FirebaseFirestore
-    private val _chatItems = MutableLiveData<List<ChatItem>>()
-    private val chatItems: LiveData<List<ChatItem>> get() = _chatItems
-    private lateinit var chatViewModel: ChatViewModel
+    private val chatViewModel: ChatViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
-        auth = FirebaseAuth.getInstance()
+        lifecycleScope.launch {
+            auth = authViewModel.returnAuth()
+        }
         firestore = FirebaseFirestore.getInstance()
-        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
 
-        val userId = auth.currentUser?.uid ?: return binding.root
+        val userId = auth.uid ?: return binding.root
+        chatViewModel.loadChatList(false)
 
-        loadChatListForUser()
-        // Observe the chat items to update the RecyclerView
-        chatItems.observe(viewLifecycleOwner, Observer { items ->
+        chatViewModel.chatItems.observe(viewLifecycleOwner, Observer { items ->
             setupRecyclerView(items)
         })
         return binding.root
-    }
-
-    private fun loadChatListForUser() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        FirebaseFirestore.getInstance()
-            .collection("chats")
-            .whereEqualTo("userId", userId)
-            .get()
-            .addOnSuccessListener { result ->
-                val chatItems = result.documents.mapNotNull { doc ->
-                    val carId = doc.getString("carId")
-                    val dealerId = doc.getString("dealerId")
-                    val timestamp = doc.getLong("timestamp")
-                    val name = doc.getString("name")
-                    if (carId != null && dealerId != null) {
-                        if (name != null) {
-                            if (timestamp != null) {
-                                ChatItem(
-                                    carId = carId,
-                                    userId = userId,
-                                    dealerId = dealerId,
-                                    timestamp = timestamp,
-                                    name = name
-                                )
-                            } else null
-
-                        }
-                        else null
-                    } else null
-                }
-
-                _chatItems.postValue(chatItems)
-            }
-            .addOnFailureListener { error ->
-                println("Error loading user chat list: ${error.message}")
-                _chatItems.postValue(emptyList())
-            }
     }
 
     private fun setupRecyclerView(items: List<ChatItem>) {

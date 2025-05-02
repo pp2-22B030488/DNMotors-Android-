@@ -4,13 +4,8 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.os.Build
-import com.example.dnmotors.services.MessageService
 import com.example.dnmotors.di.appModules
-import com.example.dnmotors.di.viewModelModule
-import com.example.dnmotors.services.MessageWorkScheduler
-import com.google.firebase.auth.FirebaseAuth
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -34,7 +29,6 @@ class App : Application() {
             androidLogger(Level.DEBUG)
             androidContext(this@App)
             modules(appModules)
-            modules(listOf(viewModelModule))
         }
     }
 
