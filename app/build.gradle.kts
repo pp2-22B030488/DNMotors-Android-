@@ -86,8 +86,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
-
-    
     implementation(libs.picasso)
 
     //Navigation Component
@@ -114,19 +112,13 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
-
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.tbuonomo:dotsindicator:4.3")
-
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-
-
     implementation("androidx.work:work-runtime-ktx:2.8.1")
-
     implementation("io.coil-kt:coil-compose:2.4.0")
-
     implementation("androidx.compose.material3:material3:1.3.2")
 
 //tests
@@ -134,6 +126,8 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
+//    library
+    implementation("com.github.pp2-22B030488:changepasswordscreenlib:1.0.0")
 
 
 }

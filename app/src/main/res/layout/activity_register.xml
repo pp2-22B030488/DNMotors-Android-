@@ -156,14 +156,14 @@
         android:layout_gravity="center"
         android:layout_marginTop="16dp">
 
-        <ImageButton
-            android:id="@+id/btnFacebook"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/facebook_ic"
-            android:contentDescription="Login with Facebook"
-            android:layout_marginEnd="16dp"/>
+<!--        <ImageButton-->
+<!--            android:id="@+id/btnFacebook"-->
+<!--            android:layout_width="48dp"-->
+<!--            android:layout_height="48dp"-->
+<!--            android:background="@android:color/transparent"-->
+<!--            android:src="@drawable/facebook_ic"-->
+<!--            android:contentDescription="Login with Facebook"-->
+<!--            android:layout_marginEnd="16dp"/>-->
 
         <ImageButton
             android:id="@+id/btnGoogle"
@@ -174,13 +174,13 @@
             android:contentDescription="Login with Google"
             android:layout_marginEnd="16dp"/>
 
-        <ImageButton
-            android:id="@+id/btnTwitter"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/twitterx_ic"
-            android:contentDescription="Login with Twitter"/>
+<!--        <ImageButton-->
+<!--            android:id="@+id/btnTwitter"-->
+<!--            android:layout_width="48dp"-->
+<!--            android:layout_height="48dp"-->
+<!--            android:background="@android:color/transparent"-->
+<!--            android:src="@drawable/twitterx_ic"-->
+<!--            android:contentDescription="Login with Twitter"/>-->
     </LinearLayout>
 
 

@@ -90,13 +90,13 @@
                     app:tint="#666666"/>
 
                 <!-- Like Icon -->
-                <ImageView
-                    android:id="@+id/imageViewLike"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_like"
-                    android:layout_marginStart="16dp"
-                    app:tint="#666666"/>
+<!--                <ImageView-->
+<!--                    android:id="@+id/imageViewLike"-->
+<!--                    android:layout_width="24dp"-->
+<!--                    android:layout_height="24dp"-->
+<!--                    android:src="@drawable/ic_like"-->
+<!--                    android:layout_marginStart="16dp"-->
+<!--                    app:tint="#666666"/>-->
             </LinearLayout>
         </LinearLayout>
 
