@@ -16,6 +16,13 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://maven.pkg.github.com/pp2-22B030488/ChangePasswordLib")
+            credentials {
+                username = "pp2-22B030488"
+                password = "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"
+            }
+        }
+
     }
 }
 

@@ -11,6 +11,7 @@ import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
 import com.example.domain.model.AuthUser
 import com.google.firebase.auth.FirebaseAuth
+import com.example.changepassword.ChangePasswordScreen
 
 @Composable
 fun DealerNavGraph(
@@ -68,7 +69,9 @@ fun DealerNavGraph(
             EditProfileScreen(navController = navController)
             }
         composable("change_password") {
-            ChangePasswordScreen(navController = navController)
+//            ChangePasswordScreen(navController = navController)
+            ChangePasswordScreen() // Библиотечная функция не требует NavController
+
         }
 
     }
