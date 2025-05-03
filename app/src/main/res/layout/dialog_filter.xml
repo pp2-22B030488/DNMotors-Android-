@@ -62,7 +62,7 @@
                     android:layout_marginHorizontal="12dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="Все"
+                    android:text="All"
                     android:textAllCaps="false"
                     app:strokeColor="#bdbdbd"
                     android:textSize="14sp"
@@ -74,7 +74,7 @@
                     android:layout_width="0dp"
                     android:layout_height="54dp"
                     android:layout_weight="1"
-                    android:text="Новые"
+                    android:text="New"
                     android:textAllCaps="false"
                     app:strokeColor="#bdbdbd"
                     android:textSize="14sp"
@@ -86,7 +86,7 @@
                     android:layout_width="0dp"
                     android:layout_height="54dp"
                     android:layout_weight="1"
-                    android:text="Б/у"
+                    android:text="Used"
                     android:textAllCaps="false"
                     app:strokeColor="#bdbdbd"
                     android:textSize="14sp"
@@ -130,7 +130,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Марка/модель"
+            android:text="Model"
             android:textColor="@color/black"
             android:textSize="16sp"
             android:layout_marginBottom="8dp"/>
@@ -138,7 +138,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Выберите марку"
+            android:hint="Choose model"
             app:boxStrokeColor="#B6B6B6"
             app:cursorColor="@color/black"
             app:hintTextColor="@color/primary_red"
@@ -213,7 +213,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Год выпуска"
+            android:text="Year"
             android:textColor="@color/black"
             android:textSize="16sp"
             android:layout_marginBottom="8dp"/>
@@ -228,7 +228,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="От"
+                android:hint="From"
                 app:placeholderTextColor="@color/black"
                 app:cursorColor="@color/black"
                 app:hintTextColor="@color/primary_red"
@@ -257,7 +257,7 @@
                 app:boxStrokeColor="@color/secondary_text"
                 app:cursorColor="@color/black"
                 app:hintTextColor="@color/primary_red"
-                android:hint="До"
+                android:hint="To"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -275,7 +275,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Цена"
+            android:text="Price"
             android:textColor="@color/black"
             android:textSize="16sp"
             android:layout_marginBottom="8dp"/>
@@ -290,7 +290,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="От"
+                android:hint="From"
                 app:placeholderTextColor="@color/black"
                 app:cursorColor="@color/black"
                 app:hintTextColor="@color/primary_red"
@@ -319,7 +319,7 @@
                 app:boxStrokeColor="@color/secondary_text"
                 app:cursorColor="@color/black"
                 app:hintTextColor="@color/primary_red"
-                android:hint="До"
+                android:hint="To"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -398,7 +398,7 @@
             android:id="@+id/showResultsButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="Показать возможные варианты"
+            android:text="Show variants"
             android:textAllCaps="false"
             android:textSize="14sp"
             app:cornerRadius="8dp"
