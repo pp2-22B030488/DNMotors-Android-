@@ -94,6 +94,12 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
         chatViewModel.chatItems.observeForever { chats ->
             val safeChats = chats.toList()
             safeChats.forEach { chat ->
+                chatViewModel.observeMessages(
+                    chatId = "${chat.dealerId}_${chat.userId}",
+                    this,
+                )
+            }
+            safeChats.forEach { chat ->
                 chatViewModel.observeNewMessages(
                     chatId = "${chat.dealerId}_${chat.userId}",
                     this,

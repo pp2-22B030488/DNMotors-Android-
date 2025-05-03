@@ -1,8 +1,12 @@
 package com.example.dnmotors.viewdealer.compose.screen
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
@@ -31,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.dnmotors.R
@@ -50,7 +56,7 @@ fun DealerProfileScreen(navController: NavHostController) {
     var showLangDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val activity = LocalActivity.current
+    val activity = (LocalContext.current as Activity)
 
     LaunchedEffect(userId) {
         userId?.let {
@@ -177,7 +183,7 @@ fun DealerProfileScreen(navController: NavHostController) {
                 )
                 Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
 
-                NotificationItem()
+                NotificationItem(activity)
                 Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
 
                 ProfileItem(
@@ -275,8 +281,19 @@ fun ProfileItem(
 }
 
 @Composable
-fun NotificationItem() {
+fun NotificationItem(activity: Activity) {
     var checked by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(activity, arrayOf(permission), 1001)
+            }
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -309,6 +326,7 @@ fun NotificationItem() {
         )
     }
 }
+
 
 @Composable
 fun LanguageSelectionDialog(

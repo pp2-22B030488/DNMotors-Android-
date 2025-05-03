@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -114,13 +115,25 @@ class ChatRepositoryImpl
 //        return roomLiveData
     }
 
-    override fun sendMessage(message: Message, chatId: String) {
+    override fun sendMessage(
+        message: Message,
+        chatId: String) {
         firestore.collection("chats")
             .document(chatId)
             .collection("messages")
             .add(message)
             .addOnSuccessListener {
-                // Additional logic to update chat metadata
+                val chatMetadata = mapOf(
+                    "userId" to message.userId,
+                    "dealerId" to message.dealerId,
+                    "name" to message.text,
+                    "carId" to message.carId,
+                    "timestamp" to System.currentTimeMillis(),
+                )
+
+                firestore.collection("chats")
+                    .document(chatId)
+                    .set(chatMetadata, SetOptions.merge())
             }
             .addOnFailureListener {
                 Log.e("ChatRepositoryImpl", "Failed to send message", it)
