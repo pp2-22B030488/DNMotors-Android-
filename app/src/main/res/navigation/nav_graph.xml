@@ -57,6 +57,9 @@
         <action
             android:id="@+id/action_carFragment_to_carComparisionFragment"
             app:destination="@+id/carComparisonFragment"/>
+        <action
+            android:id="@+id/action_carFragment_to_insuranceFragment"
+            app:destination="@id/insuranceFragment" />
     </fragment>
 
     <fragment
@@ -188,6 +191,15 @@
         <action
             android:id="@+id/action_changePasswordFragment_to_profileFragment"
             app:destination="@id/profileFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/insuranceFragment"
+        android:name="com.example.dnmotors.view.fragments.carFragment.InsuranceFragment"
+        android:label="Insurance"
+        tools:layout="@layout/fragment_insurance" >
+        <action
+            android:id="@+id/action_insuranceFragment_to_carFragment"
+            app:destination="@id/carFragment" />
     </fragment>
 
 

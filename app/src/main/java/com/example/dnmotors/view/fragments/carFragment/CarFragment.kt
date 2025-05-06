@@ -53,6 +53,10 @@ class CarFragment : Fragment() {
         binding.analysisButton.setOnClickListener {
             findNavController().navigate(R.id.action_carFragment_to_carComparisionFragment)
         }
+        binding.insuranceButton.setOnClickListener {
+            findNavController().navigate(R.id.action_carFragment_to_insuranceFragment)
+        }
+
     }
 
     private fun fetchCarsFromFirestore() {

@@ -154,25 +154,26 @@
                         android:text="Credit"/>
                 </LinearLayout>
 
-<!--                <LinearLayout-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:orientation="vertical"-->
-<!--                    android:gravity="center"-->
-<!--                    android:padding="10dp"-->
-<!--                    android:layout_marginStart="24dp">-->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="10dp"
+                    android:layout_marginStart="24dp">
 
-<!--                    <ImageButton-->
-<!--                        android:layout_width="40dp"-->
-<!--                        android:layout_height="40dp"-->
-<!--                        android:backgroundTint="@color/primary_back"-->
-<!--                        android:src="@drawable/ic_guide"/>-->
-<!--                    <TextView-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:textColor="@color/black"-->
-<!--                        android:text="Guide"/>-->
-<!--                </LinearLayout>-->
+                    <ImageButton
+                        android:id="@+id/insuranceButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:backgroundTint="@color/primary_back"
+                        android:src="@drawable/ic_insurance"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/black"
+                        android:text="Insurance"/>
+                </LinearLayout>
 
             </LinearLayout>
 
