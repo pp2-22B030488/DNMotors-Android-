@@ -3,10 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fillViewport="true"
     android:background="#FFFFFF">
 
@@ -17,14 +16,15 @@
 
 
     <!-- Car Photo -->
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPagerCarImages"
-        android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:layout_marginBottom="8dp"
-        android:background="@color/black"/>
 
-    <com.tbuonomo.viewpagerdotsindicator.DotsIndicator
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPagerCarImages"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/black" />
+
+        <com.tbuonomo.viewpagerdotsindicator.DotsIndicator
         android:id="@+id/dotsIndicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -61,6 +61,15 @@
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="#222222" />
+                <TextView
+                    android:id="@+id/textViewGeneration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="G20 (LCI Facelift)"
+                    android:textSize="18sp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp" />
 
                 <!-- Price -->
                 <TextView
@@ -69,7 +78,7 @@
                     android:layout_height="wrap_content"
                     android:text="15 800 000 ₸"
                     android:textSize="18sp"
-                    android:textColor="@color/black"
+                    android:textColor="@color/primary_red"
                     android:textStyle="bold"
                     android:layout_marginTop="4dp" />
             </LinearLayout>
@@ -100,6 +109,156 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Specifications Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:weightSum="3">
+
+            <!-- Engine Volume -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/spec_bg"
+                android:padding="12dp"
+                android:layout_margin="4dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_engine"
+                    app:tint="#000000" />
+
+                <TextView
+                    android:id="@+id/textViewEngineVolumeSpec"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2.5 L"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#000000" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Engine Volume"
+                    android:textSize="14sp"
+                    android:textColor="#777777" />
+            </LinearLayout>
+
+            <!-- Fuel Type -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/spec_bg"
+                android:padding="12dp"
+                android:layout_margin="4dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_fuel"
+                    app:tint="#000000" />
+
+                <TextView
+                    android:id="@+id/textViewFuelTypeSpec"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Petrol"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#000000" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fuel Type"
+                    android:textSize="14sp"
+                    android:textColor="#777777" />
+            </LinearLayout>
+
+            <!-- Transmission -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/spec_bg"
+                android:padding="12dp"
+                android:layout_margin="4dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_transmission"
+                    app:tint="#000000" />
+
+                <TextView
+                    android:id="@+id/textViewTransmissionSpec"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Automatic"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#000000" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Transmission"
+                    android:textSize="14sp"
+                    android:textColor="#777777" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp">
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/viewPager360"
+                android:layout_width="match_parent"
+                android:layout_height="200dp" />
+
+            <!-- Левая стрелка -->
+            <ImageButton
+                android:id="@+id/buttonPrev"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical|start"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_360arrow_right"
+                android:contentDescription="Previous" />
+
+            <!-- Правая стрелка -->
+            <ImageButton
+                android:id="@+id/buttonNext"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical|end"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_360arrow_left"
+                android:contentDescription="Next" />
+
+        </FrameLayout>
+
+
 
         <View
             android:layout_width="match_parent"
@@ -108,32 +267,61 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Mileage and Owners -->
-        <TextView
-            android:id="@+id/textViewMileage"
-            android:layout_width="wrap_content"
+        <!-- Mileage and Location Block -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Mileage: 2,500 km"
-            android:textSize="16sp"
-            android:textColor="#444444"
-            android:layout_marginTop="8dp" />
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
 
-        <TextView
-            android:id="@+id/textViewOwnersCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Owners count: 1"
-            android:textSize="16sp"
-            android:textColor="#444444" />
+            <!-- Mileage -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="4dp"
+                android:gravity="center_vertical">
 
-        <!-- Location -->
-        <TextView
-            android:id="@+id/textViewLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Location: Almaty, Kazakhstan"
-            android:textSize="16sp"
-            android:textColor="#444444" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_speedometer"
+                    android:layout_marginEnd="8dp"
+                    app:tint="#444444" />
+
+                <TextView
+                    android:id="@+id/textViewMileage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mileage: 2,500 km"
+                    android:textSize="16sp"
+                    android:textColor="#444444" />
+            </LinearLayout>
+
+            <!-- Location -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_location"
+                    android:layout_marginEnd="8dp"
+                    app:tint="#444444" />
+
+                <TextView
+                    android:id="@+id/textViewLocation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Location: Almaty, Kazakhstan"
+                    android:textSize="16sp"
+                    android:textColor="#444444" />
+            </LinearLayout>
+        </LinearLayout>
 
         <!-- Divider -->
         <View
@@ -143,48 +331,36 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp" />
 
-        <TextView android:id="@+id/textViewYear" style="@style/DetailItemStyle" android:text="Year: 2022" />
-        <TextView android:id="@+id/textViewCondition" style="@style/DetailItemStyle" android:text="Condition: used" />
-        <TextView android:id="@+id/textViewBodyType" style="@style/DetailItemStyle" android:text="Body Type: Sedan" />
-        <TextView android:id="@+id/textViewDriveType" style="@style/DetailItemStyle" android:text="Drive Type: Front-Wheel Drive" />
-        <TextView android:id="@+id/textViewEngineVolume" style="@style/DetailItemStyle" android:text="Engine Volume: 2.5 L / Petrol" />
-        <TextView android:id="@+id/textViewHorsepower" style="@style/DetailItemStyle" android:text="Horsepower: 181 hp" />
-        <TextView android:id="@+id/textViewTransmission" style="@style/DetailItemStyle" android:text="Transmission: Automatic" />
-        <TextView android:id="@+id/textViewSteeringWheel" style="@style/DetailItemStyle" android:text="Steering Wheel: left" />
-        <TextView android:id="@+id/textViewVIN" style="@style/DetailItemStyle" android:text="VIN: JTNB11HK7K3000001" />
+        <!-- Other Details -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
 
-        <!-- Exterior -->
-        <TextView
-            android:id="@+id/textViewExteriorFeatures"
-            android:layout_height="12sp"
-            android:layout_width="12sp"
-            android:text="Exterior"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp" />
-        <TextView style="@style/DetailItemStyle" android:text="• LED headlights" />
-        <TextView style="@style/DetailItemStyle" android:text="• Alloy wheels" />
-        <TextView style="@style/DetailItemStyle" android:text="• Sunroof" />
-        <TextView style="@style/DetailItemStyle" android:text="• Chrome accents" />
-        <TextView style="@style/DetailItemStyle" android:text="• Rear spoiler" />
+            <TextView
+                android:id="@+id/textViewCondition"
+                style="@style/DetailItemStyle"
+                android:text="Condition: used"
+                android:layout_marginBottom="8dp" />
 
-        <!-- Interior -->
-        <TextView
-            android:id="@+id/textViewInteriorFeatures"
-            android:layout_height="12sp"
-            android:layout_width="12sp"
-            android:text="Interior"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp" />
-        <TextView style="@style/DetailItemStyle" android:text="• Leather seats" />
-        <TextView style="@style/DetailItemStyle" android:text="• Touchscreen" />
-        <TextView style="@style/DetailItemStyle" android:text="• Ambient lighting" />
-        <TextView style="@style/DetailItemStyle" android:text="• Multifunction wheel" />
+            <TextView
+                android:id="@+id/textViewBodyType"
+                style="@style/DetailItemStyle"
+                android:text="Body Type: Sedan"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/textViewDriveType"
+                style="@style/DetailItemStyle"
+                android:text="Drive Type: Front-Wheel Drive"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/textViewVIN"
+                style="@style/DetailItemStyle"
+                android:text="VIN: JTNB11HK7K3000001" />
+        </LinearLayout>
 
         <!-- Description -->
         <TextView
@@ -195,9 +371,18 @@
             android:textSize="16sp"
             android:textColor="#444444"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="20dp" />
 
     </LinearLayout>
+        <!-- Видео тест-драйва -->
+        <WebView
+            android:id="@+id/webViewTestDrive"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            android:layout_marginBottom="100dp" />
+
     </LinearLayout>
 </ScrollView>
     <!-- Fixed bottom buttons -->

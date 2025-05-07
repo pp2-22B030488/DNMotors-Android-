@@ -27,6 +27,8 @@ class CarFragment : Fragment() {
     private lateinit var adapter: CarAdapter
     private val carList = mutableListOf<Car>()
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?

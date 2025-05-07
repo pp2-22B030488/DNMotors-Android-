@@ -25,5 +25,7 @@ data class Car(
     var isLiked: Boolean = false,
     val mileageKm: Int = 0,
     val condition: String = "",
+    val testDriveUrl: String = "",
+    val image360Url: List<String> = emptyList(),
 ) : Parcelable
 
