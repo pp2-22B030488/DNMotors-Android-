@@ -42,6 +42,7 @@ class ChatsFragment : Fragment() {
         chatViewModel.chatItems.observe(viewLifecycleOwner, Observer { items ->
             setupRecyclerView(items)
         })
+
         return binding.root
     }
 
@@ -56,6 +57,23 @@ class ChatsFragment : Fragment() {
         }
         binding.chatsRecyclerView.adapter = adapter
         binding.chatsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+    }
+
+
+    private fun setupChatList() {
+        // Здесь ты загружаешь список чатов, используя viewModel
+        chatViewModel.loadChatList(isDealer = false) // или true в зависимости от роли
+        chatViewModel.chatItems.observe(viewLifecycleOwner) { chatItems ->
+            // Обновляешь UI с чатом
+        }
+    }
+
+    private fun openChat(chatItem: ChatItem) {
+        val action = ChatsFragmentDirections.actionChatsFragmentToMessagesFragment(
+            carId = chatItem.carId, // передаем carId
+            dealerId = chatItem.dealerId // и dealerId
+        )
+        findNavController().navigate(action)
     }
 
 }

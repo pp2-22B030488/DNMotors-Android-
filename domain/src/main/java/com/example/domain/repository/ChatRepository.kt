@@ -2,6 +2,7 @@ package com.example.domain.repository
 
 import android.content.Context
 import androidx.lifecycle.LiveData
+import com.example.domain.model.Car
 import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
 
@@ -12,4 +13,6 @@ interface ChatRepository {
     fun sendMediaMessage(message: Message, chatId: String)
     fun observeMessages(chatId: String, context: Context)
     fun observeNewMessages(chatId: String): LiveData<Message>
+    suspend fun getCarByVin(vin: String): Car?
+
 }

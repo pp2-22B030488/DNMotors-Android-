@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData
 import com.example.data.model.CarDao
 import com.example.domain.model.Car
 import com.example.domain.model.CarEntity
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 class CarRepository(private val carDao: CarDao) {
     val allCars: LiveData<List<CarEntity>> = carDao.getAllCars()

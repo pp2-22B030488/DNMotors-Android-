@@ -2,12 +2,15 @@ package com.example.data.repository
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.data.model.ChatItemDao
 import com.example.data.model.MessageDao
+import com.example.domain.model.Car
 import com.example.domain.model.ChatItem
 import com.example.domain.model.Message
+import com.example.domain.model.User
 import com.example.domain.repository.ChatRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
@@ -15,62 +18,98 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class ChatRepositoryImpl
-//    (
-//    private val chatItemDao: ChatItemDao,
-//    private val messageDao: MessageDao,
-//    private val applicationScope: CoroutineScope
-//)
-    : ChatRepository {
+class ChatRepositoryImpl: ChatRepository {
+    private lateinit var car: Car
+
     private val firestore = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
 
     override fun loadChatList(isDealer: Boolean): LiveData<List<ChatItem>> {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return MutableLiveData(emptyList())
-//        val roomLiveData = chatItemDao.getChatList(currentUserId)
 
+//        val currentUserId = auth.currentUser?.uid ?: return liveData
         val queryField = if (isDealer) "dealerId" else "userId"
-
         val liveData = MutableLiveData<List<ChatItem>>()
 
         firestore.collection("chats")
             .whereEqualTo(queryField, currentUserId)
             .get()
             .addOnSuccessListener { result ->
-                val chatItems = result.documents.mapNotNull { doc ->
-//                    val chatId = doc.id
-                    val carId = doc.getString("carId")
-                    val fetcheduserId = doc.getString("userId")
-                    val fetchedDealerId = doc.getString("dealerId")
-                    val name = doc.getString("name")
-                    val timestamp = doc.getLong("timestamp")
+                val chatItems = mutableListOf<ChatItem>()
+                val jobs = mutableListOf<Deferred<Boolean>>()
 
-                    if (carId != null && fetcheduserId != null && name != null && timestamp != null && fetchedDealerId !=null) {
-                        ChatItem(
-//                            chatId = chatId,
-                            carId = carId,
-                            userId = fetcheduserId,
-                            dealerId = fetchedDealerId,
-                            timestamp = timestamp,
-                            name = name
-                        )
-                    } else null
+                CoroutineScope(Dispatchers.IO).launch {
+                    for (doc in result.documents) {
+                        val carId = doc.getString("carId") ?: continue
+                        val userId = doc.getString("userId") ?: continue
+                        val dealerId = doc.getString("dealerId") ?: continue
+                        val timestamp = doc.getLong("timestamp") ?: 0L
+                        val name = doc.getString("name") ?: ""
+                        val imageUrl = doc.get("imageUrl") as? List<String> ?: emptyList()
+                        val brand = doc.getString("brand") ?: ""
+
+                        val job = async {
+                            val car = getCarByVin(carId)
+                            val dealer = getUserById(dealerId)
+                            val lastMessagePair = getLastMessage(doc.id)
+
+                            val chatItem = ChatItem(
+                                carId = carId,
+                                userId = userId,
+                                dealerId = dealerId,
+                                timestamp = timestamp,
+                                name = name,
+                                dealerName = dealer?.name ?: "Дилер",
+                                brand = car?.brand ?: "",
+                                model = car?.model ?: "",
+                                year = car?.year ?: 0, // безопасный вызов для year
+
+                                imageUrl = car?.imageUrl ?: emptyList(),
+                                lastMessage = lastMessagePair.first,
+                                messageTime = lastMessagePair.second
+                            )
+                            chatItems.add(chatItem)
+                        }
+
+                        jobs.add(job)
+                    }
+
+                    jobs.awaitAll()
+                    liveData.postValue(chatItems)
                 }
-                liveData.postValue(chatItems)
-
-//                chatItemDao.deleteAllChatItems()
-//                chatItemDao.insertChatItems(chatItems)
             }
-            .addOnFailureListener { error ->
-                Log.e("ChatRepositoryImpl", "Error loading chat list: ${error.message}")
+            .addOnFailureListener {
                 liveData.postValue(emptyList())
             }
-        return liveData
 
-//        return roomLiveData
+        return liveData
     }
+
+
+    override suspend fun getCarByVin(vin: String): Car? {
+        return try {
+            val snapshot = firestore.collection("Cars")
+                .whereEqualTo("vin", vin)
+                .get()
+                .await()
+            snapshot.documents.firstOrNull()?.toObject(Car::class.java)
+        } catch (e: Exception) {
+            Log.e("ChatRepository", "Failed to load car by VIN", e)
+            null
+        }
+    }
+
+
 
     override fun loadMessages(chatId: String): LiveData<List<Message>> {
 //        val roomLiveData = messageDao.getMessagesForChat(chatId)
@@ -138,22 +177,6 @@ class ChatRepositoryImpl
             .addOnFailureListener {
                 Log.e("ChatRepositoryImpl", "Failed to send message", it)
             }
-//        val messageWithChatId = message.copy(chatId = chatId)
-//        applicationScope.launch(Dispatchers.IO) {
-//
-//            val newMessageRef = firestore.collection("chats").document(chatId).collection("messages").document()
-//            val messageToSave = messageWithChatId.copy(id = newMessageRef.id)
-//
-//            messageDao.insertMessage(messageToSave)
-//
-//            newMessageRef.set(messageToSave)
-//                .addOnSuccessListener {
-//                    Log.d("ChatRepositoryImpl", "Message sent successfully to Firestore")
-//                }
-//                .addOnFailureListener { e ->
-//                    Log.e("ChatRepositoryImpl", "Failed to send message to Firestore", e)
-//                }
-//        }
     }
 
     override fun sendMediaMessage(message: Message, chatId: String) {
@@ -225,6 +248,54 @@ class ChatRepositoryImpl
             }
 
         return result
+    }
+
+
+    private suspend fun getCarById(carId: String): Car? {
+        return try {
+            val snapshot = firestore.collection("Cars")
+                .document(carId)
+                .get()
+                .await()
+            snapshot.toObject(Car::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+
+
+    private suspend fun getUserById(userId: String): User? {
+        return try {
+            val snapshot = firestore.collection("users")
+                .document(userId)
+                .get()
+                .await()
+            snapshot.toObject(User::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private suspend fun getLastMessage(chatId: String): Pair<String, String> {
+        return try {
+            val snapshot = firestore.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .await()
+
+            val lastMessage = snapshot.documents.firstOrNull()
+            val text = lastMessage?.getString("text") ?: ""
+            val time = lastMessage?.getLong("timestamp")?.let {
+                SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(it))
+            } ?: ""
+            Pair(text, time)
+        } catch (e: Exception) {
+            Pair("", "")
+        }
     }
 }
 

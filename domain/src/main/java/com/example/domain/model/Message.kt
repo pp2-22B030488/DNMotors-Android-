@@ -31,5 +31,7 @@ data class Message(
     val mediaData: String? = null,
     val messageType: String? = null,
     val timestamp: Long = 0,
-    val notificationSent: Boolean = false
+    val notificationSent: Boolean = false,
+    val brand: String = "",
+    val imageUrl: List<String> = emptyList(),
 ) : Parcelable

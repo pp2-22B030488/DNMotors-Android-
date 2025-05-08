@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dnmotors.databinding.FragmentMessagesBinding
 import com.example.domain.util.FileUtils
@@ -58,6 +59,19 @@ class MessagesFragment : Fragment() {
         super.onStart()
         loadMessages()
     }
+//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+//        super.onViewCreated(view, savedInstanceState)
+//
+//        val args = arguments?.let { MessagesFragmentArgs.fromBundle(it) }
+//        carId = args?.carId ?: ""
+//        dealerId = args?.dealerId ?: ""
+//
+//        if (carId.isEmpty() || dealerId.isEmpty()) {
+//            showToast("Missing car or dealer information")
+//            findNavController().popBackStack()  // Можно вернуться назад, если аргументы пустые
+//        }
+//    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -67,7 +81,20 @@ class MessagesFragment : Fragment() {
         setupDependencies()
         setupRecyclerView()
         setupClickListeners()
+
         return binding.root
+
+    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val carId = arguments?.getString("carId")
+        val dealerId = arguments?.getString("dealerId")
+
+        carId?.let {
+            // Загружаем данные о машине, если нужно
+            chatViewModel.loadMessages(it)
+        }
     }
 
     private fun setupDependencies() {
@@ -87,7 +114,8 @@ class MessagesFragment : Fragment() {
             return
         }
 
-        val chatId = "${dealerId}_${currentUserId}"
+//        val chatId = "${dealerId}_${currentUserId}"
+        val chatId = "${carId}_${dealerId}"
         messagesRef = firestore.collection("chats")
             .document(chatId)
             .collection("messages")
@@ -112,7 +140,9 @@ class MessagesFragment : Fragment() {
 
     private fun sendTextMessage() {
         val currentUserId = auth.uid ?: return
-        val chatId = "${dealerId}_${currentUserId}"
+//        val chatId = "${dealerId}_${currentUserId}"
+        val chatId = "${carId}_${dealerId}"
+
         val messageText = binding.messageInput.text.toString().trim()
 
         if (messageText.isNotEmpty()) {
@@ -192,7 +222,9 @@ class MessagesFragment : Fragment() {
 
     private fun handleRecordedAudio(file: File) {
         val currentUserId = auth.uid ?: return
-        val chatId = "${dealerId}_${currentUserId}"
+//        val chatId = "${dealerId}_${currentUserId}"
+        val chatId = "${carId}_${dealerId}"
+
         val base64 = FileUtils.fileToBase64(file)
 
         if (base64.isNotEmpty()) {
@@ -216,7 +248,9 @@ class MessagesFragment : Fragment() {
 
     private fun loadMessages() {
         val currentUserId = auth.uid ?: return
-        val chatId = "${dealerId}_${currentUserId}"
+//        val chatId = "${dealerId}_${currentUserId}"
+        val chatId = "${carId}_${dealerId}"
+
 
         chatViewModel.loadMessages(chatId)
 

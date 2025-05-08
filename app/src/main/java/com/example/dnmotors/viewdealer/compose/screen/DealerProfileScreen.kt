@@ -86,7 +86,7 @@ fun DealerProfileScreen(navController: NavHostController) {
         // Header
         Box(
             modifier = Modifier
-                .height(300.dp)
+                .height(260.dp)
                 .fillMaxWidth()
         ) {
             if (profile.profileFon.isNotEmpty()) {

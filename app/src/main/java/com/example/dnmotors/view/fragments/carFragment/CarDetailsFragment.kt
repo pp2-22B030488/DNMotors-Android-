@@ -18,6 +18,7 @@ import com.example.dnmotors.view.adapter.CarDetailsAdapter
 import com.example.domain.model.Car
 import com.example.dnmotors.view.adapter.CarImageAdapter
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 class CarDetailsFragment : Fragment() {
 
@@ -154,6 +155,7 @@ class CarDetailsFragment : Fragment() {
         binding.dotsIndicator.attachTo(binding.viewPagerCarImages)
 
         if (!car.image360Url.isNullOrEmpty()) {
+            binding.frameLayout360.visibility = View.VISIBLE  // Показываем блок
             val adapter360 = CarDetailsAdapter(car.image360Url)
             binding.viewPager360.adapter = adapter360
 
@@ -186,6 +188,7 @@ class CarDetailsFragment : Fragment() {
 //            startAutoScroll(itemCount, itemDelay.toLong())
 
         } else {
+            binding.frameLayout360.visibility = View.GONE  // Скрываем блок полностью
             Toast.makeText(context, "360 images not available", Toast.LENGTH_SHORT).show()
         }
 
