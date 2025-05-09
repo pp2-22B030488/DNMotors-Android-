@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.dnmotors.viewdealer.compose.screen.*
 import com.example.dnmotors.viewmodel.AuthViewModel
 import com.example.dnmotors.viewmodel.ChatViewModel
@@ -36,7 +38,9 @@ fun DealerNavGraph(
 
         composable(DealerNavItem.Chat.route) {
             ChatScreen(chatViewModel, authViewModel) { chatItem ->
-                navController.navigate("messages/${chatItem.userId}/${chatItem.carId}")
+//                navController.navigate("messages/${chatItem.userId}/${chatItem.carId}")
+                navController.navigate("messages/${chatItem.userId}/${chatItem.carId}/${chatItem.dealerId}/${chatItem.dealerName}")
+
             }
         }
 
@@ -48,7 +52,7 @@ fun DealerNavGraph(
 
             if (dealerId != null) {
                 MessagesScreen(
-                    chatId = "${dealerId}_${userId}",
+                    chatId = "${carId}_${dealerId}_${userId}",
                     carId = carId,
                     userId = userId,
                     dealerId = dealerId,
@@ -59,6 +63,32 @@ fun DealerNavGraph(
             } else {
                 Text("Error: Dealer not logged in.")
             }
+        }
+        composable(
+            route = "messages/{userId}/{carId}/{dealerId}/{dealerName}",
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType },
+                navArgument("carId") { type = NavType.StringType },
+                navArgument("dealerId") { type = NavType.StringType },
+                navArgument("dealerName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")!!
+            val carId = backStackEntry.arguments?.getString("carId")!!
+            val dealerId = backStackEntry.arguments?.getString("dealerId")!!
+            val dealerName = backStackEntry.arguments?.getString("dealerName")!!
+
+            val chatId = "${carId}_${dealerId}_${userId}"
+
+            MessagesScreen(
+                chatId = chatId,
+                carId = carId,
+                userId = userId,
+                dealerId = dealerId,
+                dealerName = dealerName,
+                viewModel = chatViewModel,
+                onToggleBottomBar = onToggleBottomBar
+            )
         }
 
         composable(DealerNavItem.Profile.route) {

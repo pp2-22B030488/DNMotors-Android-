@@ -45,6 +45,7 @@ class MessagesFragment : Fragment() {
 
     private lateinit var carId: String
     private lateinit var dealerId: String
+    private lateinit var userId: String
 
     private val requestAudioPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -88,14 +89,23 @@ class MessagesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val carId = arguments?.getString("carId")
-        val dealerId = arguments?.getString("dealerId")
+        carId = arguments?.getString("carId") ?: ""
+        dealerId = arguments?.getString("dealerId") ?: ""
+//        userId = arguments?.getString("userId") ?: ""
 
-        carId?.let {
-            // Загружаем данные о машине, если нужно
-            chatViewModel.loadMessages(it)
+        lifecycleScope.launch {
+            auth = authViewModel.returnAuth()
+            userId = auth.uid ?: ""
+            if (carId.isEmpty() || dealerId.isEmpty() || userId.isEmpty()) {
+                showToast("Missing chat arguments")
+                findNavController().popBackStack()
+            } else {
+                val chatId = "${carId}_${dealerId}_${userId}"
+                chatViewModel.loadMessages(chatId)
+            }
         }
     }
+
 
     private fun setupDependencies() {
         mediaRepository = MediaRepository(requireContext())
@@ -115,7 +125,7 @@ class MessagesFragment : Fragment() {
         }
 
 //        val chatId = "${dealerId}_${currentUserId}"
-        val chatId = "${carId}_${dealerId}"
+        val chatId = "${carId}_${dealerId}_${currentUserId}"
         messagesRef = firestore.collection("chats")
             .document(chatId)
             .collection("messages")
@@ -141,7 +151,7 @@ class MessagesFragment : Fragment() {
     private fun sendTextMessage() {
         val currentUserId = auth.uid ?: return
 //        val chatId = "${dealerId}_${currentUserId}"
-        val chatId = "${carId}_${dealerId}"
+        val chatId = "${carId}_${dealerId}_${currentUserId}"
 
         val messageText = binding.messageInput.text.toString().trim()
 
@@ -223,7 +233,7 @@ class MessagesFragment : Fragment() {
     private fun handleRecordedAudio(file: File) {
         val currentUserId = auth.uid ?: return
 //        val chatId = "${dealerId}_${currentUserId}"
-        val chatId = "${carId}_${dealerId}"
+        val chatId = "${carId}_${dealerId}_${currentUserId}"
 
         val base64 = FileUtils.fileToBase64(file)
 
@@ -249,7 +259,7 @@ class MessagesFragment : Fragment() {
     private fun loadMessages() {
         val currentUserId = auth.uid ?: return
 //        val chatId = "${dealerId}_${currentUserId}"
-        val chatId = "${carId}_${dealerId}"
+        val chatId = "${carId}_${dealerId}_${currentUserId}"
 
 
         chatViewModel.loadMessages(chatId)

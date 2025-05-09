@@ -36,7 +36,12 @@ class MessageWorker(
                 .await()
 
             for (chatDoc in chatSnapshots.documents) {
-                val chatId = chatDoc.id
+                val carId = chatDoc.getString("carId") ?: continue
+                val dealerId = chatDoc.getString("dealerId") ?: continue
+                val userId = chatDoc.getString("userId") ?: continue
+
+                val chatId = "${carId}_${dealerId}_${userId}" // <--- Ключевой момент
+
                 val messagesRef = firestore.collection("chats")
                     .document(chatId)
                     .collection("messages")
@@ -46,7 +51,6 @@ class MessageWorker(
                 val messageSnapshots = messagesRef
                     .whereEqualTo("notificationSent", false)
                     .whereNotEqualTo("senderId", currentUserId)
-                    .limit(1)
                     .get()
                     .await()
 
@@ -55,14 +59,15 @@ class MessageWorker(
                     MessageNotificationUtil.createNotification(
                         applicationContext,
                         message,
-                        targetActivity = MainActivity::class.java){
-
-                        putExtra("userId", message.senderId)
+                        targetActivity = MainActivity::class.java
+                    ) {
                         putExtra("carId", message.carId)
+                        putExtra("dealerId", message.dealerId)
                     }
                     doc.reference.update("notificationSent", true).await()
                 }
             }
+
 
             Result.success()
         } catch (e: Exception) {

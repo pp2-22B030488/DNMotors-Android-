@@ -85,6 +85,7 @@ class ChatViewModel(private val chatUseCases: ChatUseCases) : ViewModel() {
                 ) {
                     putExtra("carId", message.carId)
                     putExtra("dealerId", message.dealerId)
+                    putExtra("userId", message.userId)
                 }
             } else if (activityClass == DealerActivity::class.java) {
                 MessageNotificationUtil.createNotification(
@@ -92,8 +93,9 @@ class ChatViewModel(private val chatUseCases: ChatUseCases) : ViewModel() {
                     message,
                     DealerActivity::class.java
                 ) {
-                    putExtra("userId", message.senderId)
+                    putExtra("userId", message.userId)
                     putExtra("carId", message.carId)
+                    putExtra("dealerId", message.dealerId)
                 }
             }
         }

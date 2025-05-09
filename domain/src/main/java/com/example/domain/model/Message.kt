@@ -21,7 +21,7 @@ import kotlinx.parcelize.Parcelize
 data class Message(
 //    @PrimaryKey
     val id: String? = null,
-//    val chatId: String? = null,
+    val chatId: String? = null,
     val name: String? = null,
     var senderId: String? = null,
     var userId: String? = null,

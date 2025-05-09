@@ -54,7 +54,7 @@ class ChatRepositoryImpl: ChatRepository {
                         val userId = doc.getString("userId") ?: continue
                         val dealerId = doc.getString("dealerId") ?: continue
                         val timestamp = doc.getLong("timestamp") ?: 0L
-                        val name = doc.getString("name") ?: ""
+                        val text = doc.getString("text") ?: ""
                         val imageUrl = doc.get("imageUrl") as? List<String> ?: emptyList()
                         val brand = doc.getString("brand") ?: ""
 
@@ -62,13 +62,15 @@ class ChatRepositoryImpl: ChatRepository {
                             val car = getCarByVin(carId)
                             val dealer = getUserById(dealerId)
                             val lastMessagePair = getLastMessage(doc.id)
+                            val senderName = getLastMessageSenderName(doc.id)
 
                             val chatItem = ChatItem(
                                 carId = carId,
                                 userId = userId,
                                 dealerId = dealerId,
                                 timestamp = timestamp,
-                                name = name,
+                                text = text,
+                                name = senderName ?: "Пользователь",
                                 dealerName = dealer?.name ?: "Дилер",
                                 brand = car?.brand ?: "",
                                 model = car?.model ?: "",
@@ -76,7 +78,8 @@ class ChatRepositoryImpl: ChatRepository {
 
                                 imageUrl = car?.imageUrl ?: emptyList(),
                                 lastMessage = lastMessagePair.first,
-                                messageTime = lastMessagePair.second
+                                messageTime = lastMessagePair.second,
+                                chatId = "${carId}_${dealerId}_${userId}"
                             )
                             chatItems.add(chatItem)
                         }
@@ -129,30 +132,27 @@ class ChatRepositoryImpl: ChatRepository {
                 } ?: emptyList()
 
                 liveData.postValue(messages)
-
-//                if (snapshot == null) return@addSnapshotListener
-//
-//                applicationScope.launch(Dispatchers.IO) {
-//                    for (dc in snapshot.documentChanges) {
-//                        val message = dc.document.toObject(Message::class.java)
-//                            .copy(chatId = chatId)
-//
-//                        when (dc.type) {
-//                            DocumentChange.Type.ADDED, DocumentChange.Type.MODIFIED -> {
-//                                messageDao.insertMessage(message)
-//                            }
-//
-//                            DocumentChange.Type.REMOVED -> {
-//                                message.id?.let { messageDao.deleteMessageById(it) }
-//                            }
-//                        }
-//                    }
-//                }
             }
         return liveData
-
-//        return roomLiveData
     }
+    private suspend fun getLastMessageSenderName(chatId: String): String? {
+        return try {
+            val snapshot = firestore.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .await()
+
+            val lastMessage = snapshot.documents.firstOrNull()?.toObject(Message::class.java)
+            lastMessage?.name // предполагается, что в Message есть поле name
+        } catch (e: Exception) {
+            Log.e("ChatRepositoryImpl", "Failed to get last message sender name", e)
+            null
+        }
+    }
+
 
     override fun sendMessage(
         message: Message,

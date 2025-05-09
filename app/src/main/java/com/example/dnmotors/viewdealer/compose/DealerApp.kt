@@ -25,14 +25,14 @@ fun DealerApp(messageData: Pair<String?, String?>?) {
 
         chatViewModel.chatItems.observeForever { chats ->
             chats.forEach { chat ->
-                chatViewModel.observeMessages(chatId = "${chat.dealerId}_${chat.userId}", context)
+                chatViewModel.observeMessages(chatId = "${chat.carId}_${chat.dealerId}_${chat.userId}", context)
             }
         }
         chatViewModel.loadChatList(true)
         chatViewModel.chatItems.observeForever { chats ->
             chats.forEach { chat ->
                 chatViewModel.observeNewMessages(
-                    chatId = "${chat.dealerId}_${chat.userId}",
+                    chatId = "${chat.carId}_${chat.dealerId}_${chat.userId}",
                     context,
                     activityClass = DealerActivity::class.java)
             }

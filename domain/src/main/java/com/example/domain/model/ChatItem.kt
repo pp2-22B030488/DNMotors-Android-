@@ -9,9 +9,9 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class ChatItem(
 //    @PrimaryKey
-//    val chatId: String,
+    val chatId: String,
     val carId: String,
-    val name: String,
+    val text: String,
     val dealerId: String,
     val userId: String,
     val timestamp: Long = 0L,
@@ -22,5 +22,6 @@ data class ChatItem(
     val imageUrl: List<String> = emptyList(),
     val model: String = "",
     val year: Int = 0,
+    val name: String = "",
 
 ): Parcelable

@@ -28,13 +28,16 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val name = data["name"] ?: return
         val text = data["text"] ?: "You have a new message"
         val carId = data["carId"] ?: return
-        val senderId = data["senderId"] ?: return
+        val dealerId = data["dealerId"] ?: return // <-- обязательно добавь это
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("carId", carId)
-            putExtra("senderId", senderId)
+            putExtra("dealerId", dealerId) // <-- обязательно
+            putExtra("userId", userId)
         }
+
 
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT

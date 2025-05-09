@@ -95,13 +95,13 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             val safeChats = chats.toList()
             safeChats.forEach { chat ->
                 chatViewModel.observeMessages(
-                    chatId = "${chat.dealerId}_${chat.userId}",
+                    chatId = "${chat.carId}_${chat.dealerId}_${chat.userId}",
                     this,
                 )
             }
             safeChats.forEach { chat ->
                 chatViewModel.observeNewMessages(
-                    chatId = "${chat.dealerId}_${chat.userId}",
+                    chatId = "${chat.carId}_${chat.dealerId}_${chat.userId}",
                     this,
                     activityClass = MainActivity::class.java
                 )
@@ -184,6 +184,7 @@ class MainActivity : AppCompatActivity(), SignInFragment.LoginListener {
             val bundle = Bundle().apply {
                 putString("carId", carId)
                 putString("dealerId", dealerId)
+                putString("userId", auth.uid)
             }
 
             Log.d(TAG, "Navigating to messagesFragment with carId: $carId, dealerId: $dealerId")

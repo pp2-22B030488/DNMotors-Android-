@@ -51,7 +51,7 @@ class ChatsFragment : Fragment() {
             val action = ChatsFragmentDirections
                 .actionChatsFragmentToMessagesFragment(
                     carId = clickedItem.carId,
-                    dealerId = clickedItem.dealerId
+                    dealerId = clickedItem.dealerId,
                 )
             findNavController().navigate(action)
         }
@@ -71,7 +71,7 @@ class ChatsFragment : Fragment() {
     private fun openChat(chatItem: ChatItem) {
         val action = ChatsFragmentDirections.actionChatsFragmentToMessagesFragment(
             carId = chatItem.carId, // передаем carId
-            dealerId = chatItem.dealerId // и dealerId
+            dealerId = chatItem.dealerId, // и dealerId
         )
         findNavController().navigate(action)
     }

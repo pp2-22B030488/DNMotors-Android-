@@ -120,7 +120,7 @@ fun ChatItemView(item: ChatItem, onClick: (ChatItem) -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = item.dealerName,
+                        text = item.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.Black
                     )
