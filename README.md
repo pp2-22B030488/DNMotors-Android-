@@ -130,7 +130,7 @@ Dealers can add cars using a JSON text format like this:
 
 ![photo_2025-05-03_09-40-52](https://github.com/user-attachments/assets/7c1dacee-9e6e-4bcc-a11a-4c369f6aa76b)
 ![4](https://github.com/user-attachments/assets/f970b7bd-52c8-4ee2-83d2-b8054a4f1eb4)
-![photo_2025-05-03_09-41-01](https://github.com/user-attachments/assets/e23a28b7-daeb-4f7b-88e5-df041f1faa9a)
+![3](https://github.com/user-attachments/assets/35e1f3f0-6b81-4113-948d-c90027e92726)
 ![5](https://github.com/user-attachments/assets/bd2017c0-5382-40fd-8a27-0358907ddc28)
 
 
