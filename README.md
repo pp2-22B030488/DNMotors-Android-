@@ -1,4 +1,4 @@
-# DNMotors
+![5](https://github.com/user-attachments/assets/777f1d02-3500-4d43-bf58-a845aad4df4c)# DNMotors
 
 DNMotors is a mobile car marketplace where users can explore vehicles offered directly by companies, often at prices lower than the market average. The app provides everything you need to browse, compare, and research cars in detail — including 360° views, test drive videos, and full specifications. Users can also communicate directly with authorized dealers through chat or calls, making the buying process simple and transparent. Dealers from brands like Toyota, BMW, Audi, and more have their own panel to manage listings and respond to customer inquiries.
 
@@ -127,9 +127,12 @@ Dealers can add cars using a JSON text format like this:
 
 ```
 
+
 ![photo_2025-05-03_09-40-52](https://github.com/user-attachments/assets/7c1dacee-9e6e-4bcc-a11a-4c369f6aa76b)
-![photo_2025-05-03_09-41-04](https://github.com/user-attachments/assets/4bdab12c-77e3-41f7-86f5-69a26abd0be9)
+![4](https://github.com/user-attachments/assets/f970b7bd-52c8-4ee2-83d2-b8054a4f1eb4)
 ![photo_2025-05-03_09-41-01](https://github.com/user-attachments/assets/e23a28b7-daeb-4f7b-88e5-df041f1faa9a)
+![5](https://github.com/user-attachments/assets/bd2017c0-5382-40fd-8a27-0358907ddc28)
+
 
 🚀 Getting Started
 Clone the repository: 
