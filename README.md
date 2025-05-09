@@ -30,6 +30,9 @@ DNMotors is a mobile car marketplace where users can explore vehicles offered di
   - Submit a loan application
 - Compare cars side by side by specifications
 - Add cars to Favorites
+- Search Page: Users can search and filter cars by multiple parameters:
+  - Condition (All, New, Used), Brand and model (with autocomplete suggestions) etc.
+  - Dynamic filtering with instant results display
 - Chat with dealers:
   - Chat shows dealer name, car image, car model, and latest message
   - Supports text and voice messages
@@ -74,6 +77,7 @@ DNMotors is a mobile car marketplace where users can explore vehicles offered di
 - Glide — Image loading (for all photos,)
 - Jetpack Compose — Dealer panel
 - XML Layouts — User panel
+- Material Design Components — Used for BottomSheet filter dialog.
 - Change Password Library:
 implementation("com.github.pp2-22B030488:changepasswordscreenlib:1.0.0")
 ### Android Jetpack
