@@ -20,8 +20,10 @@ DNMotors is a mobile dealership app that allows car dealers to post and manage t
 - View car details page:
   - Photo gallery
   - Specifications
+  - 360° car view (swipe or tap left/right to see from every angle)
+  - Test drive videos (watch inside the app or open in YouTube)
   - Call button (automatically opens the dialer with dealer's number)
-  - Chat with dealer
+  - Chat with dealer (supports text and voice messages)
   - Share car information with friends
 - Use Loan Calculator:
   - Calculate loans for 12 to 84 months
@@ -29,7 +31,10 @@ DNMotors is a mobile dealership app that allows car dealers to post and manage t
 - Compare cars side by side by specifications
 - Add cars to Favorites
 - Chat with dealers:
+  - Chat shows dealer name, car image, car model, and latest message
   - Supports text and voice messages
+  - Receive push notifications for new messages (tap to open chat instantly)
+  - Each chat uses unique ID (val chatId = generateChatId(carId, dealerId, userId)) to ensure privacy
 - Profile Management:
   - Edit avatar, background image
   - Update location, name, phone number
@@ -47,23 +52,43 @@ DNMotors is a mobile dealership app that allows car dealers to post and manage t
   - View added cars (data saved in Firebase Firestore)
 - Chat with users:
   - Supports text and voice messages
+  - Chat shows dealer name, car image, car model, and latest message
+  - Each chat uses unique ID (val chatId = generateChatId(carId, dealerId, userId)) to ensure privacy
+  - Receive push notifications for new messages (tap to open chat instantly)
 - Profile Management:
   - Edit avatar, background, location, name, phone
   - Change password
-  - Switch language
+  - Switch language (Kazakh, Russian, English supported)
   - Logout
 
 ---
 
 ## 🔥 Technologies Used
+
+### Core
 - Kotlin
-- Firebase Firestore — stores car data
-- Firebase Auth — user authentication
-- Firebase Storage — stores media
+- Firebase Firestore — Stores car data and chat
+- Firebase Auth — Authentication (Email & Google Sign-In)
+- Firebase Cloud Messaging (FCM) — Push notifications
+- Imgur API — Upload car images manually
+- Glide — Image loading (for all photos,)
 - Jetpack Compose — Dealer panel
 - XML Layouts — User panel
 - Change Password Library:
 implementation("com.github.pp2-22B030488:changepasswordscreenlib:1.0.0")
+### Android Jetpack
+- ViewModel + LiveData
+- Navigation Component
+- WorkManager
+- Media3 — For video playback
+### Networking
+- Retrofit + Gson — API calls (e.g., Imgur)
+- OkHttp Logging Interceptor
+### Image Libraries
+- Glide — For dynamic image loading
+- Picasso — Also used in some parts
+### Dependency Injection
+- Koin — Lightweight DI for Android
 
 ---
 
@@ -72,28 +97,34 @@ Dealers can add cars using a JSON text format like this:
 
 ```json
 {
-"vin": "WAUZZZF2XLN012345",
-"brand": "Audi",
-"model": "A7 Sportback",
-"year": 2020,
-"generation": "C8",
-"price": 28500000,
-"transmission": "Automatic",
-"driveType": "Quattro (AWD)",
-"fuelType": "Petrol",
-"location": "Astana, Kazakhstan",
-"description": "Audi A7 Sportback 2020 — a blend of coupe elegance and sedan practicality with Quattro AWD. Powered by 2.0 TFSI, 249 hp engine, 0-100 km/h in 6.2 sec. Unique with dynamic silhouette, LED matrix lights, and premium triple-screen interior. Perfect for those who value style, tech, and comfort in daily Kazakhstan drives.",
-"previewUrl": "https://upload.wikimedia.org/wikipedia/commons/1/16/Audi_A7_Sportback_45_TFSI_quattro_S_line.jpg",
-"imageUrl": [
-  "https://upload.wikimedia.org/wikipedia/commons/1/16/Audi_A7_Sportback_45_TFSI_quattro_S_line.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/3/3a/Audi_A7_Sportback_45_TFSI_quattro_S_line_Rear.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/e/ea/Audi_A7_Sportback_C8_interior.jpg"
-],
-"bodyType": "Liftback",
-"engineCapacity": "2.0L I4 TFSI",
-"mileageKm": 41000,
-"condition": "Used"
+  "vin": "WAUZZZF2XLN012345",
+  "brand": "Audi",
+  "model": "A7 Sportback",
+  "year": 2020,
+  "generation": "C8",
+  "price": 28500000,
+  "transmission": "Automatic",
+  "driveType": "Quattro (AWD)",
+  "fuelType": "Petrol",
+  "location": "Astana, Kazakhstan",
+  "description": "Audi A7 Sportback 2020 — elegant, practical, and powerful.",
+  "previewUrl": "https://link_to_preview.jpg",
+  "imageUrl": [
+    "https://link1.jpg",
+    "https://link2.jpg",
+    "https://link3.jpg"
+  ],
+  "image360Url": [
+    "https://link_to_360_1.jpg",
+    "https://link_to_360_2.jpg"
+  ],
+  "testDriveUrl": "https://link_to_test_drive_form",
+  "bodyType": "Liftback",
+  "engineCapacity": "2.0L I4 TFSI",
+  "mileageKm": 41000,
+  "condition": "Used"
 }
+
 ```
 
 ![photo_2025-05-03_09-40-52](https://github.com/user-attachments/assets/7c1dacee-9e6e-4bcc-a11a-4c369f6aa76b)
@@ -103,18 +134,9 @@ Dealers can add cars using a JSON text format like this:
 🚀 Getting Started
 Clone the repository: 
 
-git clone https://github.com/DarkhanTastanov/AndroidAdvancedDNMotors.git  
+git clone https://github.com/pp2-22B030488/DNMotors-Android-.git
 
 Open the project in Android Studio  
 
 Install dependencies and run on emulator or physical device  
   
-  
-    
-Developers:  
-
-Darkhan Tastanov    
-
-Kuanysh Nursultan  
-
-Kabylzhaparov Alinur  
