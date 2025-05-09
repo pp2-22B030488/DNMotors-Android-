@@ -1,6 +1,6 @@
 # DNMotors
 
-DNMotors is a mobile dealership app that allows car dealers to post and manage their vehicle listings. Authorized dealers from brands like Toyota, BMW, Audi, and others can log in with a dealer role and access a dealer panel where they can manage their inventory and communicate directly with users.
+DNMotors is a mobile car marketplace where users can explore vehicles offered directly by companies, often at prices lower than the market average. The app provides everything you need to browse, compare, and research cars in detail — including 360° views, test drive videos, and full specifications. Users can also communicate directly with authorized dealers through chat or calls, making the buying process simple and transparent. Dealers from brands like Toyota, BMW, Audi, and more have their own panel to manage listings and respond to customer inquiries.
 
 ## 🚗 App Features
 
